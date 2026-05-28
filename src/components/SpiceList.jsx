@@ -12,10 +12,11 @@ const FILTERS = [
 ]
 
 export default function SpiceList({ onEdit, onAdd }) {
-  const { spices: allSpices, addShoppingItem } = useStore()
+  const { spices: allSpices, addShoppingItem, locations } = useStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
+  const [locationFilter, setLocationFilter] = useState('all')
   const [sort, setSort] = useState('name') // name | mhd
   const [expandedId, setExpandedId] = useState(null)
 
@@ -28,6 +29,8 @@ export default function SpiceList({ onEdit, onAdd }) {
   const filtered = useMemo(() => {
     let list = allSpices
     if (filter !== 'all') list = list.filter(s => s.packagingType === filter)
+    if (locationFilter === 'none') list = list.filter(s => !s.locationId)
+    else if (locationFilter !== 'all') list = list.filter(s => s.locationId === locationFilter)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(s => s.name.toLowerCase().includes(q))
@@ -42,7 +45,7 @@ export default function SpiceList({ onEdit, onAdd }) {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'de'))
     }
     return list
-  }, [allSpices, filter, search, sort])
+  }, [allSpices, filter, locationFilter, search, sort])
 
   return (
     <div className="flex flex-col h-full">
@@ -108,6 +111,39 @@ export default function SpiceList({ onEdit, onAdd }) {
         </button>
       </div>
 
+      {/* Lagerort-Filter (nur anzeigen wenn Lagerorte vorhanden) */}
+      {locations.length > 0 && (
+        <div className="bg-white border-b border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setLocationFilter('all')}
+            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+              locationFilter === 'all' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            Alle Orte
+          </button>
+          {locations.map(loc => (
+            <button
+              key={loc.id}
+              onClick={() => setLocationFilter(l => l === loc.id ? 'all' : loc.id)}
+              className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                locationFilter === loc.id ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {loc.name}
+            </button>
+          ))}
+          <button
+            onClick={() => setLocationFilter(l => l === 'none' ? 'all' : 'none')}
+            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+              locationFilter === 'none' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            Kein Ort
+          </button>
+        </div>
+      )}
+
       {/* List */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
         {filtered.length === 0 ? (
@@ -131,11 +167,12 @@ export default function SpiceList({ onEdit, onAdd }) {
 }
 
 function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
-  const { deleteSpice } = useStore()
+  const { deleteSpice, locations } = useStore()
   const mhd = getMhdStatus(spice.expiryDate)
   const mhdStyle = MHD_STYLES[mhd.status]
   const pkgColor = PACKAGING_COLORS[spice.packagingType] ?? PACKAGING_COLORS.fertigstreuer
   const pkgLabel = PACKAGING_TYPES.find(t => t.id === spice.packagingType)?.label ?? spice.packagingType
+  const location = locations.find(l => l.id === spice.locationId)
 
   return (
     <div className={`card overflow-hidden transition-all ${expanded ? 'ring-2 ring-green-500' : ''}`}>
@@ -158,6 +195,14 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
               <p className="text-xs text-gray-400 font-medium mt-0.5">{spice.brand}</p>
             )}
             <p className="text-sm text-gray-500 mt-0.5">{formatAmount(spice)}</p>
+            {location && (
+              <span className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-0.5">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {location.name}
+              </span>
+            )}
           </div>
           <div className="flex-none flex flex-col items-end gap-1">
             {mhd.status !== 'none' ? (

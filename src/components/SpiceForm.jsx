@@ -13,10 +13,11 @@ const DEFAULT_FORM = {
   expiryDate: '',
   barcode: '',
   notes: '',
+  locationId: '',
 }
 
 export default function SpiceForm({ spice, onClose }) {
-  const { addSpice, updateSpice } = useStore()
+  const { addSpice, updateSpice, locations } = useStore()
   const isEdit = !!spice
 
   const [form, setForm] = useState(() => spice ? {
@@ -29,6 +30,7 @@ export default function SpiceForm({ spice, onClose }) {
     expiryDate: spice.expiryDate ?? '',
     barcode: spice.barcode ?? '',
     notes: spice.notes ?? '',
+    locationId: spice.locationId ?? '',
   } : DEFAULT_FORM)
 
   const [suggestions, setSuggestions] = useState([])
@@ -102,6 +104,7 @@ export default function SpiceForm({ spice, onClose }) {
       expiryDate: form.expiryDate || null,
       barcode: form.barcode.trim() || null,
       notes: form.notes.trim() || null,
+      locationId: form.locationId || null,
     }
 
     if (isEdit) updateSpice(spice.id, data)
@@ -314,6 +317,23 @@ export default function SpiceForm({ spice, onClose }) {
               </button>
             </div>
           </div>
+
+          {/* ── Lagerort ────────────────────────────────────────── */}
+          {locations.length > 0 && (
+            <div>
+              <label className="label">Lagerort (optional)</label>
+              <select
+                className="input"
+                value={form.locationId}
+                onChange={e => set('locationId', e.target.value)}
+              >
+                <option value="">— Kein Lagerort —</option>
+                {locations.map(loc => (
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* ── Notizen ─────────────────────────────────────────── */}
           <div>

@@ -15,6 +15,7 @@ function toJS(row) {
     expiryDate:    row.expiry_date   ?? null,
     barcode:       row.barcode       ?? null,
     notes:         row.notes         ?? null,
+    locationId:    row.location_id   ?? null,
     createdAt:     row.created_at,
     updatedAt:     row.updated_at,
   }
@@ -31,6 +32,7 @@ function toDB(data) {
     expiry_date:    data.expiryDate    ?? null,
     barcode:        data.barcode       ?? null,
     notes:          data.notes         ?? null,
+    location_id:    data.locationId    ?? null,
   }
 }
 
@@ -44,6 +46,16 @@ function shopToJS(row) {
   }
 }
 
+function locToJS(row) {
+  return {
+    id:          row.id,
+    name:        row.name,
+    description: row.description ?? '',
+    sortOrder:   row.sort_order  ?? 0,
+    createdAt:   row.created_at,
+  }
+}
+
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 const useStore = create((set, get) => ({
@@ -54,12 +66,12 @@ const useStore = create((set, get) => ({
   // Data
   spices:        [],
   shoppingItems: [],
+  locations:     [],
   dataLoading:   false,
 
   // ── Auth ──────────────────────────────────────────────────────────────
 
   async init() {
-    // Verhindert Doppel-Initialisierung (React StrictMode ruft useEffect 2× auf)
     if (get()._initialized) return
     set({ _initialized: true })
 
@@ -71,7 +83,7 @@ const useStore = create((set, get) => ({
       const user = session?.user ?? null
       set({ user })
       if (user) get().loadData()
-      else set({ spices: [], shoppingItems: [] })
+      else set({ spices: [], shoppingItems: [], locations: [] })
     })
   },
 
@@ -91,7 +103,7 @@ const useStore = create((set, get) => ({
 
   async signOut() {
     await supabase.auth.signOut()
-    set({ user: null, spices: [], shoppingItems: [], _initialized: false })
+    set({ user: null, spices: [], shoppingItems: [], locations: [], _initialized: false })
   },
 
   currentUser() {
@@ -108,13 +120,15 @@ const useStore = create((set, get) => ({
 
   async loadData() {
     set({ dataLoading: true })
-    const [{ data: spicesData }, { data: shopData }] = await Promise.all([
+    const [{ data: spicesData }, { data: shopData }, { data: locData }] = await Promise.all([
       supabase.from('spices').select('*').order('name'),
       supabase.from('shopping_items').select('*').order('created_at'),
+      supabase.from('storage_locations').select('*').order('sort_order, name'),
     ])
     set({
       spices:        (spicesData ?? []).map(toJS),
       shoppingItems: (shopData   ?? []).map(shopToJS),
+      locations:     (locData    ?? []).map(locToJS),
       dataLoading:   false,
     })
   },
@@ -125,11 +139,9 @@ const useStore = create((set, get) => ({
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
     const newSpice = toJS({ id, ...toDB(data), created_at: now, updated_at: now })
-    // Optimistisch sofort in die Liste einfügen (alphabetisch sortiert)
     set(s => ({
       spices: [...s.spices, newSpice].sort((a, b) => a.name.localeCompare(b.name, 'de')),
     }))
-    // Im Hintergrund in Supabase speichern
     supabase.from('spices')
       .insert([{ id, ...toDB(data), created_by: get().user?.id }])
       .then(({ error }) => { if (error) console.error('addSpice:', error) })
@@ -152,6 +164,37 @@ const useStore = create((set, get) => ({
     set(s => ({ spices: s.spices.filter(sp => sp.id !== id) }))
     supabase.from('spices').delete().eq('id', id)
       .then(({ error }) => { if (error) console.error('deleteSpice:', error) })
+  },
+
+  // ── Lagerorte ─────────────────────────────────────────────────────────
+
+  addLocation(data) {
+    const id = crypto.randomUUID()
+    const newLoc = locToJS({ id, name: data.name, description: data.description ?? '', sort_order: data.sortOrder ?? 0, created_at: new Date().toISOString() })
+    set(s => ({ locations: [...s.locations, newLoc] }))
+    supabase.from('storage_locations')
+      .insert([{ id, name: data.name, description: data.description || null, sort_order: data.sortOrder ?? 0 }])
+      .then(({ error }) => { if (error) console.error('addLocation:', error) })
+  },
+
+  updateLocation(id, data) {
+    set(s => ({
+      locations: s.locations.map(l => l.id === id ? { ...l, ...data } : l),
+    }))
+    supabase.from('storage_locations')
+      .update({ name: data.name, description: data.description || null, sort_order: data.sortOrder ?? 0 })
+      .eq('id', id)
+      .then(({ error }) => { if (error) console.error('updateLocation:', error) })
+  },
+
+  deleteLocation(id) {
+    set(s => ({
+      locations: s.locations.filter(l => l.id !== id),
+      // Lagerort-Zuweisung bei betroffenen Gewürzen löschen
+      spices: s.spices.map(sp => sp.locationId === id ? { ...sp, locationId: null } : sp),
+    }))
+    supabase.from('storage_locations').delete().eq('id', id)
+      .then(({ error }) => { if (error) console.error('deleteLocation:', error) })
   },
 
   // ── Shopping ─────────────────────────────────────────────────────────
