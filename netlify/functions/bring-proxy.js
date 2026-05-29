@@ -164,9 +164,9 @@ exports.handler = async function(event) {
   if (action === 'searchGoogleImages') {
     var googleQuery = p.query
     if (!googleQuery) return err('query erforderlich')
-    var gApiKey = process.env.GOOGLE_API_KEY
-    var gCx     = process.env.GOOGLE_CX
-    if (!gApiKey || !gCx) return err('Google API nicht konfiguriert')
+    var gApiKey = (process.env.GOOGLE_API_KEY || '').trim()
+    var gCx     = (process.env.GOOGLE_CX     || '').trim()
+    if (!gApiKey || !gCx) return err('Google API nicht konfiguriert (KEY=' + !!gApiKey + ' CX=' + !!gCx + ')')
 
     function parseGoogleResults(data) {
       return (data.items || [])
@@ -186,10 +186,16 @@ exports.handler = async function(event) {
         key: gApiKey, cx: gCx, q: q,
         searchType: 'image', num: '6', gl: 'de', lr: 'lang_de',
       }, extra || {})
-      var res = await fetch('https://www.googleapis.com/customsearch/v1?' + new URLSearchParams(params))
-      if (!res.ok) return []
-      var data = await res.json()
-      return parseGoogleResults(data)
+      var url = 'https://www.googleapis.com/customsearch/v1?' + new URLSearchParams(params)
+      var res  = await fetch(url)
+      var body = await res.json().catch(function() { return {} })
+      if (!res.ok) {
+        console.error('[searchGoogleImages] HTTP', res.status, JSON.stringify(body.error || body))
+        return []
+      }
+      var results = parseGoogleResults(body)
+      console.log('[searchGoogleImages] q=' + JSON.stringify(q) + (extra ? ' extra=' + JSON.stringify(extra) : '') + ' → ' + results.length + ' Treffer')
+      return results
     }
 
     try {
