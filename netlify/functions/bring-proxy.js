@@ -43,7 +43,11 @@ exports.handler = async (event) => {
         headers: { ...BRING_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
         body:    new URLSearchParams({ email: p.email, password: p.password }).toString(),
       })
-      const data = await res.json()
+      const text = await res.text()
+      if (!text) throw new Error(`Bring!-API: leere Antwort (HTTP ${res.status})`)
+      let data
+      try { data = JSON.parse(text) }
+      catch { throw new Error(`Bring!-API: kein JSON (HTTP ${res.status}): ${text.slice(0, 200)}`) }
       if (!res.ok) throw new Error(data.message ?? `Anmeldung fehlgeschlagen (${res.status})`)
       return { statusCode: 200, headers: CORS, body: JSON.stringify(data) }
     }
@@ -54,7 +58,11 @@ exports.handler = async (event) => {
       const res = await fetch(`${BASE_URL}/bringlists/${p.userUuid}`, {
         headers: { ...BRING_HEADERS, Authorization: `Bearer ${p.accessToken}` },
       })
-      const data = await res.json()
+      const text = await res.text()
+      if (!text) throw new Error(`Listen laden: leere Antwort (HTTP ${res.status})`)
+      let data
+      try { data = JSON.parse(text) }
+      catch { throw new Error(`Listen laden: kein JSON (HTTP ${res.status}): ${text.slice(0, 200)}`) }
       if (!res.ok) throw new Error(`Listen laden fehlgeschlagen (${res.status})`)
       return { statusCode: 200, headers: CORS, body: JSON.stringify(data) }
     }
