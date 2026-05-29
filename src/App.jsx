@@ -20,6 +20,16 @@ export default function App() {
 
   useEffect(() => { init() }, [])
 
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && useStore.getState().user) {
+        useStore.getState().loadData()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [])
+
   // Supabase-Session wird geprüft → Ladebildschirm
   if (authLoading) return <LoadingScreen />
 

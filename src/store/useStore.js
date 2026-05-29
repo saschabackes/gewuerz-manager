@@ -113,7 +113,7 @@ const useStore = create((set, get) => ({
   },
 
   async signOut() {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], _initialized: false })
   },
 
