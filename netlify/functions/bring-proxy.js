@@ -160,6 +160,45 @@ exports.handler = async function(event) {
     }
   }
 
+  // ── Produktbilder suchen (Google Custom Search) ────────────────────────
+  if (action === 'searchGoogleImages') {
+    var googleQuery = p.query
+    if (!googleQuery) return err('query erforderlich')
+    var gApiKey = process.env.GOOGLE_API_KEY
+    var gCx     = process.env.GOOGLE_CX
+    if (!gApiKey || !gCx) return err('Google API nicht konfiguriert')
+    try {
+      var gParams = new URLSearchParams({
+        key:        gApiKey,
+        cx:         gCx,
+        q:          googleQuery,
+        searchType: 'image',
+        num:        '6',
+        gl:         'de',
+        lr:         'lang_de',
+      })
+      var gRes  = await fetch('https://www.googleapis.com/customsearch/v1?' + gParams)
+      if (!gRes.ok) {
+        var gErr = await gRes.json().catch(function() { return {} })
+        return err('Google API: ' + ((gErr.error && gErr.error.message) || 'HTTP ' + gRes.status))
+      }
+      var gData    = await gRes.json()
+      var gResults = (gData.items || [])
+        .map(function(item) {
+          return {
+            thumbUrl: (item.image && item.image.thumbnailLink) || null,
+            fullUrl:  item.link || null,
+            name:     item.title || '',
+            brand:    item.displayLink || '',
+          }
+        })
+        .filter(function(r) { return r.thumbUrl && r.fullUrl })
+      return ok(gResults)
+    } catch (e) {
+      return err('Google searchImages exception: ' + e.message)
+    }
+  }
+
   // ── Produktbilder suchen (Open Food Facts) ─────────────────────────────
   if (action === 'searchImages') {
     var queries = p.queries

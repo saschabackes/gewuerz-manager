@@ -67,22 +67,31 @@ function buildQueries(name, brand) {
 
 // ── Öffentliche API ───────────────────────────────────────────────────────────
 
+async function proxyPost(body) {
+  const res = await fetch(PROXY, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  })
+  if (!res.ok) return []
+  const data = await res.json()
+  return Array.isArray(data) ? data : []
+}
+
 // Suche per Name + optionalem Hersteller → bis zu 6 Bilder-Vorschläge.
-// Läuft über die Netlify-Function (serverseitig, kein CORS-Problem).
+// Strategie: Google Custom Search zuerst (beste Qualität für dt. Produkte),
+// Open Food Facts als Fallback wenn Google nichts liefert.
 export async function searchProductImages(name, brand = '') {
-  const queries = buildQueries(name, brand)
+  // 1. Google Custom Search
   try {
-    const res = await fetch(PROXY, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ action: 'searchImages', queries, brand }),
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    return Array.isArray(data) ? data : []
-  } catch {
-    return []
-  }
+    const query   = [brand, name].filter(Boolean).join(' ')
+    const results = await proxyPost({ action: 'searchGoogleImages', query })
+    if (results.length > 0) return results
+  } catch { /* ignore, try fallback */ }
+
+  // 2. Fallback: Open Food Facts (mit Komposita-Splitting + Descriptor-Stripping)
+  const queries = buildQueries(name, brand)
+  return proxyPost({ action: 'searchImages', queries, brand })
 }
 
 export async function lookupBarcode(barcode) {
