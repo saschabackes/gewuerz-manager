@@ -12,7 +12,7 @@ const FILTERS = [
 ]
 
 export default function SpiceList({ onEdit, onAdd }) {
-  const { spices: allSpices, addShoppingItem, locations } = useStore()
+  const { spices: allSpices, addShoppingItem, locations, dataLoading } = useStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -146,7 +146,9 @@ export default function SpiceList({ onEdit, onAdd }) {
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {filtered.length === 0 ? (
+        {dataLoading && allSpices.length === 0 ? (
+          <LoadingSkeleton />
+        ) : filtered.length === 0 ? (
           <EmptyState search={search} onAdd={onAdd} />
         ) : (
           filtered.map(spice => (
@@ -254,6 +256,27 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
         </div>
       )}
     </div>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} className="card p-4 animate-pulse">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="flex gap-2">
+                <div className="h-4 bg-gray-200 rounded-full w-32" />
+                <div className="h-4 bg-gray-100 rounded-full w-16" />
+              </div>
+              <div className="h-3 bg-gray-100 rounded-full w-20" />
+            </div>
+            <div className="h-5 bg-gray-100 rounded-full w-14" />
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
