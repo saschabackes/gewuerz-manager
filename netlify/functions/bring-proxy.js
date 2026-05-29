@@ -167,24 +167,9 @@ exports.handler = async function(event) {
     var gApiKey = process.env.GOOGLE_API_KEY
     var gCx     = process.env.GOOGLE_CX
     if (!gApiKey || !gCx) return err('Google API nicht konfiguriert')
-    try {
-      var gParams = new URLSearchParams({
-        key:        gApiKey,
-        cx:         gCx,
-        q:          googleQuery,
-        searchType: 'image',
-        imgType:    'photo',
-        num:        '6',
-        gl:         'de',
-        lr:         'lang_de',
-      })
-      var gRes  = await fetch('https://www.googleapis.com/customsearch/v1?' + gParams)
-      if (!gRes.ok) {
-        var gErr = await gRes.json().catch(function() { return {} })
-        return err('Google API: ' + ((gErr.error && gErr.error.message) || 'HTTP ' + gRes.status))
-      }
-      var gData    = await gRes.json()
-      var gResults = (gData.items || [])
+
+    function parseGoogleResults(data) {
+      return (data.items || [])
         .map(function(item) {
           return {
             thumbUrl: (item.image && item.image.thumbnailLink) || null,
@@ -194,7 +179,32 @@ exports.handler = async function(event) {
           }
         })
         .filter(function(r) { return r.thumbUrl && r.fullUrl })
-      return ok(gResults)
+    }
+
+    async function googleSearch(q, extra) {
+      var params = Object.assign({
+        key: gApiKey, cx: gCx, q: q,
+        searchType: 'image', num: '6', gl: 'de', lr: 'lang_de',
+      }, extra || {})
+      var res = await fetch('https://www.googleapis.com/customsearch/v1?' + new URLSearchParams(params))
+      if (!res.ok) return []
+      var data = await res.json()
+      return parseGoogleResults(data)
+    }
+
+    try {
+      // Versuch 1: Brand in Anführungszeichen + imgType photo (präzisest)
+      var r1 = await googleSearch(googleQuery, { imgType: 'photo' })
+      if (r1.length > 0) return ok(r1)
+
+      // Versuch 2: Brand in Anführungszeichen, ohne imgType-Filter
+      var r2 = await googleSearch(googleQuery)
+      if (r2.length > 0) return ok(r2)
+
+      // Versuch 3: Query ohne Anführungszeichen (breiteste Suche)
+      var relaxed = googleQuery.replace(/"/g, '')
+      var r3 = await googleSearch(relaxed)
+      return ok(r3)
     } catch (e) {
       return err('Google searchImages exception: ' + e.message)
     }
