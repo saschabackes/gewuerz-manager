@@ -1,10 +1,6 @@
-// ── Bring! API Proxy ──────────────────────────────────────────────────────────
-// Läuft serverseitig auf Netlify → kein CORS-Problem.
-// Der Browser ruft /.netlify/functions/bring-proxy auf,
-// diese Funktion leitet an api.getbring.com weiter.
-
-const BASE_URL   = 'https://api.getbring.com/rest/v2'
-const BRING_KEY  = 'cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Ol'
+// Bring! API Proxy v7 – serverseitig, kein CORS-Problem
+const BASE_URL  = 'https://api.getbring.com/rest/v2'
+const BRING_KEY = 'cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Ol'
 
 const BRING_HEADERS = {
   'X-BRING-API-KEY':        BRING_KEY,
@@ -19,81 +15,93 @@ const CORS = {
   'Content-Type':                 'application/json',
 }
 
-exports.handler = async (event) => {
-  // Preflight
+function ok(data) {
+  return { statusCode: 200, headers: CORS, body: JSON.stringify(data) }
+}
+
+function err(msg, status) {
+  return { statusCode: status || 500, headers: CORS, body: JSON.stringify({ error: msg }) }
+}
+
+async function safeJson(res) {
+  var text = ''
+  try { text = await res.text() } catch (e) { return { ok: false, text: '', error: 'read error: ' + e.message } }
+  if (!text) return { ok: false, text: '', error: 'empty body (HTTP ' + res.status + ')' }
+  try {
+    var data = JSON.parse(text)
+    return { ok: true, data: data, status: res.status, httpOk: res.ok }
+  } catch (e) {
+    return { ok: false, text: text.slice(0, 300), error: 'not JSON (HTTP ' + res.status + ')' }
+  }
+}
+
+exports.handler = async function(event) {
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: { ...CORS, 'Access-Control-Allow-Methods': 'POST, OPTIONS' }, body: '' }
+    return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
   }
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method Not Allowed' }) }
+    return err('Method Not Allowed (v7)', 405)
   }
 
-  let body
-  try { body = JSON.parse(event.body || '{}') }
-  catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) } }
+  var body
+  try { body = JSON.parse(event.body || '{}') } catch (e) { return err('Invalid JSON body') }
 
-  const { action, ...p } = body
+  var action = body.action
+  var p = Object.assign({}, body)
+  delete p.action
 
-  try {
-    // ── Login ──────────────────────────────────────────────────────────
-    if (action === 'login') {
-      if (!p.email || !p.password) throw new Error('E-Mail und Passwort erforderlich')
-      const res = await fetch(`${BASE_URL}/bringauth`, {
+  // ── Login ────────────────────────────────────────────────────────────
+  if (action === 'login') {
+    if (!p.email || !p.password) return err('E-Mail und Passwort erforderlich')
+    try {
+      var res = await fetch(BASE_URL + '/bringauth', {
         method:  'POST',
-        headers: { ...BRING_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body:    new URLSearchParams({ email: p.email, password: p.password }).toString(),
+        headers: Object.assign({}, BRING_HEADERS, { 'Content-Type': 'application/x-www-form-urlencoded' }),
+        body:    'email=' + encodeURIComponent(p.email) + '&password=' + encodeURIComponent(p.password),
       })
-      const rawText = await res.text()
-      // Immer den rohen Response zurückgeben wenn etwas schief geht
-      if (!rawText) {
-        throw new Error(`Bring! HTTP ${res.status} – leere Antwort`)
-      }
-      let data
-      try {
-        data = JSON.parse(rawText)
-      } catch (_) {
-        throw new Error(`Bring! HTTP ${res.status} – kein JSON: ${rawText.slice(0, 300)}`)
-      }
-      if (!res.ok) {
-        throw new Error(`Bring! HTTP ${res.status}: ${data.message ?? rawText.slice(0, 200)}`)
-      }
-      return { statusCode: 200, headers: CORS, body: JSON.stringify(data) }
+      var result = await safeJson(res)
+      if (!result.ok) return err('Bring! login: ' + result.error)
+      if (!result.httpOk) return err('Bring! login HTTP ' + result.status + ': ' + (result.data.message || JSON.stringify(result.data)))
+      return ok(result.data)
+    } catch (e) {
+      return err('Bring! login exception: ' + e.message)
     }
-
-    // ── Listen laden ───────────────────────────────────────────────────
-    if (action === 'getLists') {
-      if (!p.userUuid || !p.accessToken) throw new Error('UUID und Token erforderlich')
-      const res = await fetch(`${BASE_URL}/bringlists/${p.userUuid}`, {
-        headers: { ...BRING_HEADERS, Authorization: `Bearer ${p.accessToken}` },
-      })
-      const rawText = await res.text()
-      if (!rawText) throw new Error(`Listen laden HTTP ${res.status} – leere Antwort`)
-      let data
-      try { data = JSON.parse(rawText) }
-      catch (_) { throw new Error(`Listen laden HTTP ${res.status} – kein JSON: ${rawText.slice(0, 300)}`) }
-      if (!res.ok) throw new Error(`Listen laden fehlgeschlagen (${res.status})`)
-      return { statusCode: 200, headers: CORS, body: JSON.stringify(data) }
-    }
-
-    // ── Artikel hinzufügen ─────────────────────────────────────────────
-    if (action === 'addItem') {
-      if (!p.listUuid || !p.accessToken || !p.name) throw new Error('Parameter fehlen')
-      const res = await fetch(`${BASE_URL}/bringlists/${p.listUuid}`, {
-        method:  'PUT',
-        headers: {
-          ...BRING_HEADERS,
-          Authorization:  `Bearer ${p.accessToken}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ purchase: p.name, specification: p.specification ?? '', remove: '' }).toString(),
-      })
-      if (!res.ok) throw new Error(`Artikel hinzufügen fehlgeschlagen (${res.status})`)
-      return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) }
-    }
-
-    throw new Error(`Unbekannte Aktion: ${action}`)
-
-  } catch (err) {
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) }
   }
+
+  // ── Listen laden ─────────────────────────────────────────────────────
+  if (action === 'getLists') {
+    if (!p.userUuid || !p.accessToken) return err('UUID und Token erforderlich')
+    try {
+      var res2 = await fetch(BASE_URL + '/bringlists/' + p.userUuid, {
+        headers: Object.assign({}, BRING_HEADERS, { 'Authorization': 'Bearer ' + p.accessToken }),
+      })
+      var result2 = await safeJson(res2)
+      if (!result2.ok) return err('Bring! getLists: ' + result2.error)
+      if (!result2.httpOk) return err('Bring! getLists HTTP ' + result2.status)
+      return ok(result2.data)
+    } catch (e) {
+      return err('Bring! getLists exception: ' + e.message)
+    }
+  }
+
+  // ── Artikel hinzufuegen ───────────────────────────────────────────────
+  if (action === 'addItem') {
+    if (!p.listUuid || !p.accessToken || !p.name) return err('Parameter fehlen')
+    try {
+      var res3 = await fetch(BASE_URL + '/bringlists/' + p.listUuid, {
+        method:  'PUT',
+        headers: Object.assign({}, BRING_HEADERS, {
+          'Authorization':  'Bearer ' + p.accessToken,
+          'Content-Type':   'application/x-www-form-urlencoded',
+        }),
+        body: 'purchase=' + encodeURIComponent(p.name) + '&specification=' + encodeURIComponent(p.specification || '') + '&remove=',
+      })
+      if (!res3.ok) return err('Bring! addItem HTTP ' + res3.status)
+      return ok({ ok: true })
+    } catch (e) {
+      return err('Bring! addItem exception: ' + e.message)
+    }
+  }
+
+  return err('Unbekannte Aktion: ' + action)
 }
