@@ -71,18 +71,25 @@ exports.handler = async function(event) {
   // ── Listen laden ─────────────────────────────────────────────────────
   if (action === 'getLists') {
     if (!p.userUuid || !p.accessToken) return err('UUID und Token erforderlich')
-    var listsUrl = BASE_URL + '/bringlists/' + p.userUuid
-    try {
-      var res2 = await fetch(listsUrl, {
-        headers: Object.assign({}, BRING_HEADERS, { 'Authorization': 'Bearer ' + p.accessToken }),
-      })
-      var result2 = await safeJson(res2)
-      if (!result2.ok) return err('getLists ' + result2.error + ' | URL: ' + listsUrl)
-      if (!result2.httpOk) return err('getLists HTTP ' + result2.status + ' | URL: ' + listsUrl)
-      return ok(result2.data)
-    } catch (e) {
-      return err('getLists exception: ' + e.message + ' | URL: ' + listsUrl)
+    var authHdr = Object.assign({}, BRING_HEADERS, { 'Authorization': 'Bearer ' + p.accessToken })
+    // Mehrere Endpoint-Varianten probieren
+    var candidates = [
+      BASE_URL + '/bringlists/' + p.userUuid,
+      BASE_URL + '/bringlists',
+      BASE_URL + '/bringusers/' + p.userUuid + '/lists',
+    ]
+    var lastErr = ''
+    for (var i = 0; i < candidates.length; i++) {
+      try {
+        var r = await fetch(candidates[i], { headers: authHdr })
+        var parsed = await safeJson(r)
+        if (parsed.ok && parsed.httpOk) return ok(parsed.data)
+        lastErr = candidates[i] + ' -> ' + (parsed.error || 'HTTP ' + parsed.status)
+      } catch (e) {
+        lastErr = candidates[i] + ' -> exception: ' + e.message
+      }
     }
+    return err('getLists: alle Endpoints fehlgeschlagen. Letzter: ' + lastErr)
   }
 
   // ── Artikel hinzufuegen ───────────────────────────────────────────────
