@@ -104,6 +104,24 @@ exports.handler = async function(event) {
     return err('getLists: alle Endpoints fehlgeschlagen. Letzter: ' + lastErr)
   }
 
+  // ── Artikel laden ────────────────────────────────────────────────────
+  if (action === 'getItems') {
+    if (!p.listUuid || !p.accessToken) return err('Parameter fehlen')
+    try {
+      var rg = await fetch(BASE_URL + '/bringlists/' + p.listUuid, {
+        headers: Object.assign({}, BRING_HEADERS, {
+          'Authorization':     'Bearer ' + p.accessToken,
+          'X-BRING-USER-UUID': p.userUuid || '',
+        }),
+      })
+      var pg = await safeJson(rg)
+      if (!pg.ok || !pg.httpOk) return err('Bring! getItems: ' + (pg.error || 'HTTP ' + pg.status))
+      return ok(pg.data)
+    } catch (e) {
+      return err('Bring! getItems exception: ' + e.message)
+    }
+  }
+
   // ── Artikel hinzufuegen ───────────────────────────────────────────────
   if (action === 'addItem') {
     if (!p.listUuid || !p.accessToken || !p.name) return err('Parameter fehlen')
@@ -120,6 +138,25 @@ exports.handler = async function(event) {
       return ok({ ok: true })
     } catch (e) {
       return err('Bring! addItem exception: ' + e.message)
+    }
+  }
+
+  // ── Artikel entfernen ─────────────────────────────────────────────────
+  if (action === 'removeItem') {
+    if (!p.listUuid || !p.accessToken || !p.name) return err('Parameter fehlen')
+    try {
+      var rr = await fetch(BASE_URL + '/bringlists/' + p.listUuid, {
+        method:  'PUT',
+        headers: Object.assign({}, BRING_HEADERS, {
+          'Authorization':  'Bearer ' + p.accessToken,
+          'Content-Type':   'application/x-www-form-urlencoded',
+        }),
+        body: 'purchase=&specification=&remove=' + encodeURIComponent(p.name),
+      })
+      if (!rr.ok) return err('Bring! removeItem HTTP ' + rr.status)
+      return ok({ ok: true })
+    } catch (e) {
+      return err('Bring! removeItem exception: ' + e.message)
     }
   }
 

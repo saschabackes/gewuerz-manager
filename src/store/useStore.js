@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
-import { bringLogin, bringGetLists, bringAddItem } from '../lib/bring'
+import { bringLogin, bringGetLists, bringAddItem, bringGetItems, bringRemoveItem } from '../lib/bring'
 
 // ── Einladungscode generieren ─────────────────────────────────────────────────
 // Verwirrbaren Zeichen (0/O, 1/I/l) ausgeschlossen
@@ -77,6 +77,7 @@ const useStore = create((set, get) => ({
 
   // Bring!
   bringSettings: null, // null | { accessToken, userUuid, listUuid, listName, email }
+  bringItems:    [],   // [{ uuid, name, specification }] – aktuelle Artikel der Bring!-Liste
 
   // Data
   spices:        [],
@@ -301,8 +302,39 @@ const useStore = create((set, get) => ({
   },
 
   async disconnectBring() {
-    set({ bringSettings: null })
+    set({ bringSettings: null, bringItems: [] })
     await supabase.auth.updateUser({ data: { bring_settings: null } })
+  },
+
+  // Aktuelle Artikel aus der Bring!-Liste laden
+  async loadBringItems() {
+    const { bringSettings } = get()
+    if (!bringSettings?.listUuid || !bringSettings?.accessToken) return
+    try {
+      const items = await bringGetItems(
+        bringSettings.listUuid,
+        bringSettings.accessToken,
+        bringSettings.userUuid ?? ''
+      )
+      set({ bringItems: items })
+    } catch (e) {
+      console.error('🔴 loadBringItems:', e.message)
+    }
+  },
+
+  // Artikel aus der Bring!-Liste entfernen (→ "Kürzlich gekauft")
+  async removeBringItem(name) {
+    const { bringSettings } = get()
+    if (!bringSettings?.listUuid || !bringSettings?.accessToken) return
+    // Optimistisch aus der lokalen Liste entfernen
+    set(s => ({ bringItems: s.bringItems.filter(i => i.name !== name) }))
+    try {
+      await bringRemoveItem(bringSettings.listUuid, bringSettings.accessToken, name)
+    } catch (e) {
+      console.error('🔴 removeBringItem:', e.message)
+      // Bei Fehler: echten Stand neu laden
+      get().loadBringItems()
+    }
   },
 
   // ── Data ─────────────────────────────────────────────────────────────
@@ -411,9 +443,10 @@ const useStore = create((set, get) => ({
   addShoppingItem(name, amount = '') {
     const { bringSettings, user, household } = get()
 
-    // Bring!-Modus: direkt in Bring!-Liste schreiben
+    // Bring!-Modus: direkt in Bring!-Liste schreiben, danach Liste neu laden
     if (bringSettings?.listUuid && bringSettings?.accessToken) {
       bringAddItem(bringSettings.listUuid, bringSettings.accessToken, name.trim(), amount.trim())
+        .then(() => get().loadBringItems())
         .catch(err => {
           console.error('🔴 Bring! addItem:', err)
           set({ dataError: `Bring!-Fehler: ${err.message}` })

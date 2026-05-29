@@ -33,3 +33,14 @@ export async function bringGetLists(userUuid, rawUuid, accessToken) {
 export async function bringAddItem(listUuid, accessToken, name, specification = '') {
   await callProxy('addItem', { listUuid, accessToken, name, specification })
 }
+
+export async function bringGetItems(listUuid, accessToken, userUuid = '') {
+  // Gibt [{ uuid, name, specification }] zurück – aktuelle Artikel auf der Liste
+  const data = await callProxy('getItems', { listUuid, accessToken, userUuid })
+  return data.items ?? []
+}
+
+export async function bringRemoveItem(listUuid, accessToken, name) {
+  // Verschiebt den Artikel in Bring!'s "Kürzlich gekauft"-Liste
+  await callProxy('removeItem', { listUuid, accessToken, name })
+}

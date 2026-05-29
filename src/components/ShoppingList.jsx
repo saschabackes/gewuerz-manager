@@ -1,13 +1,18 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import useStore from '../store/useStore'
 import { exportShoppingListAsPDF, shareShoppingList, exportShoppingListAsText, downloadTextFile } from '../utils/export'
 import { COMMON_SPICES } from '../data/spices'
 
+const BRING_POLL_MS = 30_000 // alle 30 Sekunden
+
 export default function ShoppingList() {
   const { shoppingItems: items, addShoppingItem, toggleShoppingItem,
           deleteShoppingItem, clearCheckedShopping, updateShoppingItem } = useStore()
-  const bringSettings = useStore(s => s.bringSettings)
-  const currentUser   = useStore(s => s.currentUser())
+  const bringSettings    = useStore(s => s.bringSettings)
+  const bringItems       = useStore(s => s.bringItems)
+  const loadBringItems   = useStore(s => s.loadBringItems)
+  const removeBringItem  = useStore(s => s.removeBringItem)
+  const currentUser      = useStore(s => s.currentUser())
 
   const [newName, setNewName] = useState('')
   const [newAmount, setNewAmount] = useState('')
@@ -19,8 +24,26 @@ export default function ShoppingList() {
   const [showExport, setShowExport] = useState(false)
   const suggTimeout = useRef(null)
 
+  const [bringRefreshing, setBringRefreshing] = useState(false)
+
   const checkedCount = useMemo(() => items.filter(i => i.checked).length, [items])
   const userName = currentUser?.name ?? 'Benutzer'
+
+  const bringActive = !!(bringSettings?.listUuid && bringSettings?.accessToken)
+
+  // Bring!-Artikel laden + alle 30 s pollen
+  const refresh = useCallback(async () => {
+    setBringRefreshing(true)
+    await loadBringItems()
+    setBringRefreshing(false)
+  }, [loadBringItems])
+
+  useEffect(() => {
+    if (!bringActive) return
+    refresh()
+    const id = setInterval(loadBringItems, BRING_POLL_MS)
+    return () => clearInterval(id)
+  }, [bringActive]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleNameInput(e) {
     const val = e.target.value
@@ -72,8 +95,6 @@ export default function ShoppingList() {
 
   const unchecked = items.filter(i => !i.checked)
   const checked = items.filter(i => i.checked)
-
-  const bringActive = !!(bringSettings?.listUuid && bringSettings?.accessToken)
 
   return (
     <div className="flex flex-col h-full">
@@ -145,8 +166,27 @@ export default function ShoppingList() {
         </form>
       </div>
 
-      {/* Toolbar */}
-      {items.length > 0 && (
+      {/* Toolbar – Bring!-Modus */}
+      {bringActive && (
+        <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            {bringItems.length} Artikel auf der Liste
+          </span>
+          <button
+            onClick={refresh}
+            disabled={bringRefreshing}
+            className="text-xs text-orange-600 font-semibold px-2 py-1 rounded-lg hover:bg-orange-50 transition-colors flex items-center gap-1 disabled:opacity-40"
+          >
+            <svg className={`w-4 h-4 ${bringRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Aktualisieren
+          </button>
+        </div>
+      )}
+
+      {/* Toolbar – eingebaute Liste */}
+      {!bringActive && items.length > 0 && (
         <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between">
           <span className="text-sm text-gray-500">
             {items.length} Artikel{checkedCount > 0 ? `, ${checkedCount} erledigt` : ''}
@@ -200,63 +240,127 @@ export default function ShoppingList() {
         </div>
       )}
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="text-5xl mb-4">🛒</div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-1">Einkaufsliste ist leer</h3>
-            <p className="text-sm text-gray-400">Füge Artikel hinzu, die du kaufen möchtest</p>
-          </div>
-        ) : (
-          <>
-            {unchecked.map(item => (
-              <ShoppingItem
-                key={item.id}
-                item={item}
-                isEditing={editingId === item.id}
-                editName={editName}
-                editAmount={editAmount}
-                onEditNameChange={setEditName}
-                onEditAmountChange={setEditAmount}
-                onToggle={() => toggleShoppingItem(item.id)}
-                onEdit={() => startEdit(item)}
-                onSaveEdit={() => saveEdit(item.id)}
-                onDelete={() => deleteShoppingItem(item.id)}
-              />
-            ))}
+      {/* List – Bring!-Modus */}
+      {bringActive && (
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          {bringItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="text-5xl mb-4">🛍</div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-1">Bring!-Liste ist leer</h3>
+              <p className="text-sm text-gray-400">Füge Artikel hinzu – sie erscheinen hier und in deiner Bring!-App</p>
+            </div>
+          ) : (
+            <>
+              {bringItems.map(item => (
+                <BringListItem
+                  key={item.uuid || item.name}
+                  item={item}
+                  onRemove={() => removeBringItem(item.name)}
+                />
+              ))}
+              <div className="h-2" />
+            </>
+          )}
+        </div>
+      )}
 
-            {checked.length > 0 && (
-              <>
-                <div className="flex items-center gap-3 py-1">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs text-gray-400 font-medium">Erledigt ({checked.length})</span>
-                  <div className="flex-1 h-px bg-gray-200" />
-                </div>
-                {checked.map(item => (
-                  <ShoppingItem
-                    key={item.id}
-                    item={item}
-                    isEditing={false}
-                    editName=""
-                    editAmount=""
-                    onEditNameChange={() => {}}
-                    onEditAmountChange={() => {}}
-                    onToggle={() => toggleShoppingItem(item.id)}
-                    onEdit={() => {}}
-                    onSaveEdit={() => {}}
-                    onDelete={() => deleteShoppingItem(item.id)}
-                  />
-                ))}
-              </>
-            )}
-            <div className="h-2" />
-          </>
-        )}
-      </div>
+      {/* List – eingebaute Liste */}
+      {!bringActive && (
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="text-5xl mb-4">🛒</div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-1">Einkaufsliste ist leer</h3>
+              <p className="text-sm text-gray-400">Füge Artikel hinzu, die du kaufen möchtest</p>
+            </div>
+          ) : (
+            <>
+              {unchecked.map(item => (
+                <ShoppingItem
+                  key={item.id}
+                  item={item}
+                  isEditing={editingId === item.id}
+                  editName={editName}
+                  editAmount={editAmount}
+                  onEditNameChange={setEditName}
+                  onEditAmountChange={setEditAmount}
+                  onToggle={() => toggleShoppingItem(item.id)}
+                  onEdit={() => startEdit(item)}
+                  onSaveEdit={() => saveEdit(item.id)}
+                  onDelete={() => deleteShoppingItem(item.id)}
+                />
+              ))}
+
+              {checked.length > 0 && (
+                <>
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400 font-medium">Erledigt ({checked.length})</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  {checked.map(item => (
+                    <ShoppingItem
+                      key={item.id}
+                      item={item}
+                      isEditing={false}
+                      editName=""
+                      editAmount=""
+                      onEditNameChange={() => {}}
+                      onEditAmountChange={() => {}}
+                      onToggle={() => toggleShoppingItem(item.id)}
+                      onEdit={() => {}}
+                      onSaveEdit={() => {}}
+                      onDelete={() => deleteShoppingItem(item.id)}
+                    />
+                  ))}
+                </>
+              )}
+              <div className="h-2" />
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
+
+// ── Bring!-Artikel-Karte ──────────────────────────────────────────────────────
+
+function BringListItem({ item, onRemove }) {
+  return (
+    <div className="card flex items-center gap-3 px-4 py-3">
+      {/* Checkmark-Button → entfernt aus Bring!-Liste (= "gekauft") */}
+      <button
+        onClick={onRemove}
+        className="flex-none w-6 h-6 rounded-full border-2 border-gray-300 hover:border-orange-400 flex items-center justify-center transition-all"
+        title="Als gekauft markieren"
+      >
+        <svg className="w-3 h-3 text-gray-300 hover:text-orange-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <span className="font-medium text-gray-900">{item.name}</span>
+        {item.specification && (
+          <span className="text-sm text-gray-400 ml-2">{item.specification}</span>
+        )}
+      </div>
+
+      <button
+        onClick={onRemove}
+        className="flex-none p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+        title="Entfernen"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+// ── Eingebaute Einkaufsliste ──────────────────────────────────────────────────
 
 function ShoppingItem({ item, isEditing, editName, editAmount, onEditNameChange, onEditAmountChange, onToggle, onEdit, onSaveEdit, onDelete }) {
   if (isEditing) {
