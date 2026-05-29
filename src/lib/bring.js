@@ -23,9 +23,10 @@ export async function bringLogin(email, password) {
   return callProxy('login', { email, password })
 }
 
-export async function bringGetLists(userUuid, accessToken) {
+export async function bringGetLists(userUuid, rawUuid, accessToken) {
   // Gibt [{ listUuid, name, theme }] zurück
-  const data = await callProxy('getLists', { userUuid, accessToken })
+  // rawUuid = auth.uuid, userUuid = auth.publicUuid || auth.uuid
+  const data = await callProxy('getLists', { userUuid, rawUuid, accessToken })
   return data.lists ?? []
 }
 

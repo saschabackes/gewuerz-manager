@@ -1,4 +1,4 @@
-// Bring! API Proxy v7 – serverseitig, kein CORS-Problem
+// Bring! API Proxy v8 – serverseitig, kein CORS-Problem
 const BASE_URL  = 'https://api.getbring.com/rest/v2'
 const BRING_KEY = 'cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Ol'
 
@@ -40,7 +40,7 @@ exports.handler = async function(event) {
     return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
   }
   if (event.httpMethod !== 'POST') {
-    return err('Method Not Allowed (v7)', 405)
+    return err('Method Not Allowed (v8)', 405)
   }
 
   var body
@@ -70,23 +70,35 @@ exports.handler = async function(event) {
 
   // ── Listen laden ─────────────────────────────────────────────────────
   if (action === 'getLists') {
-    if (!p.userUuid || !p.accessToken) return err('UUID und Token erforderlich')
-    var authHdr = Object.assign({}, BRING_HEADERS, { 'Authorization': 'Bearer ' + p.accessToken })
-    // Mehrere Endpoint-Varianten probieren
-    var candidates = [
-      BASE_URL + '/bringlists/' + p.userUuid,
-      BASE_URL + '/bringlists',
-      BASE_URL + '/bringusers/' + p.userUuid + '/lists',
-    ]
+    if (!p.accessToken) return err('Token erforderlich')
+
+    // Alle UUID-Varianten aus dem Login (publicUuid + uuid), ohne Duplikate
+    var uuids = []
+    if (p.userUuid) uuids.push(p.userUuid)
+    if (p.rawUuid && p.rawUuid !== p.userUuid) uuids.push(p.rawUuid)
+    if (uuids.length === 0) return err('UUID erforderlich')
+
     var lastErr = ''
-    for (var i = 0; i < candidates.length; i++) {
-      try {
-        var r = await fetch(candidates[i], { headers: authHdr })
-        var parsed = await safeJson(r)
-        if (parsed.ok && parsed.httpOk) return ok(parsed.data)
-        lastErr = candidates[i] + ' -> ' + (parsed.error || 'HTTP ' + parsed.status)
-      } catch (e) {
-        lastErr = candidates[i] + ' -> exception: ' + e.message
+    for (var u = 0; u < uuids.length; u++) {
+      var uuid = uuids[u]
+      // X-BRING-USER-UUID ist Pflicht für authentifizierte Requests
+      var authHdr = Object.assign({}, BRING_HEADERS, {
+        'Authorization':     'Bearer ' + p.accessToken,
+        'X-BRING-USER-UUID': uuid,
+      })
+      var candidates = [
+        BASE_URL + '/bringlists/' + uuid,
+        BASE_URL + '/bringusers/' + uuid + '/lists',
+      ]
+      for (var i = 0; i < candidates.length; i++) {
+        try {
+          var r = await fetch(candidates[i], { headers: authHdr })
+          var parsed = await safeJson(r)
+          if (parsed.ok && parsed.httpOk) return ok(parsed.data)
+          lastErr = candidates[i] + ' [uuid=' + uuid.slice(0, 8) + '…] -> ' + (parsed.error || 'HTTP ' + parsed.status)
+        } catch (e) {
+          lastErr = candidates[i] + ' [uuid=' + uuid.slice(0, 8) + '…] -> exception: ' + e.message
+        }
       }
     }
     return err('getLists: alle Endpoints fehlgeschlagen. Letzter: ' + lastErr)
