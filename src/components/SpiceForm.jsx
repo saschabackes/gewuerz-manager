@@ -247,15 +247,19 @@ export default function SpiceForm({ spice, onClose }) {
               <p className="text-xs text-gray-400 mb-2">Bild auswählen:</p>
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                 {imageResults.map((r, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => selectSearchImage(r.fullUrl)}
-                    title={[r.brand, r.name].filter(Boolean).join(' – ')}
-                    className="flex-none w-16 h-16 rounded-xl border-2 border-transparent hover:border-green-400 active:border-green-500 overflow-hidden bg-gray-50 transition-all shadow-sm"
-                  >
-                    <img src={r.thumbUrl} alt={r.name} className="w-full h-full object-contain" loading="lazy" />
-                  </button>
+                  <div key={i} className="flex-none w-20 text-center">
+                    <button
+                      type="button"
+                      onClick={() => selectSearchImage(r.fullUrl)}
+                      title={[r.brand, r.name].filter(Boolean).join(' – ')}
+                      className="w-20 h-20 rounded-xl border-2 border-transparent hover:border-green-400 active:border-green-500 overflow-hidden bg-gray-50 transition-all shadow-sm block"
+                    >
+                      <img src={r.thumbUrl} alt={r.name} className="w-full h-full object-contain" loading="lazy" />
+                    </button>
+                    {r.brand && (
+                      <p className="text-[10px] text-gray-400 truncate mt-1 leading-tight">{r.brand}</p>
+                    )}
+                  </div>
                 ))}
               </div>
               <button

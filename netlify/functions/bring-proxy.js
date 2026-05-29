@@ -197,10 +197,20 @@ exports.handler = async function(event) {
         if (item.thumbUrl && item.fullUrl && !seenUrls[item.fullUrl]) {
           seenUrls[item.fullUrl] = true
           merged.push(item)
-          if (merged.length >= 6) break
         }
       }
-      return ok(merged)
+
+      // Brand-Treffer nach vorne sortieren
+      if (p.brand) {
+        var brandLower = p.brand.toLowerCase()
+        merged.sort(function(a, b) {
+          var aMatch = a.brand.toLowerCase().indexOf(brandLower) >= 0 ? 0 : 1
+          var bMatch = b.brand.toLowerCase().indexOf(brandLower) >= 0 ? 0 : 1
+          return aMatch - bMatch
+        })
+      }
+
+      return ok(merged.slice(0, 6))
     } catch (e) {
       return err('searchImages exception: ' + e.message)
     }

@@ -40,7 +40,7 @@ export async function searchProductImages(name, brand = '') {
     const res  = await fetch(PROXY, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ action: 'searchImages', queries: [...queries] }),
+      body:    JSON.stringify({ action: 'searchImages', queries: [...queries], brand }),
     })
     if (!res.ok) return []
     const data = await res.json()
