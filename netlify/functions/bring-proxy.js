@@ -160,5 +160,51 @@ exports.handler = async function(event) {
     }
   }
 
+  // ── Produktbilder suchen (Open Food Facts) ─────────────────────────────
+  if (action === 'searchImages') {
+    var queries = p.queries
+    if (!Array.isArray(queries) || queries.length === 0) return err('queries erforderlich')
+
+    var OFF_SEARCH = 'https://world.openfoodfacts.org/cgi/search.pl'
+    var offParams  = 'search_simple=1&action=process&json=1&page_size=8' +
+                     '&fields=product_name,brands,image_front_small_url,image_front_url,image_url'
+
+    try {
+      var allResults = await Promise.all(queries.slice(0, 4).map(async function(q) {
+        try {
+          var offRes = await fetch(OFF_SEARCH + '?' + offParams + '&search_terms=' + encodeURIComponent(q))
+          if (!offRes.ok) return []
+          var offData = await offRes.json()
+          return (offData.products || []).map(function(prod) {
+            return {
+              thumbUrl: prod.image_front_small_url || prod.image_front_url  || prod.image_url || null,
+              fullUrl:  prod.image_front_url       || prod.image_url        || prod.image_front_small_url || null,
+              name:     prod.product_name || '',
+              brand:    (prod.brands || '').split(',')[0].trim(),
+            }
+          })
+        } catch (e) {
+          return []
+        }
+      }))
+
+      // Merge + Duplikate per fullUrl entfernen
+      var seenUrls = {}
+      var merged   = []
+      var flat     = [].concat.apply([], allResults)
+      for (var fi = 0; fi < flat.length; fi++) {
+        var item = flat[fi]
+        if (item.thumbUrl && item.fullUrl && !seenUrls[item.fullUrl]) {
+          seenUrls[item.fullUrl] = true
+          merged.push(item)
+          if (merged.length >= 6) break
+        }
+      }
+      return ok(merged)
+    } catch (e) {
+      return err('searchImages exception: ' + e.message)
+    }
+  }
+
   return err('Unbekannte Aktion: ' + action)
 }
