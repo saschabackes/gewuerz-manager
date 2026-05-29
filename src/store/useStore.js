@@ -263,11 +263,29 @@ const useStore = create((set, get) => ({
   // Schritt 1: Anmelden + Listen laden (gibt [{ listUuid, name }] zurück)
   async connectBring(email, password) {
     const auth = await bringLogin(email, password)
-    // Beide UUID-Varianten an den Proxy weitergeben – er probiert beide durch
     const publicUuid = auth.publicUuid
     const rawUuid    = auth.uuid
     const userUuid   = publicUuid || rawUuid
-    const lists = await bringGetLists(userUuid, rawUuid, auth.access_token)
+
+    // getLists versuchen – schlägt fehl → Fallback auf bringListUUID aus der Login-Antwort
+    let lists = []
+    let listsError = null
+    try {
+      lists = await bringGetLists(userUuid, rawUuid, auth.access_token)
+    } catch (e) {
+      listsError = e.message
+      console.warn('⚠️ bringGetLists fehlgeschlagen, nutze Fallback:', listsError)
+    }
+
+    // Fallback: Default-Liste ist direkt im Login-Response enthalten
+    if (lists.length === 0 && auth.bringListUUID) {
+      lists = [{ listUuid: auth.bringListUUID, name: 'Meine Bring!-Liste' }]
+    }
+
+    if (lists.length === 0) {
+      throw new Error(listsError || 'Keine Bring!-Listen gefunden')
+    }
+
     // Temporär speichern bis Liste gewählt wurde
     set({ _bringAuth: { accessToken: auth.access_token, userUuid, email } })
     return lists
