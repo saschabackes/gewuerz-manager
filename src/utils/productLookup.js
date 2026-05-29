@@ -82,13 +82,11 @@ async function proxyPost(body) {
 // Strategie: Google Custom Search zuerst (beste Qualität für dt. Produkte),
 // Open Food Facts als Fallback wenn Google nichts liefert.
 export async function searchProductImages(name, brand = '') {
-  // 1. Google Custom Search
-  // – Marke in Anführungszeichen → erzwingt exakten Brand-Treffer
-  // – stripDescriptors entfernt "ganz"/"gemahlen" → weniger Rauschen
+  // 1. SerpAPI → Google Images (beste Qualität, kein API-Overhead)
   try {
     const core        = stripDescriptors(name) || name
-    const googleQuery = brand ? `"${brand}" ${core}` : core
-    const results     = await proxyPost({ action: 'searchGoogleImages', query: googleQuery })
+    const serpQuery   = [brand, core].filter(Boolean).join(' ')
+    const results     = await proxyPost({ action: 'searchGoogleImages', query: serpQuery })
     if (results.length > 0) return results
   } catch { /* ignore, try fallback */ }
 

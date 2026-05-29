@@ -162,57 +162,40 @@ exports.handler = async function(event) {
 
   // ── Produktbilder suchen (Google Custom Search) ────────────────────────
   if (action === 'searchGoogleImages') {
-    var googleQuery = p.query
-    if (!googleQuery) return err('query erforderlich')
-    var gApiKey = (process.env.GOOGLE_API_KEY || '').trim()
-    var gCx     = (process.env.GOOGLE_CX     || '').trim()
-    if (!gApiKey || !gCx) return err('Google API nicht konfiguriert (KEY=' + !!gApiKey + ' CX=' + !!gCx + ')')
-
-    function parseGoogleResults(data) {
-      return (data.items || [])
-        .map(function(item) {
-          return {
-            thumbUrl: (item.image && item.image.thumbnailLink) || null,
-            fullUrl:  item.link || null,
-            name:     item.title || '',
-            brand:    item.displayLink || '',
-          }
-        })
-        .filter(function(r) { return r.thumbUrl && r.fullUrl })
-    }
-
-    async function googleSearch(q, extra) {
-      var params = Object.assign({
-        key: gApiKey, cx: gCx, q: q,
-        searchType: 'image', num: '6', gl: 'de', lr: 'lang_de',
-      }, extra || {})
-      var url = 'https://www.googleapis.com/customsearch/v1?' + new URLSearchParams(params)
-      var res  = await fetch(url)
-      var body = await res.json().catch(function() { return {} })
-      if (!res.ok) {
-        console.error('[searchGoogleImages] HTTP', res.status, JSON.stringify(body.error || body))
-        return []
-      }
-      var results = parseGoogleResults(body)
-      console.log('[searchGoogleImages] q=' + JSON.stringify(q) + (extra ? ' extra=' + JSON.stringify(extra) : '') + ' → ' + results.length + ' Treffer')
-      return results
-    }
+    var serpQuery = p.query
+    if (!serpQuery) return err('query erforderlich')
+    var serpKey = (process.env.SERP_API_KEY || '').trim()
+    if (!serpKey) return err('SERP_API_KEY nicht konfiguriert')
 
     try {
-      // Versuch 1: Brand in Anführungszeichen + imgType photo (präzisest)
-      var r1 = await googleSearch(googleQuery, { imgType: 'photo' })
-      if (r1.length > 0) return ok(r1)
-
-      // Versuch 2: Brand in Anführungszeichen, ohne imgType-Filter
-      var r2 = await googleSearch(googleQuery)
-      if (r2.length > 0) return ok(r2)
-
-      // Versuch 3: Query ohne Anführungszeichen (breiteste Suche)
-      var relaxed = googleQuery.replace(/"/g, '')
-      var r3 = await googleSearch(relaxed)
-      return ok(r3)
+      var serpParams = new URLSearchParams({
+        api_key: serpKey,
+        engine:  'google_images',
+        q:       serpQuery,
+        gl:      'de',
+        hl:      'de',
+      })
+      var serpRes  = await fetch('https://serpapi.com/search.json?' + serpParams)
+      var serpBody = await serpRes.json().catch(function() { return {} })
+      if (!serpRes.ok) {
+        console.error('[searchImages] SerpAPI HTTP', serpRes.status, JSON.stringify(serpBody.error || serpBody))
+        return ok([])
+      }
+      var serpResults = (serpBody.images_results || [])
+        .slice(0, 6)
+        .map(function(r) {
+          return {
+            thumbUrl: r.thumbnail || null,
+            fullUrl:  r.original  || r.thumbnail || null,
+            name:     r.title     || '',
+            brand:    r.source    || '',
+          }
+        })
+        .filter(function(r) { return r.thumbUrl })
+      console.log('[searchImages] SerpAPI q=' + JSON.stringify(serpQuery) + ' → ' + serpResults.length + ' Treffer')
+      return ok(serpResults)
     } catch (e) {
-      return err('Google searchImages exception: ' + e.message)
+      return err('SerpAPI exception: ' + e.message)
     }
   }
 
