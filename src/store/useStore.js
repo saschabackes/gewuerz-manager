@@ -448,12 +448,14 @@ const useStore = create((set, get) => ({
 
   // ── Shopping ─────────────────────────────────────────────────────────
 
-  addShoppingItem(name, amount = '') {
+  addShoppingItem(name, amount = '', isSpice = false) {
     const { bringSettings, user, household } = get()
 
     // Bring!-Modus: direkt in Bring!-Liste schreiben, danach Liste neu laden
     if (bringSettings?.listUuid && bringSettings?.accessToken) {
-      bringAddItem(bringSettings.listUuid, bringSettings.accessToken, name.trim(), amount.trim())
+      // Gewürze bekommen "Gewürz" als Specification – so können wir sie in der Ansicht filtern
+      const spec = isSpice ? 'Gewürz' : amount.trim()
+      bringAddItem(bringSettings.listUuid, bringSettings.accessToken, name.trim(), spec)
         .then(() => get().loadBringItems())
         .catch(err => {
           console.error('🔴 Bring! addItem:', err)

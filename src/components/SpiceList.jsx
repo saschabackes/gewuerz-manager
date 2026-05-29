@@ -158,7 +158,7 @@ export default function SpiceList({ onEdit, onAdd }) {
               expanded={expandedId === spice.id}
               onToggle={() => setExpandedId(id => id === spice.id ? null : spice.id)}
               onEdit={() => { onEdit(spice); setExpandedId(null) }}
-              onAddToShopping={() => addShoppingItem(spice.name)}
+              onAddToShopping={() => addShoppingItem(spice.name, '', true)}
             />
           ))
         )}

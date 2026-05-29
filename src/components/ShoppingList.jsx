@@ -17,6 +17,7 @@ export default function ShoppingList() {
 
   const [newName, setNewName] = useState('')
   const [newAmount, setNewAmount] = useState('')
+  const [newIsSpice, setNewIsSpice] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const [showSugg, setShowSugg] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -49,6 +50,7 @@ export default function ShoppingList() {
   function handleNameInput(e) {
     const val = e.target.value
     setNewName(val)
+    setNewIsSpice(false) // manuelles Tippen → kein Gewürz-Flag
     if (val.trim().length >= 1) {
       const q = val.toLowerCase()
       setSuggestions(COMMON_SPICES.filter(s => s.toLowerCase().includes(q)).slice(0, 5))
@@ -61,9 +63,10 @@ export default function ShoppingList() {
   function addItem(e) {
     e.preventDefault()
     if (!newName.trim()) return
-    addShoppingItem(newName, newAmount)
+    addShoppingItem(newName, newAmount, newIsSpice)
     setNewName('')
     setNewAmount('')
+    setNewIsSpice(false)
     setShowSugg(false)
   }
 
@@ -142,7 +145,7 @@ export default function ShoppingList() {
                     key={s}
                     type="button"
                     className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                    onClick={() => { setNewName(s); setShowSugg(false) }}
+                    onClick={() => { setNewName(s); setNewIsSpice(true); setShowSugg(false) }}
                   >
                     {s}
                   </button>
@@ -242,34 +245,62 @@ export default function ShoppingList() {
       )}
 
       {/* List – Bring!-Modus */}
-      {bringActive && (
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-          {bringItemsError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-              <p className="font-semibold mb-0.5">Bring!-Liste konnte nicht geladen werden</p>
-              <p className="text-xs text-red-500 font-mono break-all">{bringItemsError}</p>
-            </div>
-          )}
-          {!bringItemsError && bringItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="text-5xl mb-4">🛍</div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-1">Bring!-Liste ist leer</h3>
-              <p className="text-sm text-gray-400">Füge Artikel hinzu – sie erscheinen hier und in deiner Bring!-App</p>
-            </div>
-          ) : (
-            <>
-              {bringItems.map(item => (
-                <BringListItem
-                  key={item.uuid || item.name}
-                  item={item}
-                  onRemove={() => removeBringItem(item.name)}
-                />
-              ))}
-              <div className="h-2" />
-            </>
-          )}
-        </div>
-      )}
+      {bringActive && (() => {
+        const spiceItems = bringItems.filter(i => i.specification === 'Gewürz')
+        const otherItems = bringItems.filter(i => i.specification !== 'Gewürz')
+        const showSections = spiceItems.length > 0 && otherItems.length > 0
+        return (
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            {bringItemsError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                <p className="font-semibold mb-0.5">Bring!-Liste konnte nicht geladen werden</p>
+                <p className="text-xs text-red-500 font-mono break-all">{bringItemsError}</p>
+              </div>
+            )}
+            {!bringItemsError && bringItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-5xl mb-4">🛍</div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-1">Bring!-Liste ist leer</h3>
+                <p className="text-sm text-gray-400">Füge Artikel hinzu – sie erscheinen hier und in deiner Bring!-App</p>
+              </div>
+            )}
+
+            {/* Gewürze-Sektion */}
+            {spiceItems.length > 0 && (
+              <>
+                {showSections && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">🧂 Gewürze</span>
+                    <div className="flex-1 h-px bg-green-100" />
+                  </div>
+                )}
+                {spiceItems.map(item => (
+                  <BringListItem key={item.uuid || item.name} item={item} isSpice
+                    onRemove={() => removeBringItem(item.name)} />
+                ))}
+              </>
+            )}
+
+            {/* Sonstige Artikel */}
+            {otherItems.length > 0 && (
+              <>
+                {showSections && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🛒 Einkauf</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                )}
+                {otherItems.map(item => (
+                  <BringListItem key={item.uuid || item.name} item={item}
+                    onRemove={() => removeBringItem(item.name)} />
+                ))}
+              </>
+            )}
+
+            <div className="h-2" />
+          </div>
+        )
+      })()}
 
       {/* List – eingebaute Liste */}
       {!bringActive && (
@@ -333,9 +364,9 @@ export default function ShoppingList() {
 
 // ── Bring!-Artikel-Karte ──────────────────────────────────────────────────────
 
-function BringListItem({ item, onRemove }) {
+function BringListItem({ item, onRemove, isSpice = false }) {
   return (
-    <div className="card flex items-center gap-3 px-4 py-3">
+    <div className={`card flex items-center gap-3 px-4 py-3 ${isSpice ? 'border-l-2 border-green-400' : ''}`}>
       {/* Checkmark-Button → entfernt aus Bring!-Liste (= "gekauft") */}
       <button
         onClick={onRemove}
