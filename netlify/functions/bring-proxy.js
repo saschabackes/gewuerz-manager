@@ -71,16 +71,17 @@ exports.handler = async function(event) {
   // ── Listen laden ─────────────────────────────────────────────────────
   if (action === 'getLists') {
     if (!p.userUuid || !p.accessToken) return err('UUID und Token erforderlich')
+    var listsUrl = BASE_URL + '/bringlists/' + p.userUuid
     try {
-      var res2 = await fetch(BASE_URL + '/bringlists/' + p.userUuid, {
+      var res2 = await fetch(listsUrl, {
         headers: Object.assign({}, BRING_HEADERS, { 'Authorization': 'Bearer ' + p.accessToken }),
       })
       var result2 = await safeJson(res2)
-      if (!result2.ok) return err('Bring! getLists: ' + result2.error)
-      if (!result2.httpOk) return err('Bring! getLists HTTP ' + result2.status)
+      if (!result2.ok) return err('getLists ' + result2.error + ' | URL: ' + listsUrl)
+      if (!result2.httpOk) return err('getLists HTTP ' + result2.status + ' | URL: ' + listsUrl)
       return ok(result2.data)
     } catch (e) {
-      return err('Bring! getLists exception: ' + e.message)
+      return err('getLists exception: ' + e.message + ' | URL: ' + listsUrl)
     }
   }
 

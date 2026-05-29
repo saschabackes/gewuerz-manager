@@ -263,9 +263,11 @@ const useStore = create((set, get) => ({
   // Schritt 1: Anmelden + Listen laden (gibt [{ listUuid, name }] zurück)
   async connectBring(email, password) {
     const auth = await bringLogin(email, password)
-    const lists = await bringGetLists(auth.uuid, auth.access_token)
+    // Bring! nutzt publicUuid für den Listen-Endpoint, uuid als Fallback
+    const uuid = auth.publicUuid || auth.uuid
+    const lists = await bringGetLists(uuid, auth.access_token)
     // Temporär speichern bis Liste gewählt wurde
-    set({ _bringAuth: { accessToken: auth.access_token, userUuid: auth.uuid, email } })
+    set({ _bringAuth: { accessToken: auth.access_token, userUuid: uuid, email } })
     return lists
   },
 
