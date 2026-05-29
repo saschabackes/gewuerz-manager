@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useStore from '../store/useStore'
 import { COMMON_SPICES, PACKAGING_TYPES, PACKAGING_COLORS } from '../data/spices'
 import BarcodeScanner from './BarcodeScanner'
+import { searchProductImages } from '../utils/productLookup'
 
 const DEFAULT_FORM = {
   name: '',
@@ -35,11 +36,14 @@ export default function SpiceForm({ spice, onClose }) {
     category: spice.category ?? '',
   } : DEFAULT_FORM)
 
-  const [suggestions, setSuggestions] = useState([])
+  const [suggestions, setSuggestions]       = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [showScanner, setShowScanner] = useState(false)
-  const [lookupStatus, setLookupStatus] = useState(null)
-  const [error, setError] = useState('')
+  const [showScanner, setShowScanner]         = useState(false)
+  const [lookupStatus, setLookupStatus]       = useState(null)
+  const [error, setError]                     = useState('')
+  const [imageResults, setImageResults]       = useState([])   // Suchergebnisse
+  const [imageSearching, setImageSearching]   = useState(false)
+  const [imageSearchDone, setImageSearchDone] = useState(false)
   const nameRef = useRef(null)
   const gramsRef = useRef(null)
   const imageFileRef = useRef(null)
@@ -84,6 +88,26 @@ export default function SpiceForm({ spice, onClose }) {
     }
     img.src = objectUrl
     e.target.value = ''
+  }
+
+  async function handleImageSearch() {
+    if (!form.name.trim()) return
+    setImageSearching(true)
+    setImageResults([])
+    setImageSearchDone(false)
+    try {
+      const results = await searchProductImages(form.name.trim(), form.brand.trim())
+      setImageResults(results)
+      setImageSearchDone(true)
+    } finally {
+      setImageSearching(false)
+    }
+  }
+
+  function selectSearchImage(fullUrl) {
+    set('imageUrl', fullUrl)
+    setImageResults([])
+    setImageSearchDone(false)
   }
 
   function handleSubmit(e) {
@@ -181,6 +205,31 @@ export default function SpiceForm({ spice, onClose }) {
                   onChange={e => set('imageUrl', e.target.value)}
                 />
 
+                {/* Foto aus Produktdatenbank suchen */}
+                <button
+                  type="button"
+                  disabled={!form.name.trim() || imageSearching}
+                  onClick={handleImageSearch}
+                  className="btn-secondary w-full py-2 text-sm disabled:opacity-40"
+                >
+                  {imageSearching ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                      </svg>
+                      Suche…
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+                      </svg>
+                      Foto aus Datenbank suchen
+                    </span>
+                  )}
+                </button>
+
                 {/* Bild entfernen */}
                 {form.imageUrl && (
                   <button type="button" onClick={() => set('imageUrl', '')}
@@ -191,6 +240,38 @@ export default function SpiceForm({ spice, onClose }) {
               </div>
             </div>
           </div>
+
+          {/* ── Bildsuchergebnisse ─────────────────────────────── */}
+          {imageResults.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-2">Bild auswählen:</p>
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {imageResults.map((r, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => selectSearchImage(r.fullUrl)}
+                    title={[r.brand, r.name].filter(Boolean).join(' – ')}
+                    className="flex-none w-16 h-16 rounded-xl border-2 border-transparent hover:border-green-400 active:border-green-500 overflow-hidden bg-gray-50 transition-all shadow-sm"
+                  >
+                    <img src={r.thumbUrl} alt={r.name} className="w-full h-full object-contain" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setImageResults([])}
+                className="text-xs text-gray-400 hover:text-gray-600 mt-1.5 transition-colors"
+              >
+                Schließen
+              </button>
+            </div>
+          )}
+          {imageSearchDone && imageResults.length === 0 && (
+            <p className="text-xs text-gray-400 text-center -mt-2 pb-1">
+              Kein Bild gefunden – bitte manuell hochladen oder URL einfügen.
+            </p>
+          )}
 
           {/* ── Name + Hersteller ───────────────────────────────── */}
           <div className="grid grid-cols-2 gap-3">

@@ -1,4 +1,38 @@
-const OFF_API = 'https://world.openfoodfacts.org/api/v2/product'
+const OFF_API    = 'https://world.openfoodfacts.org/api/v2/product'
+const OFF_SEARCH = 'https://world.openfoodfacts.org/cgi/search.pl'
+
+// Suche per Name + optionalem Hersteller → bis zu 6 Bilder-Vorschläge
+export async function searchProductImages(name, brand = '') {
+  const query = [brand, name].filter(Boolean).join(' ')
+  const params = new URLSearchParams({
+    search_terms:  query,
+    search_simple: '1',
+    action:        'process',
+    json:          '1',
+    page_size:     '6',
+    fields:        'product_name,brands,image_front_small_url,image_front_url,image_url',
+  })
+  const controller = new AbortController()
+  const timeout    = setTimeout(() => controller.abort(), 8000)
+  try {
+    const res  = await fetch(`${OFF_SEARCH}?${params}`, { signal: controller.signal })
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.products ?? [])
+      .map(p => ({
+        thumbUrl: p.image_front_small_url || p.image_front_url || p.image_url || null,
+        fullUrl:  p.image_front_url       || p.image_url       || p.image_front_small_url || null,
+        name:     p.product_name ?? '',
+        brand:    (p.brands ?? '').split(',')[0].trim(),
+      }))
+      .filter(p => p.thumbUrl && p.fullUrl)
+      .slice(0, 6)
+  } catch {
+    return []
+  } finally {
+    clearTimeout(timeout)
+  }
+}
 
 export async function lookupBarcode(barcode) {
   const controller = new AbortController()
