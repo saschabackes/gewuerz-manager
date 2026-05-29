@@ -79,6 +79,7 @@ const useStore = create((set, get) => ({
   shoppingItems: [],
   locations:     [],
   dataLoading:   false,
+  dataError:     null,
 
   // ── Auth ──────────────────────────────────────────────────────────────
 
@@ -135,11 +136,17 @@ const useStore = create((set, get) => ({
     if (!user) return null
 
     // Bestehende Mitgliedschaft suchen
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipErr } = await supabase
       .from('household_members')
       .select('household_id, households(id, name, invite_code)')
       .eq('user_id', user.id)
       .maybeSingle()
+
+    if (membershipErr) {
+      console.error('🔴 _ensureHousehold – Mitgliedschaft abfragen:', membershipErr)
+      set({ dataError: `Datenbankfehler: ${membershipErr.message} (Code: ${membershipErr.code})` })
+      return null
+    }
 
     if (membership?.household_id) {
       const h = membership.households
@@ -161,12 +168,20 @@ const useStore = create((set, get) => ({
     const { error: hErr } = await supabase.from('households').insert([{
       id: householdId, name: householdName, invite_code: inviteCode, created_by: user.id,
     }])
-    if (hErr) { console.error('Haushalt erstellen:', hErr); return null }
+    if (hErr) {
+      console.error('🔴 _ensureHousehold – Haushalt erstellen:', hErr)
+      set({ dataError: `Haushalt erstellen fehlgeschlagen: ${hErr.message} (Code: ${hErr.code})` })
+      return null
+    }
 
     const { error: mErr } = await supabase.from('household_members').insert([{
       household_id: householdId, user_id: user.id, role: 'owner',
     }])
-    if (mErr) { console.error('Mitglied hinzufügen:', mErr); return null }
+    if (mErr) {
+      console.error('🔴 _ensureHousehold – Mitglied hinzufügen:', mErr)
+      set({ dataError: `Mitgliedschaft erstellen fehlgeschlagen: ${mErr.message} (Code: ${mErr.code})` })
+      return null
+    }
 
     // Altdaten migrieren
     await Promise.all([
@@ -240,7 +255,7 @@ const useStore = create((set, get) => ({
   async loadData() {
     const { user } = get()
     if (!user) return
-    set({ dataLoading: true })
+    set({ dataLoading: true, dataError: null })
 
     const household = await get()._ensureHousehold()
     if (!household) { set({ dataLoading: false }); return }
@@ -264,15 +279,27 @@ const useStore = create((set, get) => ({
 
   addSpice(data) {
     const { user, household } = get()
+    if (!household) {
+      console.error('🔴 addSpice: Kein Haushalt geladen – Gewürz wird nicht gespeichert!')
+      set({ dataError: 'Kein Haushalt geladen. Bitte Seite neu laden.' })
+      return
+    }
     const id  = crypto.randomUUID()
     const now = new Date().toISOString()
-    const newSpice = toJS({ id, ...toDB(data), household_id: household?.id, created_at: now, updated_at: now })
+    const newSpice = toJS({ id, ...toDB(data), household_id: household.id, created_at: now, updated_at: now })
     set(s => ({
       spices: [...s.spices, newSpice].sort((a, b) => a.name.localeCompare(b.name, 'de')),
     }))
     supabase.from('spices')
-      .insert([{ id, ...toDB(data), household_id: household?.id, created_by: user?.id }])
-      .then(({ error }) => { if (error) console.error('addSpice:', error) })
+      .insert([{ id, ...toDB(data), household_id: household.id, created_by: user?.id }])
+      .then(({ error }) => {
+        if (error) {
+          console.error('🔴 addSpice – Supabase Insert fehlgeschlagen:', error)
+          set({ dataError: `Gewürz speichern fehlgeschlagen: ${error.message}` })
+          // Optimistisches Update rückgängig machen
+          set(s => ({ spices: s.spices.filter(sp => sp.id !== id) }))
+        }
+      })
   },
 
   updateSpice(id, data) {

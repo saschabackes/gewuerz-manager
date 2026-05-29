@@ -12,6 +12,7 @@ import { PACKAGING_TYPES } from './data/spices'
 
 export default function App() {
   const { user, authLoading, init } = useStore()
+  const dataError = useStore(s => s.dataError)
   const currentUser = useStore(s => s.currentUser())
   const [view, setView] = useState('spices')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -67,6 +68,17 @@ export default function App() {
           <UserMenu />
         </div>
       </header>
+
+      {dataError && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 flex items-start gap-2">
+          <span className="text-red-500 mt-0.5 flex-none">⚠️</span>
+          <p className="text-xs text-red-700 flex-1">{dataError}</p>
+          <button
+            onClick={() => useStore.setState({ dataError: null })}
+            className="text-red-400 hover:text-red-600 flex-none text-lg leading-none"
+          >×</button>
+        </div>
+      )}
 
       <main className="flex-1 overflow-hidden flex flex-col pb-20">
         {view === 'spices'   && <SpiceList onEdit={handleEditSpice} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />}
