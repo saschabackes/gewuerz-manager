@@ -327,6 +327,8 @@ const useStore = create((set, get) => ({
       })
     } catch (e) {
       console.error('🔴 loadBringItems:', e.message)
+      // Rate-Limit: kein roter Fehler, vorhandene Liste bleibt angezeigt
+      if (e.message.includes('usage_exceeded')) return
       set({ bringItemsError: e.message })
     }
   },

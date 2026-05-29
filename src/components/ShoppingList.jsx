@@ -3,7 +3,7 @@ import useStore from '../store/useStore'
 import { exportShoppingListAsPDF, shareShoppingList, exportShoppingListAsText, downloadTextFile } from '../utils/export'
 import { COMMON_SPICES } from '../data/spices'
 
-const BRING_POLL_MS = 30_000 // alle 30 Sekunden
+const BRING_POLL_MS = 180_000 // alle 3 Minuten
 
 export default function ShoppingList() {
   const { shoppingItems: items, addShoppingItem, toggleShoppingItem,
@@ -44,8 +44,12 @@ export default function ShoppingList() {
   useEffect(() => {
     if (!bringActive) return
     refresh()
-    const id = setInterval(loadBringItems, BRING_POLL_MS)
-    return () => clearInterval(id)
+    // Nur pollen wenn Tab sichtbar ist
+    const id = setInterval(() => { if (!document.hidden) loadBringItems() }, BRING_POLL_MS)
+    // Sofort neu laden wenn Tab wieder in den Vordergrund kommt
+    const onVisible = () => { if (!document.hidden) loadBringItems() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [bringActive]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleNameInput(e) {
