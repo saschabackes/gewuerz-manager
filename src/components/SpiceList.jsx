@@ -19,7 +19,8 @@ export default function SpiceList({ onEdit, onAdd }) {
   const [locationFilter, setLocationFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [sort, setSort] = useState('name') // name | mhd
-  const [expandedId, setExpandedId] = useState(null)
+  const [expandedId, setExpandedId]   = useState(null)
+  const [zoomedImage, setZoomedImage] = useState(null)  // { url, name }
 
   const stats = useMemo(() => {
     const expired = allSpices.filter(s => getMhdStatus(s.expiryDate).status === 'expired').length
@@ -131,7 +132,7 @@ export default function SpiceList({ onEdit, onAdd }) {
             Alle
           </button>
           {usedCategories.map(cat => {
-            const col = CATEGORY_COLORS[cat.id] ?? CATEGORY_COLORS.sonstiges
+            const col = CATEGORY_COLORS[cat.color] ?? CATEGORY_COLORS.gray
             const active = categoryFilter === cat.id
             return (
               <button
@@ -196,16 +197,26 @@ export default function SpiceList({ onEdit, onAdd }) {
               onToggle={() => setExpandedId(id => id === spice.id ? null : spice.id)}
               onEdit={() => { onEdit(spice); setExpandedId(null) }}
               onAddToShopping={() => addShoppingItem(spice.name, '', true)}
+              onZoomImage={(url, name) => setZoomedImage({ url, name })}
             />
           ))
         )}
         <div className="h-2" />
       </div>
+
+      {/* Bild-Lightbox */}
+      {zoomedImage && (
+        <ImageLightbox
+          url={zoomedImage.url}
+          name={zoomedImage.name}
+          onClose={() => setZoomedImage(null)}
+        />
+      )}
     </div>
   )
 }
 
-function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
+function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomImage }) {
   const { deleteSpice, locations, categories } = useStore()
   const mhd = getMhdStatus(spice.expiryDate)
   const mhdStyle = MHD_STYLES[mhd.status]
@@ -217,11 +228,20 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
     <div className={`card overflow-hidden transition-all ${expanded ? 'ring-2 ring-green-500' : ''}`}>
       <button className="w-full text-left p-4" onClick={onToggle}>
         <div className="flex items-start justify-between gap-3">
-          {/* Thumbnail */}
+          {/* Thumbnail – klickbar zum Vergrößern */}
           {spice.imageUrl && (
-            <div className="flex-none w-12 h-12 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onZoomImage(spice.imageUrl, spice.name) }}
+              className="flex-none w-12 h-12 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 relative group flex-shrink-0"
+            >
               <img src={spice.imageUrl} alt={spice.name} className="w-full h-full object-contain" />
-            </div>
+              <div className="absolute inset-0 bg-black/25 opacity-0 group-active:opacity-100 transition-opacity flex items-center justify-center">
+                <svg className="w-4 h-4 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0zm-3-3v6m-3-3h6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </button>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -302,6 +322,37 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
         </div>
       )}
     </div>
+  )
+}
+
+function ImageLightbox({ url, name, onClose }) {
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/80 z-50 fade-enter"
+        onClick={onClose}
+      />
+      {/* Content */}
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 pointer-events-none">
+        <div className="pointer-events-auto w-full max-w-xs">
+          <img
+            src={url}
+            alt={name}
+            className="w-full max-h-[65vh] object-contain rounded-2xl shadow-2xl bg-white/5"
+          />
+          {name && (
+            <p className="text-white text-center font-semibold mt-3 text-sm drop-shadow">{name}</p>
+          )}
+          <button
+            onClick={onClose}
+            className="mt-4 w-full bg-white/15 hover:bg-white/25 text-white rounded-2xl py-3 text-sm font-semibold transition-colors backdrop-blur-sm"
+          >
+            Schließen
+          </button>
+        </div>
+      </div>
+    </>
   )
 }
 
