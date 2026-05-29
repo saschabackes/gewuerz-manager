@@ -77,7 +77,8 @@ const useStore = create((set, get) => ({
 
   // Bring!
   bringSettings: null, // null | { accessToken, userUuid, listUuid, listName, email }
-  bringItems:    [],   // [{ uuid, name, specification }] – aktuelle Artikel der Bring!-Liste
+  bringItems:      [], // [{ uuid, name, specification }] – aktuelle Artikel der Bring!-Liste
+  bringItemsError: null,
 
   // Data
   spices:        [],
@@ -316,9 +317,10 @@ const useStore = create((set, get) => ({
         bringSettings.accessToken,
         bringSettings.userUuid ?? ''
       )
-      set({ bringItems: items })
+      set({ bringItems: items, bringItemsError: null })
     } catch (e) {
       console.error('🔴 loadBringItems:', e.message)
+      set({ bringItemsError: e.message })
     }
   },
 

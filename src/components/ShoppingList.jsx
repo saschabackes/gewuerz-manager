@@ -10,6 +10,7 @@ export default function ShoppingList() {
           deleteShoppingItem, clearCheckedShopping, updateShoppingItem } = useStore()
   const bringSettings    = useStore(s => s.bringSettings)
   const bringItems       = useStore(s => s.bringItems)
+  const bringItemsError  = useStore(s => s.bringItemsError)
   const loadBringItems   = useStore(s => s.loadBringItems)
   const removeBringItem  = useStore(s => s.removeBringItem)
   const currentUser      = useStore(s => s.currentUser())
@@ -243,7 +244,13 @@ export default function ShoppingList() {
       {/* List – Bring!-Modus */}
       {bringActive && (
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-          {bringItems.length === 0 ? (
+          {bringItemsError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+              <p className="font-semibold mb-0.5">Bring!-Liste konnte nicht geladen werden</p>
+              <p className="text-xs text-red-500 font-mono break-all">{bringItemsError}</p>
+            </div>
+          )}
+          {!bringItemsError && bringItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="text-5xl mb-4">🛍</div>
               <h3 className="text-lg font-semibold text-gray-700 mb-1">Bring!-Liste ist leer</h3>
