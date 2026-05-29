@@ -1,34 +1,81 @@
 const OFF_API    = 'https://world.openfoodfacts.org/api/v2/product'
 const OFF_SEARCH = 'https://world.openfoodfacts.org/cgi/search.pl'
 
-// Suche per Name + optionalem Hersteller → bis zu 6 Bilder-Vorschläge
-export async function searchProductImages(name, brand = '') {
-  const query = [brand, name].filter(Boolean).join(' ')
+// Deutsche Komposita aufsplitten: "Selleriesalz" → "Sellerie Salz"
+// Gibt null zurück wenn keine bekannte Endung erkannt wird.
+function splitGermanCompound(word) {
+  const suffixes = [
+    'salz', 'pfeffer', 'pulver', 'samen', 'körner', 'kapseln',
+    'blätter', 'flocken', 'kräuter', 'gewürz', 'zucker', 'öl',
+    'extrakt', 'schoten', 'stangen', 'mehl', 'paste',
+  ]
+  const w = word.toLowerCase()
+  for (const suf of suffixes) {
+    if (w.endsWith(suf) && w.length > suf.length + 3) {
+      const stem = word.slice(0, word.length - suf.length)
+      return `${stem} ${suf.charAt(0).toUpperCase()}${suf.slice(1)}`
+    }
+  }
+  return null
+}
+
+// Einzelne OFF-Suchanfrage – gibt normalisiertes Array zurück
+async function offSearch(query, signal) {
   const params = new URLSearchParams({
     search_terms:  query,
     search_simple: '1',
     action:        'process',
     json:          '1',
-    page_size:     '6',
+    page_size:     '8',
     fields:        'product_name,brands,image_front_small_url,image_front_url,image_url',
   })
-  const controller = new AbortController()
-  const timeout    = setTimeout(() => controller.abort(), 8000)
   try {
-    const res  = await fetch(`${OFF_SEARCH}?${params}`, { signal: controller.signal })
+    const res  = await fetch(`${OFF_SEARCH}?${params}`, { signal })
     if (!res.ok) return []
     const data = await res.json()
-    return (data.products ?? [])
-      .map(p => ({
-        thumbUrl: p.image_front_small_url || p.image_front_url || p.image_url || null,
-        fullUrl:  p.image_front_url       || p.image_url       || p.image_front_small_url || null,
-        name:     p.product_name ?? '',
-        brand:    (p.brands ?? '').split(',')[0].trim(),
-      }))
-      .filter(p => p.thumbUrl && p.fullUrl)
-      .slice(0, 6)
+    return (data.products ?? []).map(p => ({
+      thumbUrl: p.image_front_small_url || p.image_front_url || p.image_url || null,
+      fullUrl:  p.image_front_url       || p.image_url       || p.image_front_small_url || null,
+      name:     p.product_name ?? '',
+      brand:    (p.brands ?? '').split(',')[0].trim(),
+    }))
   } catch {
     return []
+  }
+}
+
+// Suche per Name + optionalem Hersteller → bis zu 6 Bilder-Vorschläge.
+// Strategie: mehrere Queries parallel (original, Name ohne Marke,
+// Kompositum gesplittet) → merge & dedup → beste 6 zurückgeben.
+export async function searchProductImages(name, brand = '') {
+  const controller = new AbortController()
+  const timeout    = setTimeout(() => controller.abort(), 8000)
+
+  // Alle sinnvollen Query-Varianten sammeln (ohne Duplikate)
+  const queries = new Set()
+  const full    = [brand, name].filter(Boolean).join(' ')
+  queries.add(full)
+  if (brand) queries.add(name)                      // nur Name, ohne Marke
+
+  const split = splitGermanCompound(name)
+  if (split) {
+    queries.add([brand, split].filter(Boolean).join(' '))
+    queries.add(split)
+  }
+
+  try {
+    const results = await Promise.all([...queries].map(q => offSearch(q, controller.signal)))
+    // Merge + Duplikate per fullUrl entfernen + nur Einträge mit Bild
+    const seen = new Set()
+    return results
+      .flat()
+      .filter(p => {
+        if (!p.thumbUrl || !p.fullUrl) return false
+        if (seen.has(p.fullUrl)) return false
+        seen.add(p.fullUrl)
+        return true
+      })
+      .slice(0, 6)
   } finally {
     clearTimeout(timeout)
   }
