@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import useStore from '../store/useStore'
-import { COMMON_SPICES, PACKAGING_TYPES, PACKAGING_COLORS, SPICE_CATEGORIES } from '../data/spices'
+import { COMMON_SPICES, PACKAGING_TYPES, PACKAGING_COLORS } from '../data/spices'
 import BarcodeScanner from './BarcodeScanner'
 
 const DEFAULT_FORM = {
@@ -18,7 +18,7 @@ const DEFAULT_FORM = {
 }
 
 export default function SpiceForm({ spice, onClose }) {
-  const { addSpice, updateSpice, locations } = useStore()
+  const { addSpice, updateSpice, locations, categories } = useStore()
   const isEdit = !!spice
 
   const [form, setForm] = useState(() => spice ? {
@@ -339,19 +339,21 @@ export default function SpiceForm({ spice, onClose }) {
           )}
 
           {/* ── Kategorie ───────────────────────────────────────── */}
-          <div>
-            <label className="label">Kategorie (optional)</label>
-            <select
-              className="input"
-              value={form.category}
-              onChange={e => set('category', e.target.value)}
-            >
-              <option value="">— Keine Kategorie —</option>
-              {SPICE_CATEGORIES.map(c => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
-            </select>
-          </div>
+          {categories.length > 0 && (
+            <div>
+              <label className="label">Kategorie (optional)</label>
+              <select
+                className="input"
+                value={form.category}
+                onChange={e => set('category', e.target.value)}
+              >
+                <option value="">— Keine Kategorie —</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* ── Notizen ─────────────────────────────────────────── */}
           <div>

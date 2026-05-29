@@ -67,6 +67,16 @@ function locToJS(row) {
   }
 }
 
+function catToJS(row) {
+  return {
+    id:        row.id,
+    name:      row.name,
+    color:     row.color      ?? 'gray',
+    sortOrder: row.sort_order ?? 0,
+    createdAt: row.created_at,
+  }
+}
+
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 const useStore = create((set, get) => ({
@@ -86,6 +96,7 @@ const useStore = create((set, get) => ({
   spices:        [],
   shoppingItems: [],
   locations:     [],
+  categories:    [],
   dataLoading:   false,
   dataError:     null,
 
@@ -104,7 +115,7 @@ const useStore = create((set, get) => ({
       const bringSettings = user?.user_metadata?.bring_settings ?? null
       set({ user, bringSettings })
       if (user) get().loadData()
-      else set({ household: null, spices: [], shoppingItems: [], locations: [], bringSettings: null })
+      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null })
     })
   },
 
@@ -124,7 +135,7 @@ const useStore = create((set, get) => ({
 
   async signOut() {
     await supabase.auth.signOut({ scope: 'local' })
-    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], bringSettings: null, _initialized: false })
+    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, _initialized: false })
   },
 
   currentUser() {
@@ -359,10 +370,11 @@ const useStore = create((set, get) => ({
     const household = await get()._ensureHousehold()
     if (!household) { set({ dataLoading: false, _dataLoadingLock: false }); return }
 
-    const [{ data: spicesData }, { data: shopData }, { data: locData }] = await Promise.all([
+    const [{ data: spicesData }, { data: shopData }, { data: locData }, { data: catData }] = await Promise.all([
       supabase.from('spices').select('*').eq('household_id', household.id).order('name'),
       supabase.from('shopping_items').select('*').eq('household_id', household.id).order('created_at'),
       supabase.from('storage_locations').select('*').eq('household_id', household.id).order('sort_order, name'),
+      supabase.from('spice_categories').select('*').eq('household_id', household.id).order('sort_order, name'),
     ])
 
     set({
@@ -370,6 +382,7 @@ const useStore = create((set, get) => ({
       spices:        (spicesData ?? []).map(toJS),
       shoppingItems: (shopData   ?? []).map(shopToJS),
       locations:     (locData    ?? []).map(locToJS),
+      categories:    (catData    ?? []).map(catToJS),
       dataLoading:   false,
       _dataLoadingLock: false,
     })
@@ -448,6 +461,38 @@ const useStore = create((set, get) => ({
     }))
     supabase.from('storage_locations').delete().eq('id', id)
       .then(({ error }) => { if (error) console.error('deleteLocation:', error) })
+  },
+
+  // ── Kategorien ────────────────────────────────────────────────────────
+
+  addCategory(data) {
+    const { household, categories } = get()
+    const id = crypto.randomUUID()
+    const newCat = catToJS({ id, name: data.name, color: data.color ?? 'gray', sort_order: categories.length, created_at: new Date().toISOString() })
+    set(s => ({ categories: [...s.categories, newCat] }))
+    supabase.from('spice_categories')
+      .insert([{ id, name: data.name, color: data.color || 'gray', sort_order: categories.length, household_id: household?.id }])
+      .then(({ error }) => { if (error) console.error('addCategory:', error) })
+  },
+
+  updateCategory(id, data) {
+    set(s => ({ categories: s.categories.map(c => c.id === id ? { ...c, ...data } : c) }))
+    supabase.from('spice_categories')
+      .update({ name: data.name, color: data.color })
+      .eq('id', id)
+      .then(({ error }) => { if (error) console.error('updateCategory:', error) })
+  },
+
+  deleteCategory(id) {
+    set(s => ({
+      categories: s.categories.filter(c => c.id !== id),
+      spices:     s.spices.map(sp => sp.category === id ? { ...sp, category: null } : sp),
+    }))
+    supabase.from('spice_categories').delete().eq('id', id)
+      .then(({ error }) => { if (error) console.error('deleteCategory:', error) })
+    // Kategorie-Zuweisung bei betroffenen Gewürzen entfernen
+    supabase.from('spices').update({ category: null }).eq('category', id)
+      .then(({ error }) => { if (error) console.error('deleteCategory/spices:', error) })
   },
 
   // ── Shopping ─────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
 import { getMhdStatus, MHD_STYLES, formatMhdDate, formatAmount } from '../utils/mhd'
-import { PACKAGING_TYPES, PACKAGING_COLORS, SPICE_CATEGORIES, CATEGORY_COLORS } from '../data/spices'
+import { PACKAGING_TYPES, PACKAGING_COLORS, CATEGORY_COLORS } from '../data/spices'
 
 const FILTERS = [
   { id: 'all', label: 'Alle' },
@@ -12,7 +12,7 @@ const FILTERS = [
 ]
 
 export default function SpiceList({ onEdit, onAdd }) {
-  const { spices: allSpices, addShoppingItem, locations, dataLoading } = useStore()
+  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading } = useStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -27,10 +27,10 @@ export default function SpiceList({ onEdit, onAdd }) {
     return { total: allSpices.length, expired, critical }
   }, [allSpices])
 
-  // Kategorien, die tatsächlich in Verwendung sind
+  // Kategorien, die tatsächlich in Verwendung sind (aus DB)
   const usedCategories = useMemo(() =>
-    SPICE_CATEGORIES.filter(cat => allSpices.some(s => s.category === cat.id)),
-    [allSpices]
+    allCategories.filter(cat => allSpices.some(s => s.category === cat.id)),
+    [allCategories, allSpices]
   )
 
   const filtered = useMemo(() => {
@@ -206,7 +206,7 @@ export default function SpiceList({ onEdit, onAdd }) {
 }
 
 function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
-  const { deleteSpice, locations } = useStore()
+  const { deleteSpice, locations, categories } = useStore()
   const mhd = getMhdStatus(spice.expiryDate)
   const mhdStyle = MHD_STYLES[mhd.status]
   const pkgColor = PACKAGING_COLORS[spice.packagingType] ?? PACKAGING_COLORS.fertigstreuer
@@ -230,11 +230,11 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
                 {pkgLabel}
               </span>
               {spice.category && (() => {
-                const cat = SPICE_CATEGORIES.find(c => c.id === spice.category)
-                const col = CATEGORY_COLORS[spice.category] ?? CATEGORY_COLORS.sonstiges
+                const cat = categories.find(c => c.id === spice.category)
+                const col = cat ? (CATEGORY_COLORS[cat.color] ?? CATEGORY_COLORS.gray) : null
                 return cat ? (
                   <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${col.bg} ${col.text}`}>
-                    {cat.label}
+                    {cat.name}
                   </span>
                 ) : null
               })()}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
+import { CATEGORY_COLORS } from '../data/spices'
 
 export default function SettingsView({ onClose }) {
   return (
@@ -27,6 +28,8 @@ export default function SettingsView({ onClose }) {
           <HouseholdSection />
           <div className="border-t border-gray-100" />
           <LocationsSection />
+          <div className="border-t border-gray-100" />
+          <CategoriesSection />
           <div className="border-t border-gray-100" />
           <BringSection />
         </div>
@@ -411,6 +414,164 @@ function BringSection() {
           {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2">{error}</p>}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Farbwähler ────────────────────────────────────────────────────────────────
+
+function ColorPicker({ value, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Object.entries(CATEGORY_COLORS).map(([key, cls]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          title={key}
+          className={`w-7 h-7 rounded-full transition-all ${cls.bg} border-2 ${
+            value === key
+              ? 'border-gray-500 scale-110 shadow'
+              : 'border-transparent hover:scale-105'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ── Kategorien ────────────────────────────────────────────────────────────────
+
+function CategoriesSection() {
+  const { categories, spices, addCategory, updateCategory, deleteCategory } = useStore()
+  const [newName, setNewName]   = useState('')
+  const [newColor, setNewColor] = useState('green')
+  const [editingId, setEditingId]   = useState(null)
+  const [editName, setEditName]     = useState('')
+  const [editColor, setEditColor]   = useState('green')
+
+  function handleAdd(e) {
+    e.preventDefault()
+    if (!newName.trim()) return
+    addCategory({ name: newName.trim(), color: newColor, sortOrder: categories.length })
+    setNewName('')
+    setNewColor('green')
+  }
+
+  function startEdit(cat) {
+    setEditingId(cat.id)
+    setEditName(cat.name)
+    setEditColor(cat.color)
+  }
+
+  function saveEdit(id) {
+    if (editName.trim()) updateCategory(id, { name: editName.trim(), color: editColor })
+    setEditingId(null)
+  }
+
+  function handleDelete(cat) {
+    const count = spices.filter(s => s.category === cat.id).length
+    const msg = count > 0
+      ? `"${cat.name}" löschen? ${count} Gewürz${count !== 1 ? 'e verlieren' : ' verliert'} die Kategorie-Zuweisung.`
+      : `"${cat.name}" wirklich löschen?`
+    if (confirm(msg)) deleteCategory(cat.id)
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className="font-bold text-gray-800">Kategorien</h3>
+        {categories.length > 0 && (
+          <span className="ml-auto text-xs text-gray-400 font-medium">{categories.length} Kategorien</span>
+        )}
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {categories.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-4">Noch keine Kategorien angelegt.</p>
+        )}
+        {categories.map(cat => {
+          const count = spices.filter(s => s.category === cat.id).length
+          const cls   = CATEGORY_COLORS[cat.color] ?? CATEGORY_COLORS.gray
+          if (editingId === cat.id) {
+            return (
+              <div key={cat.id} className="card p-3 space-y-3 ring-2 ring-green-500">
+                <input
+                  type="text"
+                  className="input py-2 text-sm"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Name"
+                  autoFocus
+                />
+                <div>
+                  <p className="text-xs text-gray-400 mb-2">Farbe</p>
+                  <ColorPicker value={editColor} onChange={setEditColor} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => saveEdit(cat.id)} className="btn-primary flex-1 py-2 text-sm">Speichern</button>
+                  <button onClick={() => setEditingId(null)} className="btn-secondary flex-1 py-2 text-sm">Abbrechen</button>
+                </div>
+              </div>
+            )
+          }
+          return (
+            <div key={cat.id} className="card px-4 py-3 flex items-center gap-3">
+              <div className={`w-8 h-8 ${cls.bg} rounded-lg flex-none`} />
+              <div className="flex-1 min-w-0">
+                <div className={`font-semibold text-sm ${cls.text}`}>{cat.name}</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {count === 0 ? 'Keine Gewürze' : `${count} Gewürz${count !== 1 ? 'e' : ''}`}
+                </div>
+              </div>
+              <div className="flex gap-1 flex-none">
+                <button
+                  onClick={() => startEdit(cat)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDelete(cat)}
+                  className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <form onSubmit={handleAdd} className="space-y-3 border-t border-gray-100 pt-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Neue Kategorie</p>
+        <input
+          type="text"
+          className="input py-2.5 text-sm"
+          placeholder="z.B. Kräuter, Asiatisch, Scharf…"
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+        />
+        <div>
+          <p className="text-xs text-gray-400 mb-2">Farbe</p>
+          <ColorPicker value={newColor} onChange={setNewColor} />
+        </div>
+        <button type="submit" className="btn-primary w-full" disabled={!newName.trim()}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Kategorie hinzufügen
+        </button>
+      </form>
     </div>
   )
 }
