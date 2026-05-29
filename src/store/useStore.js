@@ -312,12 +312,17 @@ const useStore = create((set, get) => ({
     const { bringSettings } = get()
     if (!bringSettings?.listUuid || !bringSettings?.accessToken) return
     try {
-      const items = await bringGetItems(
+      const { items, debugInfo } = await bringGetItems(
         bringSettings.listUuid,
         bringSettings.accessToken,
         bringSettings.userUuid ?? ''
       )
-      set({ bringItems: items, bringItemsError: null })
+      set({
+        bringItems: items,
+        bringItemsError: items.length === 0
+          ? `Keine Artikel gefunden. API-Antwort: ${debugInfo}`
+          : null,
+      })
     } catch (e) {
       console.error('🔴 loadBringItems:', e.message)
       set({ bringItemsError: e.message })
@@ -332,9 +337,10 @@ const useStore = create((set, get) => ({
     set(s => ({ bringItems: s.bringItems.filter(i => i.name !== name) }))
     try {
       await bringRemoveItem(bringSettings.listUuid, bringSettings.accessToken, name)
+      // Nach Entfernen neu laden um sicherzugehen
+      get().loadBringItems()
     } catch (e) {
       console.error('🔴 removeBringItem:', e.message)
-      // Bei Fehler: echten Stand neu laden
       get().loadBringItems()
     }
   },

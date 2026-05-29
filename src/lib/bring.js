@@ -35,9 +35,26 @@ export async function bringAddItem(listUuid, accessToken, name, specification = 
 }
 
 export async function bringGetItems(listUuid, accessToken, userUuid = '') {
-  // Gibt [{ uuid, name, specification }] zurück – aktuelle Artikel auf der Liste
   const data = await callProxy('getItems', { listUuid, accessToken, userUuid })
-  return data.items ?? []
+
+  // Bring! kann die Liste direkt als Array zurückgeben oder in verschiedenen Feldern verpackt
+  const raw = Array.isArray(data)
+    ? data
+    : (data.items ?? data.purchases ?? data.content ?? [])
+
+  // Feldnamen normalisieren: Bring! nutzt itemId/spec statt name/specification
+  const items = raw.map(i => ({
+    uuid:          i.uuid          ?? i.itemId ?? i.name ?? '',
+    name:          i.name          ?? i.itemId ?? '',
+    specification: i.specification ?? i.spec   ?? '',
+  })).filter(i => i.name)
+
+  // Debug-Info für den Fall dass noch immer leer
+  const debugInfo = Array.isArray(data)
+    ? `Array mit ${data.length} Einträgen`
+    : `Felder: ${Object.keys(data).join(', ')} | raw=${raw.length}`
+
+  return { items, debugInfo }
 }
 
 export async function bringRemoveItem(listUuid, accessToken, name) {
