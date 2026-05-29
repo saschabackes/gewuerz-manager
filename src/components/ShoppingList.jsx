@@ -27,6 +27,7 @@ export default function ShoppingList() {
   const suggTimeout = useRef(null)
 
   const [bringRefreshing, setBringRefreshing] = useState(false)
+  const [bringFilter, setBringFilter] = useState('spices') // 'spices' | 'all'
 
   const checkedCount = useMemo(() => items.filter(i => i.checked).length, [items])
   const userName = currentUser?.name ?? 'Benutzer'
@@ -172,10 +173,30 @@ export default function ShoppingList() {
 
       {/* Toolbar – Bring!-Modus */}
       {bringActive && (
-        <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            {bringItems.length} Artikel auf der Liste
-          </span>
+        <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between gap-3">
+          {/* Filter-Toggle */}
+          <div className="flex bg-white border border-gray-200 rounded-lg p-0.5 gap-0.5">
+            <button
+              onClick={() => setBringFilter('spices')}
+              className={`text-xs font-semibold px-3 py-1 rounded-md transition-colors ${
+                bringFilter === 'spices'
+                  ? 'bg-green-500 text-white'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🧂 Gewürze
+            </button>
+            <button
+              onClick={() => setBringFilter('all')}
+              className={`text-xs font-semibold px-3 py-1 rounded-md transition-colors ${
+                bringFilter === 'all'
+                  ? 'bg-orange-400 text-white'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Alle
+            </button>
+          </div>
           <button
             onClick={refresh}
             disabled={bringRefreshing}
@@ -248,7 +269,9 @@ export default function ShoppingList() {
       {bringActive && (() => {
         const spiceItems = bringItems.filter(i => i.specification === 'Gewürz')
         const otherItems = bringItems.filter(i => i.specification !== 'Gewürz')
-        const showSections = spiceItems.length > 0 && otherItems.length > 0
+        const visibleSpices = spiceItems
+        const visibleOthers = bringFilter === 'all' ? otherItems : []
+        const showSections = visibleSpices.length > 0 && visibleOthers.length > 0
         return (
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {bringItemsError && (
@@ -257,16 +280,22 @@ export default function ShoppingList() {
                 <p className="text-xs text-red-500 font-mono break-all">{bringItemsError}</p>
               </div>
             )}
-            {!bringItemsError && bringItems.length === 0 && (
+            {!bringItemsError && visibleSpices.length === 0 && visibleOthers.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-5xl mb-4">🛍</div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-1">Bring!-Liste ist leer</h3>
-                <p className="text-sm text-gray-400">Füge Artikel hinzu – sie erscheinen hier und in deiner Bring!-App</p>
+                <div className="text-5xl mb-4">{bringFilter === 'spices' ? '🧂' : '🛍'}</div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-1">
+                  {bringFilter === 'spices' ? 'Keine Gewürze auf der Liste' : 'Bring!-Liste ist leer'}
+                </h3>
+                <p className="text-sm text-gray-400">
+                  {bringFilter === 'spices'
+                    ? 'Füge Gewürze über die Gewürzliste oder das Suchfeld hinzu'
+                    : 'Füge Artikel hinzu – sie erscheinen hier und in deiner Bring!-App'}
+                </p>
               </div>
             )}
 
             {/* Gewürze-Sektion */}
-            {spiceItems.length > 0 && (
+            {visibleSpices.length > 0 && (
               <>
                 {showSections && (
                   <div className="flex items-center gap-3 pt-1">
@@ -274,15 +303,15 @@ export default function ShoppingList() {
                     <div className="flex-1 h-px bg-green-100" />
                   </div>
                 )}
-                {spiceItems.map(item => (
+                {visibleSpices.map(item => (
                   <BringListItem key={item.uuid || item.name} item={item} isSpice
                     onRemove={() => removeBringItem(item.name)} />
                 ))}
               </>
             )}
 
-            {/* Sonstige Artikel */}
-            {otherItems.length > 0 && (
+            {/* Sonstige Artikel (nur im "Alle"-Modus) */}
+            {visibleOthers.length > 0 && (
               <>
                 {showSections && (
                   <div className="flex items-center gap-3 pt-1">
@@ -290,7 +319,7 @@ export default function ShoppingList() {
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
                 )}
-                {otherItems.map(item => (
+                {visibleOthers.map(item => (
                   <BringListItem key={item.uuid || item.name} item={item}
                     onRemove={() => removeBringItem(item.name)} />
                 ))}
