@@ -177,10 +177,7 @@ exports.handler = async function(event) {
       })
       var serpRes  = await fetch('https://serpapi.com/search.json?' + serpParams)
       var serpBody = await serpRes.json().catch(function() { return {} })
-      if (!serpRes.ok) {
-        console.error('[searchImages] SerpAPI HTTP', serpRes.status, JSON.stringify(serpBody.error || serpBody))
-        return ok([])
-      }
+      if (!serpRes.ok) return ok([])
       var serpResults = (serpBody.images_results || [])
         .slice(0, 6)
         .map(function(r) {
@@ -192,7 +189,6 @@ exports.handler = async function(event) {
           }
         })
         .filter(function(r) { return r.thumbUrl })
-      console.log('[searchImages] SerpAPI q=' + JSON.stringify(serpQuery) + ' → ' + serpResults.length + ' Treffer')
       return ok(serpResults)
     } catch (e) {
       return err('SerpAPI exception: ' + e.message)
