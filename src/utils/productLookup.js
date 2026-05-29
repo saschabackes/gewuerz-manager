@@ -1,6 +1,25 @@
 const OFF_API = 'https://world.openfoodfacts.org/api/v2/product'
 const PROXY   = '/.netlify/functions/bring-proxy'
 
+// ── Hilfsfunktionen für Query-Generierung ────────────────────────────────────
+
+// Formdeskriptoren die in Gewürznamen vorkommen, aber nicht in OFF-Produktnamen:
+// "Kreuzkümmel ganz" → "Kreuzkümmel", "Nelken gemahlen" → "Nelken"
+const FORM_DESCRIPTORS = [
+  'ganz', 'gemahlen', 'getrocknet', 'fein', 'grob',
+  'gerieben', 'geräuchert', 'gerebelt', 'granuliert',
+  'gefriergetrocknet', 'fein gemahlen', 'grob gemahlen',
+]
+
+function stripDescriptors(name) {
+  let s = name
+  for (const d of FORM_DESCRIPTORS) {
+    s = s.replace(new RegExp(`\\s+${d}\\b`, 'gi'), '')
+         .replace(new RegExp(`\\b${d}\\s+`, 'gi'), '')
+  }
+  return s.trim()
+}
+
 // Deutsche Komposita aufsplitten: "Selleriesalz" → "Sellerie Salz"
 // Gibt null zurück wenn keine bekannte Endung erkannt wird.
 function splitGermanCompound(word) {
@@ -8,6 +27,7 @@ function splitGermanCompound(word) {
     'salz', 'pfeffer', 'pulver', 'samen', 'körner', 'kapseln',
     'blätter', 'flocken', 'kräuter', 'gewürz', 'zucker', 'öl',
     'extrakt', 'schoten', 'stangen', 'mehl', 'paste',
+    'kümmel', 'nuss', 'granulat', 'beeren', 'blüte',
   ]
   const w = word.toLowerCase()
   for (const suf of suffixes) {
@@ -19,28 +39,43 @@ function splitGermanCompound(word) {
   return null
 }
 
-// Suche per Name + optionalem Hersteller → bis zu 6 Bilder-Vorschläge.
-// Läuft über die Netlify-Function (serverseitig, kein CORS-Problem).
-// Strategie: mehrere Query-Varianten (original, ohne Marke, Kompositum
-// aufgesplittet) → Proxy merged und dedup-t serverseitig.
-export async function searchProductImages(name, brand = '') {
-  // Query-Varianten sammeln
-  const queries = new Set()
-  const full    = [brand, name].filter(Boolean).join(' ')
-  queries.add(full)
-  if (brand) queries.add(name)
+// Alle Query-Varianten für einen Namen erzeugen (ohne Duplikate)
+function buildQueries(name, brand) {
+  const add = (set, ...parts) => set.add(parts.filter(Boolean).join(' ').trim())
+  const q   = new Set()
 
-  const split = splitGermanCompound(name)
-  if (split) {
-    queries.add([brand, split].filter(Boolean).join(' '))
-    queries.add(split)
+  add(q, brand, name)              // "Edora Kreuzkümmel ganz"
+  if (brand) add(q, name)          // "Kreuzkümmel ganz"
+
+  const core = stripDescriptors(name)
+  if (core && core !== name) {
+    add(q, brand, core)            // "Edora Kreuzkümmel"
+    add(q, core)                   // "Kreuzkümmel"
   }
 
+  // Komposita aufsplitten – auf dem Original UND dem gestrippten Namen
+  for (const candidate of new Set([name, core])) {
+    const split = splitGermanCompound(candidate)
+    if (split) {
+      add(q, brand, split)         // "Edora Kreuz Kümmel" / "Ostmann Sellerie Salz"
+      add(q, split)                // "Kreuz Kümmel"
+    }
+  }
+
+  return [...q].filter(Boolean)
+}
+
+// ── Öffentliche API ───────────────────────────────────────────────────────────
+
+// Suche per Name + optionalem Hersteller → bis zu 6 Bilder-Vorschläge.
+// Läuft über die Netlify-Function (serverseitig, kein CORS-Problem).
+export async function searchProductImages(name, brand = '') {
+  const queries = buildQueries(name, brand)
   try {
-    const res  = await fetch(PROXY, {
+    const res = await fetch(PROXY, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ action: 'searchImages', queries: [...queries], brand }),
+      body:    JSON.stringify({ action: 'searchImages', queries, brand }),
     })
     if (!res.ok) return []
     const data = await res.json()

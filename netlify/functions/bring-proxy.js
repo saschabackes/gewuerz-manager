@@ -170,7 +170,7 @@ exports.handler = async function(event) {
                      '&fields=product_name,brands,image_front_small_url,image_front_url,image_url'
 
     try {
-      var allResults = await Promise.all(queries.slice(0, 4).map(async function(q) {
+      var allResults = await Promise.all(queries.slice(0, 6).map(async function(q) {
         try {
           var offRes = await fetch(OFF_SEARCH + '?' + offParams + '&search_terms=' + encodeURIComponent(q))
           if (!offRes.ok) return []
