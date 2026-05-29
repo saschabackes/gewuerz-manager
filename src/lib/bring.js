@@ -40,7 +40,7 @@ export async function bringGetItems(listUuid, accessToken, userUuid = '') {
   // Bring! kann die Liste direkt als Array zurückgeben oder in verschiedenen Feldern verpackt
   const raw = Array.isArray(data)
     ? data
-    : (data.items ?? data.purchases ?? data.content ?? [])
+    : (data.purchase ?? data.items ?? data.purchases ?? [])
 
   // Feldnamen normalisieren: Bring! nutzt itemId/spec statt name/specification
   const items = raw.map(i => ({
