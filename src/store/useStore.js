@@ -135,18 +135,21 @@ const useStore = create((set, get) => ({
     const { user } = get()
     if (!user) return null
 
-    // Bestehende Mitgliedschaft suchen
-    const { data: membership, error: membershipErr } = await supabase
+    // Bestehende Mitgliedschaft suchen (limit(1) statt maybeSingle, um mehrere Zeilen zu tolerieren)
+    const { data: memberships, error: membershipErr } = await supabase
       .from('household_members')
       .select('household_id, households(id, name, invite_code)')
       .eq('user_id', user.id)
-      .maybeSingle()
+      .order('joined_at', { ascending: true })
+      .limit(1)
 
     if (membershipErr) {
       console.error('🔴 _ensureHousehold – Mitgliedschaft abfragen:', membershipErr)
       set({ dataError: `Datenbankfehler: ${membershipErr.message} (Code: ${membershipErr.code})` })
       return null
     }
+
+    const membership = memberships?.[0] ?? null
 
     if (membership?.household_id) {
       const h = membership.households
@@ -254,11 +257,11 @@ const useStore = create((set, get) => ({
 
   async loadData() {
     const { user } = get()
-    if (!user) return
-    set({ dataLoading: true, dataError: null })
+    if (!user || get()._dataLoadingLock) return
+    set({ dataLoading: true, dataError: null, _dataLoadingLock: true })
 
     const household = await get()._ensureHousehold()
-    if (!household) { set({ dataLoading: false }); return }
+    if (!household) { set({ dataLoading: false, _dataLoadingLock: false }); return }
 
     const [{ data: spicesData }, { data: shopData }, { data: locData }] = await Promise.all([
       supabase.from('spices').select('*').eq('household_id', household.id).order('name'),
@@ -272,6 +275,7 @@ const useStore = create((set, get) => ({
       shoppingItems: (shopData   ?? []).map(shopToJS),
       locations:     (locData    ?? []).map(locToJS),
       dataLoading:   false,
+      _dataLoadingLock: false,
     })
   },
 
