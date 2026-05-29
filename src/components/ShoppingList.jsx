@@ -6,7 +6,8 @@ import { COMMON_SPICES } from '../data/spices'
 export default function ShoppingList() {
   const { shoppingItems: items, addShoppingItem, toggleShoppingItem,
           deleteShoppingItem, clearCheckedShopping, updateShoppingItem } = useStore()
-  const currentUser = useStore(s => s.currentUser())
+  const bringSettings = useStore(s => s.bringSettings)
+  const currentUser   = useStore(s => s.currentUser())
 
   const [newName, setNewName] = useState('')
   const [newAmount, setNewAmount] = useState('')
@@ -72,8 +73,30 @@ export default function ShoppingList() {
   const unchecked = items.filter(i => !i.checked)
   const checked = items.filter(i => i.checked)
 
+  const bringActive = !!(bringSettings?.listUuid && bringSettings?.accessToken)
+
   return (
     <div className="flex flex-col h-full">
+
+      {/* Bring!-Banner */}
+      {bringActive && (
+        <div className="bg-orange-50 border-b border-orange-100 px-4 py-2.5 flex items-center gap-3">
+          <span className="text-lg leading-none">🛍</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-orange-800">Bring! aktiv – Liste: {bringSettings.listName}</p>
+            <p className="text-xs text-orange-600">Artikel gehen direkt in deine Bring!-Liste.</p>
+          </div>
+          <a
+            href="https://web.getbring.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-none text-xs font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-xl px-3 py-1.5 transition-colors"
+          >
+            Öffnen
+          </a>
+        </div>
+      )}
+
       {/* Add item form */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <form onSubmit={addItem} className="space-y-2">

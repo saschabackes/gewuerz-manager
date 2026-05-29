@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { bringLogin, bringGetLists, bringAddItem } from '../lib/bring'
 
 // ── Einladungscode generieren ─────────────────────────────────────────────────
 // Verwirrbaren Zeichen (0/O, 1/I/l) ausgeschlossen
@@ -74,6 +75,9 @@ const useStore = create((set, get) => ({
   // Haushalt
   household: null,   // { id, name, inviteCode }
 
+  // Bring!
+  bringSettings: null, // null | { accessToken, userUuid, listUuid, listName, email }
+
   // Data
   spices:        [],
   shoppingItems: [],
@@ -88,14 +92,15 @@ const useStore = create((set, get) => ({
     set({ _initialized: true })
 
     const { data: { session } } = await supabase.auth.getSession()
-    set({ user: session?.user ?? null, authLoading: false })
-    if (session?.user) get().loadData()
+    const bringSettings = session?.user?.user_metadata?.bring_settings ?? null
+    set({ user: session?.user ?? null, authLoading: false, bringSettings })
 
     supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null
-      set({ user })
+      const bringSettings = user?.user_metadata?.bring_settings ?? null
+      set({ user, bringSettings })
       if (user) get().loadData()
-      else set({ household: null, spices: [], shoppingItems: [], locations: [] })
+      else set({ household: null, spices: [], shoppingItems: [], locations: [], bringSettings: null })
     })
   },
 
@@ -115,7 +120,7 @@ const useStore = create((set, get) => ({
 
   async signOut() {
     await supabase.auth.signOut({ scope: 'local' })
-    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], _initialized: false })
+    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], bringSettings: null, _initialized: false })
   },
 
   currentUser() {
@@ -253,6 +258,31 @@ const useStore = create((set, get) => ({
     await supabase.from('households').update({ name: name.trim() }).eq('id', household.id)
   },
 
+  // ── Bring! ────────────────────────────────────────────────────────────
+
+  // Schritt 1: Anmelden + Listen laden (gibt [{ listUuid, name }] zurück)
+  async connectBring(email, password) {
+    const auth = await bringLogin(email, password)
+    const lists = await bringGetLists(auth.uuid, auth.access_token)
+    // Temporär speichern bis Liste gewählt wurde
+    set({ _bringAuth: { accessToken: auth.access_token, userUuid: auth.uuid, email } })
+    return lists
+  },
+
+  // Schritt 2: Liste auswählen + persistent speichern
+  async setBringList(listUuid, listName) {
+    const { _bringAuth } = get()
+    if (!_bringAuth) throw new Error('Nicht authentifiziert')
+    const settings = { ..._bringAuth, listUuid, listName }
+    set({ bringSettings: settings, _bringAuth: null })
+    await supabase.auth.updateUser({ data: { bring_settings: settings } })
+  },
+
+  async disconnectBring() {
+    set({ bringSettings: null })
+    await supabase.auth.updateUser({ data: { bring_settings: null } })
+  },
+
   // ── Data ─────────────────────────────────────────────────────────────
 
   async loadData() {
@@ -357,7 +387,19 @@ const useStore = create((set, get) => ({
   // ── Shopping ─────────────────────────────────────────────────────────
 
   addShoppingItem(name, amount = '') {
-    const { user, household } = get()
+    const { bringSettings, user, household } = get()
+
+    // Bring!-Modus: direkt in Bring!-Liste schreiben
+    if (bringSettings?.listUuid && bringSettings?.accessToken) {
+      bringAddItem(bringSettings.listUuid, bringSettings.accessToken, name.trim(), amount.trim())
+        .catch(err => {
+          console.error('🔴 Bring! addItem:', err)
+          set({ dataError: `Bring!-Fehler: ${err.message}` })
+        })
+      return
+    }
+
+    // Eingebaute Liste
     const id   = crypto.randomUUID()
     const item = { id, name: name.trim(), amount: amount.trim(), checked: false, createdAt: new Date().toISOString() }
     set(s => ({ shoppingItems: [...s.shoppingItems, item] }))
