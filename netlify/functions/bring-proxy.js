@@ -173,6 +173,7 @@ exports.handler = async function(event) {
         cx:         gCx,
         q:          googleQuery,
         searchType: 'image',
+        imgType:    'photo',
         num:        '6',
         gl:         'de',
         lr:         'lang_de',
