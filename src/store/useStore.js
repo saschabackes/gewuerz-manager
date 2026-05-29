@@ -553,6 +553,42 @@ const useStore = create((set, get) => ({
     supabase.from('shopping_items').delete().in('id', ids)
       .then(({ error }) => { if (error) console.error('clearCheckedShopping:', error) })
   },
+
+  // ── Export ────────────────────────────────────────────────────────────
+
+  exportData() {
+    const { spices, locations, categories, household } = get()
+    const locById = Object.fromEntries(locations.map(l => [l.id, l]))
+    const catById = Object.fromEntries(categories.map(c => [c.id, c]))
+    return {
+      exportedAt: new Date().toISOString(),
+      version:    1,
+      haushalt:   household?.name ?? '',
+      kategorien: categories.map(c => ({
+        name:        c.name,
+        farbe:       c.color,
+        reihenfolge: c.sortOrder,
+      })),
+      lagerorte: locations.map(l => ({
+        name:         l.name,
+        beschreibung: l.description || null,
+        reihenfolge:  l.sortOrder,
+      })),
+      gewuerze: spices.map(s => ({
+        name:       s.name,
+        marke:      s.brand        ?? null,
+        verpackung: s.packagingType,
+        mengeGramm: s.amountGrams  ?? null,
+        stueckzahl: s.units        ?? null,
+        mhd:        s.expiryDate   ?? null,
+        barcode:    s.barcode      ?? null,
+        notizen:    s.notes        ?? null,
+        kategorie:  catById[s.category]?.name   ?? null,
+        lagerort:   locById[s.locationId]?.name ?? null,
+        erstellt:   s.createdAt,
+      })),
+    }
+  },
 }))
 
 export default useStore

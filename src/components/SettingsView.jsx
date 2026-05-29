@@ -32,6 +32,8 @@ export default function SettingsView({ onClose }) {
           <CategoriesSection />
           <div className="border-t border-gray-100" />
           <BringSection />
+          <div className="border-t border-gray-100" />
+          <ExportSection />
         </div>
       </div>
     </>
@@ -572,6 +574,80 @@ function CategoriesSection() {
           Kategorie hinzufügen
         </button>
       </form>
+    </div>
+  )
+}
+
+// ── Datensicherung ────────────────────────────────────────────────────────────
+
+function ExportSection() {
+  const { exportData, spices, categories, locations, household } = useStore()
+  const [done, setDone] = useState(false)
+
+  function handleExport() {
+    const data = exportData()
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `gewuerze-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    setDone(true)
+    setTimeout(() => setDone(false), 3000)
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className="font-bold text-gray-800">Datensicherung</h3>
+      </div>
+
+      <div className="card px-4 py-3">
+        <p className="text-sm text-gray-700 mb-0.5">
+          <span className="font-semibold">{spices.length} Gewürze</span>
+          {categories.length > 0 && <span className="text-gray-400"> · {categories.length} Kategorien</span>}
+          {locations.length  > 0 && <span className="text-gray-400"> · {locations.length} Lagerorte</span>}
+        </p>
+        <p className="text-xs text-gray-400 mb-3">
+          Haushalt „{household?.name ?? '…'}" · JSON-Datei, lokal gespeichert
+        </p>
+        <button
+          onClick={handleExport}
+          className={`w-full flex items-center justify-center gap-2 rounded-2xl py-2.5 text-sm font-semibold transition-colors ${
+            done
+              ? 'bg-green-100 text-green-700'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {done ? (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Exportiert
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Daten exportieren
+            </>
+          )}
+        </button>
+        <p className="text-xs text-gray-400 text-center mt-2">
+          Tipp: Einmal pro Woche exportieren als Backup
+        </p>
+      </div>
     </div>
   )
 }
