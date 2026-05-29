@@ -25,6 +25,7 @@ function toJS(row) {
     barcode:       row.barcode        ?? null,
     notes:         row.notes          ?? null,
     locationId:    row.location_id    ?? null,
+    category:      row.category       ?? null,
     createdAt:     row.created_at,
     updatedAt:     row.updated_at,
   }
@@ -42,6 +43,7 @@ function toDB(data) {
     barcode:        data.barcode        ?? null,
     notes:          data.notes          ?? null,
     location_id:    data.locationId     ?? null,
+    category:       data.category       ?? null,
   }
 }
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
 import { getMhdStatus, MHD_STYLES, formatMhdDate, formatAmount } from '../utils/mhd'
-import { PACKAGING_TYPES, PACKAGING_COLORS } from '../data/spices'
+import { PACKAGING_TYPES, PACKAGING_COLORS, SPICE_CATEGORIES, CATEGORY_COLORS } from '../data/spices'
 
 const FILTERS = [
   { id: 'all', label: 'Alle' },
@@ -17,6 +17,7 @@ export default function SpiceList({ onEdit, onAdd }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [locationFilter, setLocationFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const [sort, setSort] = useState('name') // name | mhd
   const [expandedId, setExpandedId] = useState(null)
 
@@ -26,9 +27,16 @@ export default function SpiceList({ onEdit, onAdd }) {
     return { total: allSpices.length, expired, critical }
   }, [allSpices])
 
+  // Kategorien, die tatsächlich in Verwendung sind
+  const usedCategories = useMemo(() =>
+    SPICE_CATEGORIES.filter(cat => allSpices.some(s => s.category === cat.id)),
+    [allSpices]
+  )
+
   const filtered = useMemo(() => {
     let list = allSpices
     if (filter !== 'all') list = list.filter(s => s.packagingType === filter)
+    if (categoryFilter !== 'all') list = list.filter(s => s.category === categoryFilter)
     if (locationFilter === 'none') list = list.filter(s => !s.locationId)
     else if (locationFilter !== 'all') list = list.filter(s => s.locationId === locationFilter)
     if (search.trim()) {
@@ -45,7 +53,7 @@ export default function SpiceList({ onEdit, onAdd }) {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'de'))
     }
     return list
-  }, [allSpices, filter, locationFilter, search, sort])
+  }, [allSpices, filter, categoryFilter, locationFilter, search, sort])
 
   return (
     <div className="flex flex-col h-full">
@@ -110,6 +118,35 @@ export default function SpiceList({ onEdit, onAdd }) {
           {sort === 'name' ? 'A–Z' : 'MHD'}
         </button>
       </div>
+
+      {/* Kategorie-Filter (nur wenn mind. eine Kategorie vergeben) */}
+      {usedCategories.length > 0 && (
+        <div className="bg-white border-b border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setCategoryFilter('all')}
+            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+              categoryFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            Alle
+          </button>
+          {usedCategories.map(cat => {
+            const col = CATEGORY_COLORS[cat.id] ?? CATEGORY_COLORS.sonstiges
+            const active = categoryFilter === cat.id
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setCategoryFilter(f => f === cat.id ? 'all' : cat.id)}
+                className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  active ? `${col.bg} ${col.text} ring-1 ring-current` : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {cat.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Lagerort-Filter (nur anzeigen wenn Lagerorte vorhanden) */}
       {locations.length > 0 && (
@@ -192,6 +229,15 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping }) {
               <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${pkgColor.bg} ${pkgColor.text}`}>
                 {pkgLabel}
               </span>
+              {spice.category && (() => {
+                const cat = SPICE_CATEGORIES.find(c => c.id === spice.category)
+                const col = CATEGORY_COLORS[spice.category] ?? CATEGORY_COLORS.sonstiges
+                return cat ? (
+                  <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${col.bg} ${col.text}`}>
+                    {cat.label}
+                  </span>
+                ) : null
+              })()}
             </div>
             {spice.brand && (
               <p className="text-xs text-gray-400 font-medium mt-0.5">{spice.brand}</p>

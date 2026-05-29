@@ -70,3 +70,27 @@ export const PACKAGING_COLORS = {
   ganz: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-400' },
   metallstreuer: { bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
 }
+
+// ── Gewürz-Kategorien ─────────────────────────────────────────────────────────
+
+export const SPICE_CATEGORIES = [
+  { id: 'kraeuter',   label: 'Kräuter'         },
+  { id: 'gemahlen',   label: 'Gemahlen'         },
+  { id: 'ganzgewuerz',label: 'Ganze Gewürze'    },
+  { id: 'mischungen', label: 'Mischungen'       },
+  { id: 'chili',      label: 'Chilis & Paprika' },
+  { id: 'salz',       label: 'Salze & Pfeffer'  },
+  { id: 'backen',     label: 'Backen'           },
+  { id: 'sonstiges',  label: 'Sonstiges'        },
+]
+
+export const CATEGORY_COLORS = {
+  kraeuter:    { bg: 'bg-green-100',  text: 'text-green-700'  },
+  gemahlen:    { bg: 'bg-orange-100', text: 'text-orange-700' },
+  ganzgewuerz: { bg: 'bg-amber-100',  text: 'text-amber-700'  },
+  mischungen:  { bg: 'bg-purple-100', text: 'text-purple-700' },
+  chili:       { bg: 'bg-red-100',    text: 'text-red-700'    },
+  salz:        { bg: 'bg-gray-100',   text: 'text-gray-600'   },
+  backen:      { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  sonstiges:   { bg: 'bg-slate-100',  text: 'text-slate-600'  },
+}
