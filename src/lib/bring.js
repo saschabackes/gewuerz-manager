@@ -1,63 +1,34 @@
-// ── Bring! Inoffizielle API ───────────────────────────────────────────────────
-// Basierend auf Community-Dokumentation (github.com/foxriver76/node-bring-api)
-// Die API ist nicht offiziell – kann sich ändern.
+// ── Bring! API (über Netlify-Proxy) ───────────────────────────────────────────
+// Direkte Browser-Anfragen an api.getbring.com scheitern an CORS.
+// Deshalb läuft der eigentliche HTTP-Call serverseitig in einer
+// Netlify Function unter /.netlify/functions/bring-proxy.
 
-const BASE_URL = 'https://api.getbring.com/rest/v2'
-const BRING_KEY = 'cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Ol'
+const PROXY = '/.netlify/functions/bring-proxy'
 
-const BASE_HEADERS = {
-  'X-BRING-API-KEY':         BRING_KEY,
-  'X-BRING-CLIENT':          'webApp',
-  'X-BRING-CLIENT-VERSION':  '303070050',
-  'X-BRING-COUNTRY':         'DE',
-}
-
-// ── Auth ─────────────────────────────────────────────────────────────────────
-
-/**
- * Meldet den Nutzer an und gibt { uuid, access_token, name, email } zurück.
- */
-export async function bringLogin(email, password) {
-  const res = await fetch(`${BASE_URL}/bringauth`, {
+async function callProxy(action, params = {}) {
+  const res = await fetch(PROXY, {
     method:  'POST',
-    headers: { ...BASE_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    new URLSearchParams({ email, password }),
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ action, ...params }),
   })
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}))
-    throw new Error(data.message ?? `Anmeldung fehlgeschlagen (${res.status})`)
-  }
-  return res.json()
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? `Fehler ${res.status}`)
+  return data
 }
 
-// ── Listen ────────────────────────────────────────────────────────────────────
+// ── Öffentliche API ───────────────────────────────────────────────────────────
 
-/**
- * Gibt alle Listen des Nutzers zurück: [{ listUuid, name, theme }]
- */
+export async function bringLogin(email, password) {
+  // Gibt { uuid, access_token, name, email, ... } zurück
+  return callProxy('login', { email, password })
+}
+
 export async function bringGetLists(userUuid, accessToken) {
-  const res = await fetch(`${BASE_URL}/bringlists/${userUuid}`, {
-    headers: { ...BASE_HEADERS, Authorization: `Bearer ${accessToken}` },
-  })
-  if (!res.ok) throw new Error(`Listen laden fehlgeschlagen (${res.status})`)
-  const data = await res.json()
+  // Gibt [{ listUuid, name, theme }] zurück
+  const data = await callProxy('getLists', { userUuid, accessToken })
   return data.lists ?? []
 }
 
-// ── Artikel ───────────────────────────────────────────────────────────────────
-
-/**
- * Fügt einen Artikel zur Bring!-Liste hinzu.
- */
 export async function bringAddItem(listUuid, accessToken, name, specification = '') {
-  const res = await fetch(`${BASE_URL}/bringlists/${listUuid}`, {
-    method:  'PUT',
-    headers: {
-      ...BASE_HEADERS,
-      Authorization:  `Bearer ${accessToken}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ purchase: name, specification, remove: '' }),
-  })
-  if (!res.ok) throw new Error(`Artikel hinzufügen fehlgeschlagen (${res.status})`)
+  await callProxy('addItem', { listUuid, accessToken, name, specification })
 }
