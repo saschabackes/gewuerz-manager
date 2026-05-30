@@ -81,15 +81,15 @@ export default function SpiceList({ onEdit, onAdd }) {
       {/* Stats strip */}
       {stats.total > 0 && (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2.5 flex gap-4 text-sm">
-          <span className="text-gray-500">{stats.total} Gewürze</span>
+          <span className="text-gray-500 dark:text-gray-400">{stats.total} Gewürze</span>
           {stats.expired > 0 && (
-            <span className="text-red-600 font-medium flex items-center gap-1">
+            <span className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
               {stats.expired} abgelaufen
             </span>
           )}
           {stats.critical > 0 && (
-            <span className="text-orange-600 font-medium flex items-center gap-1">
+            <span className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />
               {stats.critical} bald
             </span>
@@ -99,8 +99,8 @@ export default function SpiceList({ onEdit, onAdd }) {
               onClick={() => setShowReorderOnly(v => !v)}
               className={`font-medium flex items-center gap-1 rounded-full px-2 py-0.5 -mx-2 transition-colors ${
                 showReorderOnly
-                  ? 'bg-orange-100 text-orange-700'
-                  : 'text-orange-600 hover:text-orange-700'
+                  ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-700'
+                  : 'text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:text-orange-300'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />
@@ -135,7 +135,7 @@ export default function SpiceList({ onEdit, onAdd }) {
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
               filter === f.id
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             {f.label}
@@ -144,7 +144,7 @@ export default function SpiceList({ onEdit, onAdd }) {
         <div className="flex-none border-l border-gray-200 dark:border-gray-700 mx-1" />
         <button
           onClick={() => setSort(s => s === 'name' ? 'mhd' : 'name')}
-          className="flex-none flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600"
+          className="flex-none flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M3 6h18M7 12h10M11 18h2" strokeLinecap="round"/>
@@ -159,7 +159,7 @@ export default function SpiceList({ onEdit, onAdd }) {
           <button
             onClick={() => setCategoryFilter('all')}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              categoryFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+              categoryFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             Alle
@@ -172,7 +172,7 @@ export default function SpiceList({ onEdit, onAdd }) {
                 key={cat.id}
                 onClick={() => setCategoryFilter(f => f === cat.id ? 'all' : cat.id)}
                 className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  active ? `${col.bg} ${col.text} ring-1 ring-current` : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+                  active ? `${col.bg} ${col.text} ring-1 ring-current` : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
               >
                 {cat.label}
@@ -188,7 +188,7 @@ export default function SpiceList({ onEdit, onAdd }) {
           <button
             onClick={() => setLocationFilter('all')}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              locationFilter === 'all' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+              locationFilter === 'all' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             Alle Orte
@@ -198,7 +198,7 @@ export default function SpiceList({ onEdit, onAdd }) {
               key={loc.id}
               onClick={() => setLocationFilter(l => l === loc.id ? 'all' : loc.id)}
               className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                locationFilter === loc.id ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+                locationFilter === loc.id ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
               {loc.name}
@@ -207,7 +207,7 @@ export default function SpiceList({ onEdit, onAdd }) {
           <button
             onClick={() => setLocationFilter(l => l === 'none' ? 'all' : 'none')}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              locationFilter === 'none' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+              locationFilter === 'none' ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             Kein Ort
@@ -294,7 +294,7 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
                 ) : null
               })()}
               {needsReorder && (
-                <span className="text-xs bg-orange-100 text-orange-700 font-semibold rounded-full px-2 py-0.5">
+                <span className="text-xs bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 font-semibold rounded-full px-2 py-0.5">
                   ↓ Nachkaufen
                 </span>
               )}
@@ -302,9 +302,9 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
             {spice.brand && (
               <p className="text-xs text-gray-400 font-medium mt-0.5">{spice.brand}</p>
             )}
-            <p className="text-sm text-gray-500 mt-0.5">{formatAmount(spice)}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{formatAmount(spice)}</p>
             {location && (
-              <span className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-0.5">
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 mt-0.5">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -345,7 +345,7 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
           <p className="text-xs text-gray-400 mt-1">Barcode: {spice.barcode}</p>
         )}
         {spice.notes && (
-          <p className="text-xs text-gray-500 mt-1 italic">{spice.notes}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{spice.notes}</p>
         )}
       </button>
 

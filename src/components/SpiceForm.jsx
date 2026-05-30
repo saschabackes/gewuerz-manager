@@ -160,7 +160,7 @@ export default function SpiceForm({ spice, onClose }) {
             {isEdit ? 'Gewürz bearbeiten' : 'Gewürz hinzufügen'}
           </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition-colors">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
@@ -237,7 +237,7 @@ export default function SpiceForm({ spice, onClose }) {
                 {/* Bild entfernen */}
                 {form.imageUrl && (
                   <button type="button" onClick={() => set('imageUrl', '')}
-                    className="text-xs text-red-400 hover:text-red-600 transition-colors">
+                    className="text-xs text-red-400 hover:text-red-600 dark:text-red-400 transition-colors">
                     Bild entfernen
                   </button>
                 )}
@@ -269,7 +269,7 @@ export default function SpiceForm({ spice, onClose }) {
               <button
                 type="button"
                 onClick={() => setImageResults([])}
-                className="text-xs text-gray-400 hover:text-gray-600 mt-1.5 transition-colors"
+                className="text-xs text-gray-400 hover:text-gray-600 dark:text-gray-300 mt-1.5 transition-colors"
               >
                 Schließen
               </button>
@@ -303,7 +303,7 @@ export default function SpiceForm({ spice, onClose }) {
                   >
                     {suggestions.map(s => (
                       <button key={s} type="button"
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 dark:bg-green-900/30 transition-colors first:rounded-t-xl last:rounded-b-xl"
                         onClick={() => { set('name', s); setShowSuggestions(false) }}
                       >{s}</button>
                     ))}
@@ -334,7 +334,7 @@ export default function SpiceForm({ spice, onClose }) {
                 return (
                   <button key={t.id} type="button" onClick={() => set('packagingType', t.id)}
                     className={`rounded-xl p-3 text-left transition-all border-2 ${
-                      active ? `${col.bg} ${col.text} border-current` : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600'
+                      active ? `${col.bg} ${col.text} border-current` : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                     }`}>
                     <div className="font-semibold text-sm">{t.label}</div>
                     <div className="text-xs mt-0.5 opacity-70 leading-tight">{t.description}</div>
@@ -396,12 +396,12 @@ export default function SpiceForm({ spice, onClose }) {
                   onClick={() => set('fillLevel', lvl)}
                   className={`flex-1 py-2.5 rounded-xl flex flex-col items-center gap-1.5 border-2 transition-all ${
                     form.fillLevel === lvl
-                      ? 'border-green-500 bg-green-50'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
                       : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-gray-200 dark:border-gray-700'
                   }`}
                 >
                   <FillBar level={lvl} />
-                  <span className="text-[10px] text-gray-500 font-medium leading-none">
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-none">
                     {FILL_LABELS[lvl]}
                   </span>
                 </button>
@@ -478,7 +478,7 @@ export default function SpiceForm({ spice, onClose }) {
 
           {/* ── Lookup-Status ───────────────────────────────────── */}
           {lookupStatus === 'found' && (
-            <div className="bg-green-50 text-green-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
               </svg>
@@ -486,7 +486,7 @@ export default function SpiceForm({ spice, onClose }) {
             </div>
           )}
           {lookupStatus === 'found-no-weight' && (
-            <div className="bg-blue-50 text-blue-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
               </svg>
@@ -494,7 +494,7 @@ export default function SpiceForm({ spice, onClose }) {
             </div>
           )}
           {lookupStatus === 'notfound' && (
-            <div className="bg-yellow-50 text-yellow-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
               </svg>
@@ -504,7 +504,7 @@ export default function SpiceForm({ spice, onClose }) {
 
           {/* ── Fehler ──────────────────────────────────────────── */}
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm rounded-xl px-4 py-3">{error}</div>
           )}
 
           {/* ── Buttons ─────────────────────────────────────────── */}

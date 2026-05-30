@@ -49,10 +49,10 @@ function NavItem({ icon, label, active, onClick }) {
     <button
       onClick={onClick}
       className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${
-        active ? 'text-green-600' : 'text-gray-400'
+        active ? 'text-green-600 dark:text-green-400' : 'text-gray-400'
       }`}
     >
-      <span className={`w-6 h-6 ${active ? 'text-green-600' : 'text-gray-400'}`}>{icon}</span>
+      <span className={`w-6 h-6 ${active ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>{icon}</span>
       <span className="text-[10px] font-semibold">{label}</span>
     </button>
   )

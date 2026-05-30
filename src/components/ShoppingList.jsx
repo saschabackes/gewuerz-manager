@@ -110,17 +110,17 @@ export default function ShoppingList() {
 
       {/* Bring!-Banner */}
       {bringActive && (
-        <div className="bg-orange-50 border-b border-orange-100 px-4 py-2.5 flex items-center gap-3">
+        <div className="bg-orange-50 dark:bg-orange-900/30 border-b border-orange-100 px-4 py-2.5 flex items-center gap-3">
           <span className="text-lg leading-none">🛍</span>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-orange-800">Bring! aktiv – Liste: {bringSettings.listName}</p>
-            <p className="text-xs text-orange-600">Artikel gehen direkt in deine Bring!-Liste.</p>
+            <p className="text-xs font-semibold text-orange-800 dark:text-orange-300">Bring! aktiv – Liste: {bringSettings.listName}</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400">Artikel gehen direkt in deine Bring!-Liste.</p>
           </div>
           <a
             href="https://web.getbring.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-none text-xs font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-xl px-3 py-1.5 transition-colors"
+            className="flex-none text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-200 rounded-xl px-3 py-1.5 transition-colors"
           >
             Öffnen
           </a>
@@ -149,7 +149,7 @@ export default function ShoppingList() {
                   <button
                     key={s}
                     type="button"
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 dark:bg-green-900/30 transition-colors first:rounded-t-xl last:rounded-b-xl"
                     onClick={() => { setNewName(s); setNewIsSpice(true); setShowSugg(false) }}
                   >
                     {s}
@@ -204,7 +204,7 @@ export default function ShoppingList() {
           <button
             onClick={refresh}
             disabled={bringRefreshing}
-            className="text-xs text-orange-600 font-semibold px-2 py-1 rounded-lg hover:bg-orange-50 transition-colors flex items-center gap-1 disabled:opacity-40"
+            className="text-xs text-orange-600 dark:text-orange-400 font-semibold px-2 py-1 rounded-lg hover:bg-orange-50 dark:bg-orange-900/30 transition-colors flex items-center gap-1 disabled:opacity-40"
           >
             <svg className={`w-4 h-4 ${bringRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/>
@@ -217,14 +217,14 @@ export default function ShoppingList() {
       {/* Toolbar – eingebaute Liste */}
       {!bringActive && items.length > 0 && (
         <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {items.length} Artikel{checkedCount > 0 ? `, ${checkedCount} erledigt` : ''}
           </span>
           <div className="flex gap-2 items-center">
             {checkedCount > 0 && (
               <button
                 onClick={() => { if (confirm(`${checkedCount} erledigte Artikel löschen?`)) clearCheckedShopping() }}
-                className="text-xs text-red-500 font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                className="text-xs text-red-500 font-semibold px-2 py-1 rounded-lg hover:bg-red-50 dark:bg-red-900/30 transition-colors"
               >
                 Erledigt löschen
               </button>
@@ -232,7 +232,7 @@ export default function ShoppingList() {
             <div className="relative">
               <button
                 onClick={() => setShowExport(v => !v)}
-                className="text-xs text-green-600 font-semibold px-2 py-1 rounded-lg hover:bg-green-50 transition-colors flex items-center gap-1"
+                className="text-xs text-green-600 dark:text-green-400 font-semibold px-2 py-1 rounded-lg hover:bg-green-50 dark:bg-green-900/30 transition-colors flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -279,7 +279,7 @@ export default function ShoppingList() {
         return (
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {bringItemsError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-300">
                 <p className="font-semibold mb-0.5">Bring!-Liste konnte nicht geladen werden</p>
                 <p className="text-xs text-red-500 font-mono break-all">{bringItemsError}</p>
               </div>
@@ -303,8 +303,8 @@ export default function ShoppingList() {
               <>
                 {showSections && (
                   <div className="flex items-center gap-3 pt-1">
-                    <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">🧂 Gewürze</span>
-                    <div className="flex-1 h-px bg-green-100" />
+                    <span className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">🧂 Gewürze</span>
+                    <div className="flex-1 h-px bg-green-100 dark:bg-green-900/40" />
                   </div>
                 )}
                 {visibleSpices.map(item => (
@@ -319,7 +319,7 @@ export default function ShoppingList() {
               <>
                 {showSections && (
                   <div className="flex items-center gap-3 pt-1">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🛒 Einkauf</span>
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">🛒 Einkauf</span>
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
                 )}
@@ -420,7 +420,7 @@ function BringListItem({ item, onRemove, isSpice = false }) {
 
       <button
         onClick={onRemove}
-        className="flex-none p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+        className="flex-none p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
         title="Entfernen"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -488,7 +488,7 @@ function ShoppingItem({ item, isEditing, editName, editAmount, onEditNameChange,
             </svg>
           </button>
         )}
-        <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>

@@ -207,7 +207,7 @@ export default function HelpView({ onClose }) {
             Hilfe &amp; Anleitung
           </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
@@ -224,7 +224,7 @@ export default function HelpView({ onClose }) {
 
           {HELP_GROUPS.map(group => (
             <div key={group.group} className="mb-5">
-              <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">
+              <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
                 {group.group}
               </h3>
               <div className="space-y-1.5">

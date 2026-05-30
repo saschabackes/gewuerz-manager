@@ -45,14 +45,14 @@ export default function SettingsView({ onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100 dark:border-gray-700">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round"/>
               <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Einstellungen
           </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition-colors">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
@@ -66,7 +66,7 @@ export default function SettingsView({ onClose }) {
               className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                 tab === 'settings'
                   ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
               }`}
             >
               Allgemein
@@ -77,7 +77,7 @@ export default function SettingsView({ onClose }) {
                 className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   tab === 'admin'
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                 }`}
               >
                 Mitglieder
@@ -89,7 +89,7 @@ export default function SettingsView({ onClose }) {
                 className={`relative flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   tab === 'super'
                     ? 'bg-rose-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                 }`}
               >
                 Betreiber
@@ -206,8 +206,8 @@ function HouseholdSection() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
             <polyline points="9 22 9 12 15 12 15 22" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -267,14 +267,14 @@ function HouseholdSection() {
             </button>
             <button
               onClick={copyCode}
-              className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 text-xs font-semibold rounded-xl px-3 py-2 transition-colors hover:bg-gray-200"
+              className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold rounded-xl px-3 py-2 transition-colors hover:bg-gray-200"
             >
               {copied ? (
                 <>
-                  <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span className="text-green-600">Kopiert</span>
+                  <span className="text-green-600 dark:text-green-400">Kopiert</span>
                 </>
               ) : (
                 <>
@@ -314,10 +314,10 @@ function HouseholdSection() {
         </form>
 
         {joinError && (
-          <div className="mt-2 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{joinError}</div>
+          <div className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2">{joinError}</div>
         )}
         {joinSuccess && (
-          <div className="mt-2 text-xs text-green-700 bg-green-50 rounded-xl px-3 py-2">{joinSuccess}</div>
+          <div className="mt-2 text-xs text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 rounded-xl px-3 py-2">{joinSuccess}</div>
         )}
       </div>
 
@@ -330,9 +330,9 @@ function HouseholdSection() {
           Haushalt verlassen und privaten Haushalt erstellen
         </button>
       ) : (
-        <div className="bg-red-50 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-red-700 mb-1">Haushalt wirklich verlassen?</p>
-          <p className="text-xs text-red-600 mb-3">
+        <div className="bg-red-50 dark:bg-red-900/30 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1">Haushalt wirklich verlassen?</p>
+          <p className="text-xs text-red-600 dark:text-red-400 mb-3">
             Du verlässt „{household?.name}" und bekommst einen neuen leeren privaten Haushalt. Bestehende Daten bleiben im alten Haushalt.
           </p>
           <div className="flex gap-2">
@@ -387,8 +387,8 @@ function InviteSection() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -400,28 +400,28 @@ function InviteSection() {
         <button
           onClick={() => setMode('household')}
           className={`rounded-2xl p-3 text-left border-2 transition-all ${
-            mode === 'household' ? 'border-green-500 bg-green-50' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+            mode === 'household' ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
           }`}
         >
           <div className="text-lg mb-0.5">🏠</div>
           <div className="font-semibold text-sm text-gray-800 dark:text-gray-100">Familie / Mitbewohner</div>
-          <div className="text-xs text-gray-500 mt-0.5 leading-tight">Gemeinsame Gewürzsammlung verwalten</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">Gemeinsame Gewürzsammlung verwalten</div>
         </button>
         <button
           onClick={() => setMode('friend')}
           className={`rounded-2xl p-3 text-left border-2 transition-all ${
-            mode === 'friend' ? 'border-blue-500 bg-blue-50' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+            mode === 'friend' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
           }`}
         >
           <div className="text-lg mb-0.5">👤</div>
           <div className="font-semibold text-sm text-gray-800 dark:text-gray-100">Freunde</div>
-          <div className="text-xs text-gray-500 mt-0.5 leading-tight">Eigene Sammlung – unabhängig von dir</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">Eigene Sammlung – unabhängig von dir</div>
         </button>
       </div>
 
       {/* Hinweis je nach Modus */}
       <div className={`text-xs rounded-xl px-3 py-2 mb-3 ${
-        mode === 'household' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+        mode === 'household' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
       }`}>
         {mode === 'household'
           ? `Einladungscode ${displayCode} wird automatisch eingefügt. Dein Kontakt tritt „${houseName}" bei.`
@@ -431,7 +431,7 @@ function InviteSection() {
 
       {/* Persönliche Nachricht */}
       <div className="mb-3">
-        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">
           Persönliche Nachricht (optional)
         </label>
         <textarea
@@ -449,7 +449,7 @@ function InviteSection() {
       {/* Vorschau */}
       <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 mb-3 border border-gray-100 dark:border-gray-700">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vorschau</p>
-        <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">{buildMessage()}</pre>
+        <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">{buildMessage()}</pre>
       </div>
 
       {/* Aktionen */}
@@ -464,7 +464,7 @@ function InviteSection() {
         <button onClick={handleCopy}
           className="flex-1 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl py-3 text-sm font-semibold hover:bg-gray-200 transition-colors">
           {copied
-            ? <><svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="text-green-600">Kopiert!</span></>
+            ? <><svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="text-green-600 dark:text-green-400">Kopiert!</span></>
             : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/></svg>Kopieren</>
           }
         </button>
@@ -547,8 +547,8 @@ function MembersSection() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -562,7 +562,7 @@ function MembersSection() {
         <p className="text-sm text-gray-400 text-center py-4">Lade Mitglieder…</p>
       )}
       {error && (
-        <div className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-3">{error}</div>
+        <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2 mb-3">{error}</div>
       )}
 
       <div className="space-y-2">
@@ -583,13 +583,13 @@ function MembersSection() {
                     <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{m.name}</span>
                     <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${
                       m.role === 'owner'
-                        ? 'bg-indigo-100 text-indigo-700'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                     }`}>
                       {m.role === 'owner' ? 'Inhaber' : 'Mitglied'}
                     </span>
                     {m.isBanned && (
-                      <span className="text-xs bg-red-100 text-red-600 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>
+                      <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>
                     )}
                     {isMe && (
                       <span className="text-xs text-gray-400">(du)</span>
@@ -625,7 +625,7 @@ function MembersSection() {
                       if (!confirm(`Passwort-Reset-Mail an ${m.email} senden?`)) return
                       handleAction(() => adminResetPassword(household.id, m.email))
                     }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-xl px-3 py-2.5 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-xl px-3 py-2.5 hover:bg-blue-100 dark:bg-blue-900/40 transition-colors disabled:opacity-50"
                   >
                     <svg className="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" strokeLinecap="round" strokeLinejoin="round"/>
@@ -645,8 +645,8 @@ function MembersSection() {
                     }}
                     className={`flex items-center gap-1.5 text-xs font-semibold rounded-xl px-3 py-2.5 transition-colors disabled:opacity-50 ${
                       m.isBanned
-                        ? 'text-green-700 bg-green-50 hover:bg-green-100'
-                        : 'text-red-700 bg-red-50 hover:bg-red-100'
+                        ? 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:bg-green-900/40'
+                        : 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:bg-red-900/40'
                     }`}
                   >
                     <svg className="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -669,7 +669,7 @@ function MembersSection() {
                       if (!confirm(msg)) return
                       handleAction(() => adminChangeRole(household.id, m.id, newRole))
                     }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-xl px-3 py-2.5 hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl px-3 py-2.5 hover:bg-indigo-100 dark:bg-indigo-900/40 transition-colors disabled:opacity-50"
                   >
                     <svg className="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round"/>
@@ -786,8 +786,8 @@ function SuperAdminSection() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 bg-rose-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-rose-100 dark:bg-rose-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -833,7 +833,7 @@ function SuperAdminSection() {
       </button>
 
       {error && (
-        <div className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</div>
+        <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2">{error}</div>
       )}
 
       {/* Suche */}
@@ -869,9 +869,9 @@ function SuperAdminSection() {
                       {u.email.toLowerCase() === SUPER_ADMIN_EMAIL && (
                         <span className="text-xs bg-rose-600 text-white font-semibold rounded-full px-2 py-0.5">Betreiber</span>
                       )}
-                      {isNew(u) && <span className="text-xs bg-rose-100 text-rose-600 font-semibold rounded-full px-2 py-0.5">Neu</span>}
-                      {u.isBanned && <span className="text-xs bg-red-100 text-red-600 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>}
-                      {!u.confirmed && <span className="text-xs bg-yellow-100 text-yellow-700 font-semibold rounded-full px-2 py-0.5">Unbestätigt</span>}
+                      {isNew(u) && <span className="text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-semibold rounded-full px-2 py-0.5">Neu</span>}
+                      {u.isBanned && <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>}
+                      {!u.confirmed && <span className="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 font-semibold rounded-full px-2 py-0.5">Unbestätigt</span>}
                     </div>
                     <p className="text-xs text-gray-400 truncate">{u.email}</p>
                     <p className="text-xs text-gray-400">
@@ -894,7 +894,7 @@ function SuperAdminSection() {
                     <button
                       disabled={busy}
                       onClick={() => { if (confirm(`Passwort-Reset-Mail an ${u.email}?`)) act(() => superResetPassword(u.email), false) }}
-                      className="flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-xl px-3 py-2.5 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-xl px-3 py-2.5 hover:bg-blue-100 dark:bg-blue-900/40 transition-colors disabled:opacity-50"
                     >
                       Passwort reset
                     </button>
@@ -905,7 +905,7 @@ function SuperAdminSection() {
                         if (confirm(msg)) act(() => superBanUser(u.id, !u.isBanned))
                       }}
                       className={`flex items-center justify-center gap-1.5 text-xs font-semibold rounded-xl px-3 py-2.5 transition-colors disabled:opacity-50 ${
-                        u.isBanned ? 'text-green-700 bg-green-50 hover:bg-green-100' : 'text-red-700 bg-red-50 hover:bg-red-100'
+                        u.isBanned ? 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:bg-green-900/40' : 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:bg-red-900/40'
                       }`}
                     >
                       {u.isBanned ? 'Entsperren' : 'Sperren'}
@@ -987,7 +987,7 @@ function BringSection() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center text-base leading-none">
+        <div className="w-7 h-7 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center text-base leading-none">
           🛍
         </div>
         <h3 className="font-bold text-gray-800 dark:text-gray-100">Einkaufsliste</h3>
@@ -1000,14 +1000,14 @@ function BringSection() {
             <div className="flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Bring!</span>
-                <span className="text-xs bg-green-100 text-green-700 font-semibold rounded-full px-2 py-0.5">Aktiv</span>
+                <span className="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-semibold rounded-full px-2 py-0.5">Aktiv</span>
               </div>
-              <p className="text-xs text-gray-500">Liste: <span className="font-medium text-gray-700 dark:text-gray-200">{bringSettings.listName}</span></p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Liste: <span className="font-medium text-gray-700 dark:text-gray-200">{bringSettings.listName}</span></p>
               <p className="text-xs text-gray-400">{bringSettings.email}</p>
             </div>
             <button
               onClick={handleDisconnect}
-              className="text-xs text-red-500 font-semibold px-3 py-1.5 rounded-xl hover:bg-red-50 transition-colors flex-none"
+              className="text-xs text-red-500 font-semibold px-3 py-1.5 rounded-xl hover:bg-red-50 dark:bg-red-900/30 transition-colors flex-none"
             >
               Trennen
             </button>
@@ -1037,7 +1037,7 @@ function BringSection() {
 
       {/* Login-Formular */}
       {step === 'login' && (
-        <form onSubmit={handleLogin} className="border border-dashed border-orange-200 rounded-2xl p-4 space-y-3 bg-orange-50/30">
+        <form onSubmit={handleLogin} className="border border-dashed border-orange-200 rounded-2xl p-4 space-y-3 bg-orange-50/30 dark:bg-orange-900/30">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">Bring!-Konto anmelden</p>
           <input
             type="email"
@@ -1057,7 +1057,7 @@ function BringSection() {
             required
             autoComplete="current-password"
           />
-          {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+          {error && <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2">{error}</p>}
           <div className="flex gap-2">
             <button
               type="submit"
@@ -1079,7 +1079,7 @@ function BringSection() {
 
       {/* Listauswahl */}
       {step === 'selectList' && (
-        <div className="border border-dashed border-orange-200 rounded-2xl p-4 bg-orange-50/30">
+        <div className="border border-dashed border-orange-200 rounded-2xl p-4 bg-orange-50/30 dark:bg-orange-900/30">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Welche Liste verwenden?</p>
           {lists.length === 0 && (
             <p className="text-sm text-gray-400">Keine Listen gefunden.</p>
@@ -1101,11 +1101,11 @@ function BringSection() {
           </div>
           <button
             onClick={() => { setStep('login'); setError('') }}
-            className="text-xs text-gray-400 hover:text-gray-600 mt-3 w-full text-center transition-colors"
+            className="text-xs text-gray-400 hover:text-gray-600 dark:text-gray-300 mt-3 w-full text-center transition-colors"
           >
             Zurück
           </button>
-          {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-2">{error}</p>}
+          {error && <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2 mt-2">{error}</p>}
         </div>
       )}
     </div>
@@ -1174,8 +1174,8 @@ function CategoriesSection() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -1234,7 +1234,7 @@ function CategoriesSection() {
                 </button>
                 <button
                   onClick={() => handleDelete(cat)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1247,7 +1247,7 @@ function CategoriesSection() {
       </div>
 
       <form onSubmit={handleAdd} className="space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Neue Kategorie</p>
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Neue Kategorie</p>
         <input
           type="text"
           className="input py-2.5 text-sm"
@@ -1334,8 +1334,8 @@ function ExportSection() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -1355,7 +1355,7 @@ function ExportSection() {
           onClick={handleExport}
           className={`w-full flex items-center justify-center gap-2 rounded-2xl py-2.5 text-sm font-semibold transition-colors ${
             done
-              ? 'bg-green-100 text-green-700'
+              ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
         >
@@ -1425,8 +1425,8 @@ function LocationsSection() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -1458,7 +1458,7 @@ function LocationsSection() {
           }
           return (
             <div key={loc.id} className="card px-4 py-3 flex items-center gap-3">
-              <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center flex-none">
+              <div className="w-8 h-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center flex-none">
                 <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -1478,7 +1478,7 @@ function LocationsSection() {
                   </svg>
                 </button>
                 <button onClick={() => handleDelete(loc)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                  className="p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -1490,7 +1490,7 @@ function LocationsSection() {
       </div>
 
       <form onSubmit={handleAdd} className="space-y-2 border-t border-gray-100 dark:border-gray-700 pt-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Neuer Lagerort</p>
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Neuer Lagerort</p>
         <input type="text" className="input py-2.5 text-sm" placeholder="z.B. Oberschrank links, Kiste 1…"
           value={newName} onChange={e => setNewName(e.target.value)} />
         <input type="text" className="input py-2.5 text-sm" placeholder="Beschreibung (optional)"

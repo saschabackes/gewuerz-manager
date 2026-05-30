@@ -102,7 +102,7 @@ export default function BarcodeScanner({ onDetected, onClose }) {
               <p className="text-xs text-gray-400">EAN-13 / EAN-8 / Code128</p>
             </div>
             <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition-colors">
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
@@ -114,7 +114,7 @@ export default function BarcodeScanner({ onDetected, onClose }) {
               {cameras.map((cam, i) => (
                 <button key={cam.id} onClick={() => switchCamera(cam.id)}
                   className={`text-xs rounded-full px-3 py-1 font-medium transition-colors ${
-                    activeCamId === cam.id ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+                    activeCamId === cam.id ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}>
                   {cam.label || `Kamera ${i + 1}`}
                 </button>
@@ -144,7 +144,7 @@ export default function BarcodeScanner({ onDetected, onClose }) {
           {/* Hinweis / Fehler */}
           <div className="px-4 py-3">
             {error ? (
-              <div className="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3 mb-3">{error}</div>
+              <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm rounded-xl px-4 py-3 mb-3">{error}</div>
             ) : !loading && !looking && (
               <p className="text-xs text-gray-400 text-center mb-3">
                 Barcode in den <strong>weißen Rahmen</strong> halten · ca. 10–20 cm Abstand
