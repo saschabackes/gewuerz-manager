@@ -490,6 +490,18 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+// Klartext-Beschreibung der Haushaltszugehörigkeit (Betreiber-Ansicht).
+// „Inhaber" wird nur bei tatsächlich geteilten Haushalten angezeigt – ein
+// allein wohnender Nutzer ist schlicht in seinem „eigenen Haushalt".
+function householdLabel(u) {
+  if (!u.householdName || u.householdName === '—' || u.role === '—') return 'Kein Haushalt'
+  if (u.role === 'owner') {
+    if ((u.householdSize ?? 1) <= 1) return 'Eigener Haushalt'
+    return `Inhaber · ${u.householdName} (${u.householdSize} Mitglieder)`
+  }
+  return `Mitglied · ${u.householdName}`
+}
+
 function MembersSection() {
   const { household, user } = useStore()
   const isOwner = household?.role === 'owner'
@@ -860,7 +872,7 @@ function SuperAdminSection() {
                     </div>
                     <p className="text-xs text-gray-400 truncate">{u.email}</p>
                     <p className="text-xs text-gray-400">
-                      {u.householdName !== '—' ? `${u.householdName} · ${u.role === 'owner' ? 'Inhaber' : 'Mitglied'}` : 'Kein Haushalt'}
+                      {householdLabel(u)}
                       {u.lastSignIn ? ` · zuletzt ${fmtDate(u.lastSignIn)}` : ''}
                     </p>
                   </div>

@@ -86,12 +86,18 @@ exports.handler = async function(event) {
       )
       var memberships = await membRes.json().catch(function() { return [] })
       var byUser = {}
+      var householdCounts = {}
       if (Array.isArray(memberships)) {
+        // Mitglieder pro Haushalt zählen
+        memberships.forEach(function(m) {
+          householdCounts[m.household_id] = (householdCounts[m.household_id] || 0) + 1
+        })
         memberships.forEach(function(m) {
           byUser[m.user_id] = {
-            role:          m.role,
-            householdId:   m.household_id,
-            householdName: (m.households && m.households.name) || '—',
+            role:           m.role,
+            householdId:    m.household_id,
+            householdName:  (m.households && m.households.name) || '—',
+            householdSize:  householdCounts[m.household_id] || 1,
           }
         })
       }
@@ -109,6 +115,7 @@ exports.handler = async function(event) {
           isBanned:      !!(u.banned_until && new Date(u.banned_until) > now),
           householdName: hm.householdName || '—',
           role:          hm.role || '—',
+          householdSize: hm.householdSize || 0,
         }
       })
       return ok(result)
