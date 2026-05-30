@@ -135,6 +135,13 @@ const useStore = create((set, get) => ({
     if (error) throw error
   },
 
+  async resetPassword(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin,
+    })
+    if (error) throw error
+  },
+
   async signOut() {
     await supabase.auth.signOut({ scope: 'local' })
     set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, _initialized: false })

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import useStore from '../store/useStore'
 
 export default function Login() {
-  const { signIn, signUp } = useStore()
-  const [mode, setMode] = useState('login')
+  const { signIn, signUp, resetPassword } = useStore()
+  const [mode, setMode] = useState('login')  // 'login' | 'register' | 'reset'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,11 +24,13 @@ export default function Login() {
         setMessage('Konto erstellt! Du kannst dich jetzt anmelden.')
         setMode('login')
         setPassword('')
+      } else if (mode === 'reset') {
+        await resetPassword(email)
+        setMessage('Reset-Mail gesendet! Bitte prüfe dein Postfach und klicke den Link.')
       } else {
         await signIn(email.trim(), password)
       }
     } catch (err) {
-      // Supabase-Fehlermeldungen eingedeutscht
       const msg = err.message ?? String(err)
       if (msg.includes('Invalid login credentials'))
         setError('E-Mail oder Passwort falsch.')
@@ -60,11 +62,16 @@ export default function Login() {
 
       {/* Form Card */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-5">
-          {mode === 'login' ? 'Anmelden' : 'Neues Konto erstellen'}
+        <h2 className="text-lg font-bold text-gray-900 mb-1">
+          {mode === 'login' ? 'Anmelden' : mode === 'register' ? 'Neues Konto erstellen' : 'Passwort zurücksetzen'}
         </h2>
+        {mode === 'reset' && (
+          <p className="text-sm text-gray-500 mb-4">
+            Gib deine E-Mail-Adresse ein. Du bekommst einen Link zum Zurücksetzen.
+          </p>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {mode === 'register' && (
             <div>
               <label className="label">Name</label>
@@ -94,17 +101,30 @@ export default function Login() {
             />
           </div>
 
-          <div>
-            <label className="label">Passwort</label>
-            <input
-              type="password"
-              className="input"
-              placeholder={mode === 'register' ? 'Mindestens 6 Zeichen' : 'Dein Passwort'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          {mode !== 'reset' && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="label mb-0">Passwort</label>
+                {mode === 'login' && (
+                  <button
+                    type="button"
+                    onClick={() => switchMode('reset')}
+                    className="text-xs text-gray-400 hover:text-green-600 transition-colors"
+                  >
+                    Vergessen?
+                  </button>
+                )}
+              </div>
+              <input
+                type="password"
+                className="input"
+                placeholder={mode === 'register' ? 'Mindestens 6 Zeichen' : 'Dein Passwort'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
           {message && (
             <div className="bg-green-50 text-green-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
@@ -130,23 +150,31 @@ export default function Login() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
-            ) : mode === 'login' ? 'Anmelden' : 'Konto erstellen'}
+            ) : mode === 'login' ? 'Anmelden' : mode === 'register' ? 'Konto erstellen' : 'Reset-Mail senden'}
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          {mode === 'login' ? (
+        <div className="mt-4 text-center space-y-2">
+          {mode === 'login' && (
             <p className="text-sm text-gray-500">
               Noch kein Konto?{' '}
               <button onClick={() => switchMode('register')} className="text-green-600 font-semibold">
                 Registrieren
               </button>
             </p>
-          ) : (
+          )}
+          {mode === 'register' && (
             <p className="text-sm text-gray-500">
               Bereits registriert?{' '}
               <button onClick={() => switchMode('login')} className="text-green-600 font-semibold">
                 Anmelden
+              </button>
+            </p>
+          )}
+          {mode === 'reset' && (
+            <p className="text-sm text-gray-500">
+              <button onClick={() => switchMode('login')} className="text-green-600 font-semibold">
+                ← Zurück zur Anmeldung
               </button>
             </p>
           )}
