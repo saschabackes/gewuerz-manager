@@ -117,8 +117,6 @@ export default function SettingsView({ onClose }) {
             <BringSection />
             <div className="border-t border-gray-100 dark:border-gray-700" />
             <ExportSection />
-            <div className="border-t border-gray-100 dark:border-gray-700" />
-            <HelpSection />
           </div>
         )}
 
@@ -1305,106 +1303,6 @@ function AppearanceSection() {
             <span className="text-xl">{o.emoji}</span>
             <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{o.label}</span>
           </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Hilfe ─────────────────────────────────────────────────────────────────────
-
-const HELP_ITEMS = [
-  {
-    emoji: '🌿',
-    title: 'Gewürz hinzufügen',
-    body: 'Tippe auf das grüne + in der Mitte der Navigation. Pflichtfelder sind Name und Verpackungstyp – je nach Typ kommen Gramm und/oder Anzahl dazu. Alle anderen Felder sind optional.',
-  },
-  {
-    emoji: '📸',
-    title: 'Produktfoto',
-    body: 'Im Bearbeitungsformular gibt es drei Wege: Kamera / Galerie (eigenes Foto), URL einfügen oder „Foto aus Datenbank suchen" – dabei werden Google-Bilder nach Hersteller + Gewürzname durchsucht. Antippen des Thumbnails in der Karte vergrößert das Bild.',
-  },
-  {
-    emoji: '📊',
-    title: 'Füllstand',
-    body: 'Die 4 kleinen Balken rechts auf jeder Karte zeigen den Vorrat. Antippen cycelt eine Stufe runter: Voll → Gut → Halb → Wenig → Fast leer. Tippe erneut auf „Fast leer" um zurück auf Voll zu setzen (neue Packung gekauft).',
-  },
-  {
-    emoji: '↓',
-    title: 'Nachkaufen-Hinweis',
-    body: 'Der orangene „↓ Nachkaufen"-Badge erscheint erst wenn ALLE Einheiten einer Sorte auf „Wenig" oder „Fast leer" stehen. Hast du z.B. zwei Päckchen Curry, erscheint der Hinweis erst wenn beide niedrig sind. Im Stat-Streifen oben kannst du direkt auf die Nachkaufen-Liste filtern.',
-  },
-  {
-    emoji: '🛒',
-    title: 'Einkaufsliste & Bring!',
-    body: 'Karte antippen → aufklappen → „Einkaufen". Optional: Bring! in den Einstellungen verknüpfen – dann landen Artikel direkt in deiner Bring!-Liste mit automatischem Gewürz-Tag. Die Ansicht zeigt nur Gewürze oder alle Artikel (umschaltbar).',
-  },
-  {
-    emoji: '🏷️',
-    title: 'Kategorien',
-    body: 'Kategorien (z.B. Kräuter, Asiatisch, Scharf) legst du in Einstellungen → Kategorien an. Du wählst einen Namen und eine Farbe. Danach ist die Kategorie beim Bearbeiten eines Gewürzes auswählbar und dient als Filterchip in der Hauptliste.',
-  },
-  {
-    emoji: '📦',
-    title: 'Lagerorte',
-    body: 'Lagerorte (z.B. Oberschrank, Keller, Schublade) legst du in Einstellungen → Lagerorte an. Jedem Gewürz kann ein Lagerort zugewiesen werden – er erscheint dann als orangener Hinweis auf der Karte und ist als Filter nutzbar.',
-  },
-  {
-    emoji: '📅',
-    title: 'Ablaufdatum (MHD)',
-    body: 'Optional beim Gewürz einzutragen. Läuft es in weniger als 60 Tagen ab → orangenes Badge. Bereits abgelaufen → rotes Badge mit ⚠. Im Stat-Streifen oben siehst du die Gesamtzahl. Die MHD-Ansicht (Kalender-Icon in der Navigation) zeigt alle Gewürze sortiert nach Datum.',
-  },
-  {
-    emoji: '🏠',
-    title: 'Haushalt teilen',
-    body: 'Einstellungen → Verwaltung → Einladen. Für Familie/Mitbewohner: Einladungscode teilen – sie treten deinem Haushalt bei und sehen deine Gewürzsammlung. Für Freunde: App-Empfehlung ohne Code – sie erstellen ihren eigenen unabhängigen Haushalt.',
-  },
-  {
-    emoji: '💾',
-    title: 'Datensicherung',
-    body: 'Einstellungen → Datensicherung. Exportiert alle Gewürze, Kategorien und Lagerorte als JSON-Datei auf dein Gerät. Empfehlung: einmal pro Woche exportieren als lokales Backup. Die Datei enthält alle Daten lesbar und kann bei Bedarf manuell ausgelesen werden.',
-  },
-]
-
-function HelpSection() {
-  const [openIdx, setOpenIdx] = useState(null)
-
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-sky-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="12" cy="17" r=".5" fill="currentColor"/>
-          </svg>
-        </div>
-        <h3 className="font-bold text-gray-800 dark:text-gray-100">Hilfe</h3>
-      </div>
-
-      <div className="space-y-1">
-        {HELP_ITEMS.map((item, i) => (
-          <div key={i} className="card overflow-hidden">
-            <button
-              onClick={() => setOpenIdx(openIdx === i ? null : i)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left"
-            >
-              <span className="text-base flex-none">{item.emoji}</span>
-              <span className="flex-1 font-semibold text-sm text-gray-800 dark:text-gray-100">{item.title}</span>
-              <svg
-                className={`w-4 h-4 text-gray-400 flex-none transition-transform ${openIdx === i ? 'rotate-180' : ''}`}
-                fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
-              >
-                <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            {openIdx === i && (
-              <div className="px-4 pb-4 pt-0">
-                <div className="h-px bg-gray-100 dark:bg-gray-700 mb-3" />
-                <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
-              </div>
-            )}
-          </div>
         ))}
       </div>
     </div>
