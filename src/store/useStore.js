@@ -160,7 +160,7 @@ const useStore = create((set, get) => ({
     // Bestehende Mitgliedschaft suchen (limit(1) statt maybeSingle, um mehrere Zeilen zu tolerieren)
     const { data: memberships, error: membershipErr } = await supabase
       .from('household_members')
-      .select('household_id, households(id, name, invite_code)')
+      .select('household_id, role, households(id, name, invite_code)')
       .eq('user_id', user.id)
       .order('joined_at', { ascending: true })
       .limit(1)
