@@ -6,12 +6,33 @@ import { adminGetMembers, adminResetPassword, adminBanUser, adminRemoveMember, a
 
 const SUPER_ADMIN_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || '').toLowerCase()
 
+const LAST_SEEN_KEY = 'gewuerz_superadmin_lastseen'
+function getLastSeen() {
+  return localStorage.getItem(LAST_SEEN_KEY) || '1970-01-01T00:00:00Z'
+}
+function markSeen() {
+  localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString())
+}
+
 export default function SettingsView({ onClose }) {
   const { household, user } = useStore()
   const isOwner      = household?.role === 'owner'
   const isSuperAdmin = !!SUPER_ADMIN_EMAIL && (user?.email || '').toLowerCase() === SUPER_ADMIN_EMAIL
   const [tab, setTab] = useState('settings')  // 'settings' | 'admin' | 'super'
+  const [newUserCount, setNewUserCount] = useState(0)
   const showTabs = isOwner || isSuperAdmin
+
+  // Beim Öffnen (als Super-Admin): zählen wie viele Nutzer seit dem letzten Besuch neu sind
+  useEffect(() => {
+    if (!isSuperAdmin) return
+    const since = getLastSeen()
+    superListUsers()
+      .then(users => {
+        const count = (users || []).filter(u => u.createdAt && u.createdAt > since).length
+        setNewUserCount(count)
+      })
+      .catch(() => {})
+  }, [isSuperAdmin])
 
   return (
     <>
@@ -64,14 +85,19 @@ export default function SettingsView({ onClose }) {
             )}
             {isSuperAdmin && (
               <button
-                onClick={() => setTab('super')}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                onClick={() => { setTab('super'); setNewUserCount(0) }}
+                className={`relative flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   tab === 'super'
                     ? 'bg-rose-600 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 Betreiber
+                {newUserCount > 0 && tab !== 'super' && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow">
+                    {newUserCount}
+                  </span>
+                )}
               </button>
             )}
           </div>
@@ -677,6 +703,8 @@ function SuperAdminSection() {
   const [search, setSearch]   = useState('')
   const [expanded, setExpanded] = useState(null)
   const [busy, setBusy]       = useState(false)
+  // Zeitpunkt des letzten Besuchs einmalig festhalten (für „Neu"-Markierung)
+  const [seenBefore] = useState(() => getLastSeen())
 
   useEffect(() => { loadAll() }, [])
 
@@ -687,6 +715,7 @@ function SuperAdminSection() {
       const [u, s] = await Promise.all([superListUsers(), superStats().catch(() => null)])
       setUsers(Array.isArray(u) ? u : [])
       setStats(s)
+      markSeen()  // Besuch vermerken → Tab-Badge ist beim nächsten Öffnen zurückgesetzt
     } catch (e) {
       setError(e.message)
     } finally {
@@ -727,11 +756,19 @@ function SuperAdminSection() {
     }
   }
 
-  const filtered = users.filter(u => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return u.email.toLowerCase().includes(q) || u.name.toLowerCase().includes(q) || (u.householdName || '').toLowerCase().includes(q)
-  })
+  const isNew = u => u.createdAt && u.createdAt > seenBefore
+
+  const filtered = users
+    .filter(u => {
+      if (!search.trim()) return true
+      const q = search.toLowerCase()
+      return u.email.toLowerCase().includes(q) || u.name.toLowerCase().includes(q) || (u.householdName || '').toLowerCase().includes(q)
+    })
+    .sort((a, b) => {
+      // Neue zuerst, dann nach Registrierungsdatum absteigend
+      if (isNew(a) !== isNew(b)) return isNew(a) ? -1 : 1
+      return (b.createdAt || '').localeCompare(a.createdAt || '')
+    })
 
   return (
     <div className="space-y-5">
@@ -817,6 +854,7 @@ function SuperAdminSection() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-semibold text-gray-900 text-sm">{u.name}</span>
+                      {isNew(u) && <span className="text-xs bg-rose-100 text-rose-600 font-semibold rounded-full px-2 py-0.5">Neu</span>}
                       {u.isBanned && <span className="text-xs bg-red-100 text-red-600 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>}
                       {!u.confirmed && <span className="text-xs bg-yellow-100 text-yellow-700 font-semibold rounded-full px-2 py-0.5">Unbestätigt</span>}
                     </div>
