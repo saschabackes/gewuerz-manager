@@ -21,3 +21,11 @@ export const adminResetPassword = (hId, email)       => callAdmin('resetPassword
 export const adminBanUser       = (hId, targetId, ban) => callAdmin('banUser',    hId, { targetId, ban })
 export const adminRemoveMember  = (hId, targetId)    => callAdmin('removeMember', hId, { targetId })
 export const adminChangeRole    = (hId, targetId, role) => callAdmin('changeRole', hId, { targetId, role })
+
+// ── Super-Admin (App-Betreiber) – kein householdId nötig ──────────────────────
+export const superListUsers     = ()             => callAdmin('superListUsers',    null)
+export const superBanUser       = (targetId, ban) => callAdmin('superBanUser',     null, { targetId, ban })
+export const superResetPassword = (email)        => callAdmin('superResetPassword', null, { email })
+export const superDeleteUser    = (targetId)     => callAdmin('superDeleteUser',    null, { targetId })
+export const superBackup        = ()             => callAdmin('superBackup',        null)
+export const superStats         = ()             => callAdmin('superStats',         null)

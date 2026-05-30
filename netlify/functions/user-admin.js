@@ -40,7 +40,7 @@ exports.handler = async function(event) {
   var action      = body.action
   var accessToken = body.accessToken
   var householdId = body.householdId
-  if (!accessToken || !householdId) return err('accessToken und householdId erforderlich', 400)
+  if (!accessToken) return err('accessToken erforderlich', 400)
 
   // ── JWT verifizieren (Supabase prüft Signatur) ────────────────────────────
   var verifyRes = await fetch(sbUrl + '/auth/v1/user', {
@@ -48,7 +48,143 @@ exports.handler = async function(event) {
   })
   var caller = await verifyRes.json().catch(function() { return {} })
   if (!verifyRes.ok || !caller.id) return err('Ungültiges oder abgelaufenes Token', 401)
-  var callerId = caller.id
+  var callerId    = caller.id
+  var callerEmail = (caller.email || '').toLowerCase()
+
+  // ── Helper: Auth-User-Details laden ──────────────────────────────────────
+  async function getAuthUser(userId) {
+    var r = await fetch(sbUrl + '/auth/v1/admin/users/' + userId, { headers: authH })
+    return r.ok ? r.json() : null
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SUPER-ADMIN-AKTIONEN (App-Betreiber) – Auth via SUPER_ADMIN_EMAIL
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (action && action.indexOf('super') === 0) {
+    var superEmail = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase()
+    if (!superEmail) return err('Super-Admin nicht konfiguriert (SUPER_ADMIN_EMAIL fehlt)')
+    if (callerEmail !== superEmail) return err('Keine Berechtigung – nur der App-Betreiber', 403)
+
+    // Alle Nutzer der App auflisten (paginiert, max 200)
+    if (action === 'superListUsers') {
+      var allUsers = []
+      var page = 1
+      while (page <= 4) {
+        var lr = await fetch(sbUrl + '/auth/v1/admin/users?page=' + page + '&per_page=50', { headers: authH })
+        if (!lr.ok) break
+        var ld = await lr.json().catch(function() { return {} })
+        var batch = (ld && ld.users) || []
+        allUsers = allUsers.concat(batch)
+        if (batch.length < 50) break
+        page++
+      }
+
+      // Haushalts-Mitgliedschaften für alle Nutzer laden (Name des Haushalts)
+      var membRes = await fetch(
+        sbUrl + '/rest/v1/household_members?select=user_id,role,household_id,households(name)',
+        { headers: dbH }
+      )
+      var memberships = await membRes.json().catch(function() { return [] })
+      var byUser = {}
+      if (Array.isArray(memberships)) {
+        memberships.forEach(function(m) {
+          byUser[m.user_id] = {
+            role:          m.role,
+            householdId:   m.household_id,
+            householdName: (m.households && m.households.name) || '—',
+          }
+        })
+      }
+
+      var now = new Date()
+      var result = allUsers.map(function(u) {
+        var hm = byUser[u.id] || {}
+        return {
+          id:            u.id,
+          email:         u.email || '',
+          name:          (u.user_metadata && u.user_metadata.name) || (u.email && u.email.split('@')[0]) || 'Unbekannt',
+          createdAt:     u.created_at || null,
+          lastSignIn:    u.last_sign_in_at || null,
+          confirmed:     !!u.email_confirmed_at,
+          isBanned:      !!(u.banned_until && new Date(u.banned_until) > now),
+          householdName: hm.householdName || '—',
+          role:          hm.role || '—',
+        }
+      })
+      return ok(result)
+    }
+
+    // Beliebigen Nutzer sperren / entsperren
+    if (action === 'superBanUser') {
+      if (!body.targetId) return err('targetId erforderlich')
+      if (body.targetId === callerId) return err('Du kannst dich nicht selbst sperren')
+      var sbanRes = await fetch(sbUrl + '/auth/v1/admin/users/' + body.targetId, {
+        method: 'PUT', headers: authH,
+        body: JSON.stringify({ ban_duration: body.ban ? '876000h' : 'none' }),
+      })
+      if (!sbanRes.ok) return err('Sperren fehlgeschlagen: ' + sbanRes.status)
+      return ok({ banned: body.ban })
+    }
+
+    // Passwort-Reset-Mail an beliebigen Nutzer
+    if (action === 'superResetPassword') {
+      if (!body.email) return err('E-Mail erforderlich')
+      var srRes = await fetch(sbUrl + '/auth/v1/recover', {
+        method: 'POST', headers: authH,
+        body: JSON.stringify({ email: body.email }),
+      })
+      if (!srRes.ok) {
+        var sre = await srRes.json().catch(function() { return {} })
+        return err('Reset fehlgeschlagen: ' + (sre.error_description || sre.msg || srRes.status))
+      }
+      return ok({ sent: true })
+    }
+
+    // Nutzer komplett löschen (inkl. Auth-Konto)
+    if (action === 'superDeleteUser') {
+      if (!body.targetId) return err('targetId erforderlich')
+      if (body.targetId === callerId) return err('Du kannst dich nicht selbst löschen')
+      var delRes = await fetch(sbUrl + '/auth/v1/admin/users/' + body.targetId, {
+        method: 'DELETE', headers: authH,
+      })
+      if (!delRes.ok) return err('Löschen fehlgeschlagen: ' + delRes.status)
+      return ok({ deleted: true })
+    }
+
+    // App-weites Voll-Backup (alle Tabellen als JSON)
+    if (action === 'superBackup') {
+      var tables = ['households', 'household_members', 'spices', 'spice_categories', 'storage_locations', 'shopping_items']
+      var dump = {}
+      for (var t = 0; t < tables.length; t++) {
+        var tr = await fetch(sbUrl + '/rest/v1/' + tables[t] + '?select=*', { headers: dbH })
+        dump[tables[t]] = tr.ok ? await tr.json().catch(function() { return [] }) : []
+      }
+      return ok({ exportedAt: new Date().toISOString(), tables: dump })
+    }
+
+    // App-Statistiken
+    if (action === 'superStats') {
+      async function countOf(table) {
+        var cr = await fetch(sbUrl + '/rest/v1/' + table + '?select=id', {
+          headers: Object.assign({}, dbH, { 'Prefer': 'count=exact', 'Range': '0-0' }),
+        })
+        var range = cr.headers.get('content-range') || '0/0'
+        return parseInt(range.split('/')[1] || '0', 10)
+      }
+      var stats = {
+        households: await countOf('households'),
+        spices:     await countOf('spices'),
+      }
+      return ok(stats)
+    }
+
+    return err('Unbekannte Super-Aktion: ' + action)
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HAUSHALTS-AKTIONEN – brauchen householdId + Owner-Rolle
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (!householdId) return err('householdId erforderlich', 400)
 
   // ── Prüfen ob Caller Owner des Haushalts ist ──────────────────────────────
   var chkRes = await fetch(
@@ -58,12 +194,6 @@ exports.handler = async function(event) {
   var chkData = await chkRes.json().catch(function() { return [] })
   if (!Array.isArray(chkData) || chkData.length === 0 || chkData[0].role !== 'owner') {
     return err('Keine Berechtigung – nur Haushaltsinhaber können Mitglieder verwalten', 403)
-  }
-
-  // ── Helper: Auth-User-Details laden ──────────────────────────────────────
-  async function getAuthUser(userId) {
-    var r = await fetch(sbUrl + '/auth/v1/admin/users/' + userId, { headers: authH })
-    return r.ok ? r.json() : null
   }
 
   // ── Mitglieder abrufen ────────────────────────────────────────────────────
