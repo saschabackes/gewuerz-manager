@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
 import { getMhdStatus, MHD_STYLES, formatMhdDate, formatAmount } from '../utils/mhd'
 import { PACKAGING_TYPES, PACKAGING_COLORS, CATEGORY_COLORS } from '../data/spices'
+import FillBar, { FILL_LABELS } from './FillBar'
 
 const FILTERS = [
   { id: 'all', label: 'Alle' },
@@ -12,18 +13,34 @@ const FILTERS = [
 ]
 
 export default function SpiceList({ onEdit, onAdd }) {
-  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading } = useStore()
+  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading, updateFillLevel } = useStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [locationFilter, setLocationFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [sort, setSort] = useState('name') // name | mhd
-  const [expandedId, setExpandedId]   = useState(null)
-  const [zoomedImage, setZoomedImage] = useState(null)  // { url, name }
+  const [expandedId, setExpandedId]         = useState(null)
+  const [zoomedImage, setZoomedImage]       = useState(null)
+  const [showReorderOnly, setShowReorderOnly] = useState(false)
+
+  // Nachkaufen-Logik: Gruppe braucht Nachkauf wenn ALLE Einheiten ≤ level 1
+  const reorderNeeded = useMemo(() => {
+    const groups = {}
+    allSpices.forEach(s => {
+      const key = s.name.toLowerCase().trim()
+      if (!groups[key]) groups[key] = []
+      groups[key].push(s)
+    })
+    const names = new Set()
+    Object.entries(groups).forEach(([key, group]) => {
+      if (group.every(s => (s.fillLevel ?? 4) <= 1)) names.add(key)
+    })
+    return names
+  }, [allSpices])
 
   const stats = useMemo(() => {
-    const expired = allSpices.filter(s => getMhdStatus(s.expiryDate).status === 'expired').length
+    const expired  = allSpices.filter(s => getMhdStatus(s.expiryDate).status === 'expired').length
     const critical = allSpices.filter(s => getMhdStatus(s.expiryDate).status === 'critical').length
     return { total: allSpices.length, expired, critical }
   }, [allSpices])
@@ -44,6 +61,9 @@ export default function SpiceList({ onEdit, onAdd }) {
       const q = search.toLowerCase()
       list = list.filter(s => s.name.toLowerCase().includes(q))
     }
+    if (showReorderOnly) {
+      list = list.filter(s => reorderNeeded.has(s.name.toLowerCase().trim()))
+    }
     if (sort === 'mhd') {
       list = [...list].sort((a, b) => {
         const da = a.expiryDate ? new Date(a.expiryDate) : new Date('9999-12-31')
@@ -54,7 +74,7 @@ export default function SpiceList({ onEdit, onAdd }) {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'de'))
     }
     return list
-  }, [allSpices, filter, categoryFilter, locationFilter, search, sort])
+  }, [allSpices, filter, categoryFilter, locationFilter, search, sort, showReorderOnly, reorderNeeded])
 
   return (
     <div className="flex flex-col h-full">
@@ -73,6 +93,19 @@ export default function SpiceList({ onEdit, onAdd }) {
               <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />
               {stats.critical} bald
             </span>
+          )}
+          {reorderNeeded.size > 0 && (
+            <button
+              onClick={() => setShowReorderOnly(v => !v)}
+              className={`font-medium flex items-center gap-1 rounded-full px-2 py-0.5 -mx-2 transition-colors ${
+                showReorderOnly
+                  ? 'bg-orange-100 text-orange-700'
+                  : 'text-orange-600 hover:text-orange-700'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />
+              {reorderNeeded.size} nachkaufen
+            </button>
           )}
         </div>
       )}
@@ -198,6 +231,8 @@ export default function SpiceList({ onEdit, onAdd }) {
               onEdit={() => { onEdit(spice); setExpandedId(null) }}
               onAddToShopping={() => addShoppingItem(spice.name, '', true)}
               onZoomImage={(url, name) => setZoomedImage({ url, name })}
+              needsReorder={reorderNeeded.has(spice.name.toLowerCase().trim())}
+              onFillChange={level => updateFillLevel(spice.id, level)}
             />
           ))
         )}
@@ -216,7 +251,7 @@ export default function SpiceList({ onEdit, onAdd }) {
   )
 }
 
-function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomImage }) {
+function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomImage, needsReorder, onFillChange }) {
   const { deleteSpice, locations, categories } = useStore()
   const mhd = getMhdStatus(spice.expiryDate)
   const mhdStyle = MHD_STYLES[mhd.status]
@@ -258,6 +293,11 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
                   </span>
                 ) : null
               })()}
+              {needsReorder && (
+                <span className="text-xs bg-orange-100 text-orange-700 font-semibold rounded-full px-2 py-0.5">
+                  ↓ Nachkaufen
+                </span>
+              )}
             </div>
             {spice.brand && (
               <p className="text-xs text-gray-400 font-medium mt-0.5">{spice.brand}</p>
@@ -272,7 +312,7 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
               </span>
             )}
           </div>
-          <div className="flex-none flex flex-col items-end gap-1">
+          <div className="flex-none flex flex-col items-end gap-1.5">
             {mhd.status !== 'none' ? (
               <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${mhdStyle.bg} ${mhdStyle.text}`}>
                 {mhd.status === 'expired' ? '⚠ ' : ''}{formatMhdDate(spice.expiryDate)}
@@ -286,6 +326,19 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
             >
               <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+            {/* Füllstand — Tippen cycelt eine Stufe runter, bei 0 zurück auf 4 */}
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation()
+                const cur = spice.fillLevel ?? 4
+                onFillChange(cur === 0 ? 4 : cur - 1)
+              }}
+              title={`Füllstand: ${FILL_LABELS[spice.fillLevel ?? 4]} – Tippen zum Ändern`}
+              className="mt-0.5 p-0.5 rounded hover:bg-gray-100 transition-colors"
+            >
+              <FillBar level={spice.fillLevel ?? 4} />
+            </button>
           </div>
         </div>
         {spice.barcode && (

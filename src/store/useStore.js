@@ -26,6 +26,7 @@ function toJS(row) {
     notes:         row.notes          ?? null,
     locationId:    row.location_id    ?? null,
     category:      row.category       ?? null,
+    fillLevel:     row.fill_level     ?? 4,
     createdAt:     row.created_at,
     updatedAt:     row.updated_at,
   }
@@ -44,6 +45,7 @@ function toDB(data) {
     notes:          data.notes          ?? null,
     location_id:    data.locationId     ?? null,
     category:       data.category       ?? null,
+    fill_level:     data.fillLevel      ?? 4,
   }
 }
 
@@ -424,6 +426,15 @@ const useStore = create((set, get) => ({
       .update({ ...toDB(data), updated_at: now })
       .eq('id', id)
       .then(({ error }) => { if (error) console.error('updateSpice:', error) })
+  },
+
+  updateFillLevel(id, level) {
+    const clamped = Math.max(0, Math.min(4, level))
+    set(s => ({
+      spices: s.spices.map(sp => sp.id === id ? { ...sp, fillLevel: clamped } : sp),
+    }))
+    supabase.from('spices').update({ fill_level: clamped }).eq('id', id)
+      .then(({ error }) => { if (error) console.error('updateFillLevel:', error) })
   },
 
   deleteSpice(id) {

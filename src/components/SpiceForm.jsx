@@ -3,6 +3,7 @@ import useStore from '../store/useStore'
 import { COMMON_SPICES, PACKAGING_TYPES, PACKAGING_COLORS } from '../data/spices'
 import BarcodeScanner from './BarcodeScanner'
 import { searchProductImages } from '../utils/productLookup'
+import FillBar, { FILL_LABELS } from './FillBar'
 
 const DEFAULT_FORM = {
   name: '',
@@ -16,6 +17,7 @@ const DEFAULT_FORM = {
   notes: '',
   locationId: '',
   category: '',
+  fillLevel: 4,
 }
 
 export default function SpiceForm({ spice, onClose }) {
@@ -34,6 +36,7 @@ export default function SpiceForm({ spice, onClose }) {
     notes: spice.notes ?? '',
     locationId: spice.locationId ?? '',
     category: spice.category ?? '',
+    fillLevel: spice.fillLevel ?? 4,
   } : DEFAULT_FORM)
 
   const [suggestions, setSuggestions]       = useState([])
@@ -132,6 +135,7 @@ export default function SpiceForm({ spice, onClose }) {
       notes: form.notes.trim() || null,
       locationId: form.locationId || null,
       category: form.category || null,
+      fillLevel: form.fillLevel ?? 4,
     }
 
     if (isEdit) updateSpice(spice.id, data)
@@ -379,6 +383,30 @@ export default function SpiceForm({ spice, onClose }) {
             <label className="label">Mindesthaltbarkeitsdatum</label>
             <input type="date" className="input" value={form.expiryDate}
               onChange={e => set('expiryDate', e.target.value)} />
+          </div>
+
+          {/* ── Füllstand ───────────────────────────────────────── */}
+          <div>
+            <label className="label">Füllstand</label>
+            <div className="flex gap-2">
+              {[4, 3, 2, 1, 0].map(lvl => (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() => set('fillLevel', lvl)}
+                  className={`flex-1 py-2.5 rounded-xl flex flex-col items-center gap-1.5 border-2 transition-all ${
+                    form.fillLevel === lvl
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                  }`}
+                >
+                  <FillBar level={lvl} />
+                  <span className="text-[10px] text-gray-500 font-medium leading-none">
+                    {FILL_LABELS[lvl]}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* ── Barcode ─────────────────────────────────────────── */}
