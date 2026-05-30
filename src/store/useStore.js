@@ -181,7 +181,7 @@ const useStore = create((set, get) => ({
         supabase.from('shopping_items').update({ household_id: h.id }).is('household_id', null),
         supabase.from('storage_locations').update({ household_id: h.id }).is('household_id', null),
       ])
-      return { id: h.id, name: h.name, inviteCode: h.invite_code }
+      return { id: h.id, name: h.name, inviteCode: h.invite_code, role: membership.role ?? 'member' }
     }
 
     // Keinen Haushalt gefunden → neuen erstellen
@@ -215,7 +215,7 @@ const useStore = create((set, get) => ({
       supabase.from('storage_locations').update({ household_id: householdId }).is('household_id', null),
     ])
 
-    return { id: householdId, name: householdName, inviteCode }
+    return { id: householdId, name: householdName, inviteCode, role: 'owner' }
   },
 
   // Haushalt per Einladungscode beitreten
