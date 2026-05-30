@@ -4,6 +4,10 @@ import { CATEGORY_COLORS } from '../data/spices'
 import { adminGetMembers, adminResetPassword, adminBanUser, adminRemoveMember, adminChangeRole } from '../lib/userAdmin'
 
 export default function SettingsView({ onClose }) {
+  const { household } = useStore()
+  const isOwner = household?.role === 'owner'
+  const [tab, setTab] = useState('settings')  // 'settings' | 'admin'
+
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40 fade-enter" onClick={onClose} />
@@ -11,6 +15,8 @@ export default function SettingsView({ onClose }) {
         <div className="flex justify-center pt-3 pb-1 flex-none">
           <div className="w-10 h-1.5 rounded-full bg-gray-200" />
         </div>
+
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -25,19 +31,54 @@ export default function SettingsView({ onClose }) {
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 pb-safe">
-          <HouseholdSection />
-          <div className="border-t border-gray-100" />
-          <MembersSection />
-          <div className="border-t border-gray-100" />
-          <LocationsSection />
-          <div className="border-t border-gray-100" />
-          <CategoriesSection />
-          <div className="border-t border-gray-100" />
-          <BringSection />
-          <div className="border-t border-gray-100" />
-          <ExportSection />
-        </div>
+
+        {/* Tabs — nur für Owner */}
+        {isOwner && (
+          <div className="flex gap-1 px-5 pt-3 pb-1 flex-none">
+            <button
+              onClick={() => setTab('settings')}
+              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                tab === 'settings'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Einstellungen
+            </button>
+            <button
+              onClick={() => setTab('admin')}
+              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                tab === 'admin'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Verwaltung
+            </button>
+          </div>
+        )}
+
+        {/* Einstellungen-Tab */}
+        {tab === 'settings' && (
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 pb-safe">
+            <HouseholdSection />
+            <div className="border-t border-gray-100" />
+            <LocationsSection />
+            <div className="border-t border-gray-100" />
+            <CategoriesSection />
+            <div className="border-t border-gray-100" />
+            <BringSection />
+            <div className="border-t border-gray-100" />
+            <ExportSection />
+          </div>
+        )}
+
+        {/* Verwaltungs-Tab (nur Owner) */}
+        {tab === 'admin' && isOwner && (
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 pb-safe">
+            <MembersSection />
+          </div>
+        )}
       </div>
     </>
   )
