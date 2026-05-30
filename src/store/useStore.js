@@ -127,12 +127,15 @@ const useStore = create((set, get) => ({
   },
 
   async signUp(name, email, password) {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } },
     })
     if (error) throw error
+    // Gibt true zurück wenn E-Mail-Bestätigung erforderlich ist
+    // (Supabase setzt session=null wenn Confirmation aktiv)
+    return { needsConfirmation: !data.session }
   },
 
   async resetPassword(email) {

@@ -20,10 +20,14 @@ export default function Login() {
       if (mode === 'register') {
         if (!name.trim()) throw new Error('Bitte Namen eingeben')
         if (password.length < 6) throw new Error('Passwort muss mindestens 6 Zeichen haben')
-        await signUp(name.trim(), email.trim(), password)
-        setMessage('Konto erstellt! Du kannst dich jetzt anmelden.')
-        setMode('login')
-        setPassword('')
+        const { needsConfirmation } = await signUp(name.trim(), email.trim(), password)
+        if (needsConfirmation) {
+          setMode('confirm')
+        } else {
+          setMessage('Konto erstellt! Du kannst dich jetzt anmelden.')
+          setMode('login')
+          setPassword('')
+        }
       } else if (mode === 'reset') {
         await resetPassword(email)
         setMessage('Reset-Mail gesendet! Bitte prüfe dein Postfach und klicke den Link.')
@@ -62,6 +66,36 @@ export default function Login() {
 
       {/* Form Card */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
+        {/* Bestätigungs-Hinweis nach Registrierung */}
+        {mode === 'confirm' ? (
+          <div className="text-center py-4">
+            <div className="text-5xl mb-4">📬</div>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Mail bestätigen</h2>
+            <p className="text-sm text-gray-500 mb-1">
+              Wir haben eine Bestätigungs-Mail an
+            </p>
+            <p className="text-sm font-semibold text-gray-800 mb-3">{email}</p>
+            <p className="text-sm text-gray-500 mb-6">
+              Klicke den Link in der Mail um dein Konto zu aktivieren. Danach kannst du dich anmelden.
+            </p>
+            <button
+              onClick={() => switchMode('login')}
+              className="btn-primary w-full"
+            >
+              Zur Anmeldung
+            </button>
+            <p className="text-xs text-gray-400 mt-3">
+              Keine Mail erhalten? Prüfe den Spam-Ordner oder{' '}
+              <button
+                onClick={() => switchMode('register')}
+                className="text-green-600 underline"
+              >
+                erneut registrieren
+              </button>
+            </p>
+          </div>
+        ) : (
+        <>
         <h2 className="text-lg font-bold text-gray-900 mb-1">
           {mode === 'login' ? 'Anmelden' : mode === 'register' ? 'Neues Konto erstellen' : 'Passwort zurücksetzen'}
         </h2>
@@ -179,6 +213,8 @@ export default function Login() {
             </p>
           )}
         </div>
+        </>
+        )}
       </div>
 
       <p className="text-green-300 text-xs mt-6 text-center">
