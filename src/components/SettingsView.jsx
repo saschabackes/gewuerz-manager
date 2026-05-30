@@ -866,6 +866,9 @@ function SuperAdminSection() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-semibold text-gray-900 text-sm">{u.name}</span>
+                      {u.email.toLowerCase() === SUPER_ADMIN_EMAIL && (
+                        <span className="text-xs bg-rose-600 text-white font-semibold rounded-full px-2 py-0.5">Betreiber</span>
+                      )}
                       {isNew(u) && <span className="text-xs bg-rose-100 text-rose-600 font-semibold rounded-full px-2 py-0.5">Neu</span>}
                       {u.isBanned && <span className="text-xs bg-red-100 text-red-600 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>}
                       {!u.confirmed && <span className="text-xs bg-yellow-100 text-yellow-700 font-semibold rounded-full px-2 py-0.5">Unbestätigt</span>}
