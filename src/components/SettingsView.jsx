@@ -59,7 +59,7 @@ export default function SettingsView({ onClose }) {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Haushalt
+                Mitglieder
               </button>
             )}
             {isSuperAdmin && (
