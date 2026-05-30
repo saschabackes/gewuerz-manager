@@ -295,6 +295,7 @@ function HouseholdSection() {
 
 function InviteSection() {
   const { household, currentUser } = useStore()
+  const [mode, setMode]               = useState('household')  // 'household' | 'friend'
   const [personalMsg, setPersonalMsg] = useState('')
   const [copied, setCopied]           = useState(false)
   const [shared, setShared]           = useState(false)
@@ -302,38 +303,21 @@ function InviteSection() {
   const displayCode = household?.inviteCode
     ? `${household.inviteCode.slice(0, 4)}-${household.inviteCode.slice(4)}`
     : '——'
-
   const senderName = currentUser()?.name ?? 'Jemand'
+  const houseName  = household?.name ?? 'unserem Haushalt'
 
   function buildMessage() {
-    const personal = personalMsg.trim()
-      ? `${personalMsg.trim()}\n\n`
-      : ''
-
-    return (
-`Hey! 🌿
-
-${personal}${senderName} lädt dich in den Gewürz-Manager ein – eine gemeinsame App für die Gewürzsammlung von „${household?.name ?? 'unserem Haushalt'}".
-
-Was du damit kannst:
-• Gewürze mit Foto, Menge & Lagerort verwalten
-• Füllstand & Ablaufdaten im Blick behalten
-• Einkaufsliste – mit optionaler Bring!-Anbindung
-• Gemeinsam mit ${senderName} den Überblick behalten
-
-So kommst du rein:
-1. App öffnen → https://gewuerzmanager.netlify.app
-2. Konto erstellen
-3. Einladungscode eingeben: ${displayCode}
-
-Bis gleich! 👋`
-    )
+    const p = personalMsg.trim() ? `${personalMsg.trim()}\n\n` : ''
+    if (mode === 'household') {
+      return `Hey! 🌿\n\n${p}${senderName} lädt dich ein, unsere Gewürzsammlung gemeinsam zu verwalten.\n\nWir nutzen dafür den Gewürz-Manager – eine App die uns hilft den Überblick zu behalten:\n• Welche Gewürze haben wir, wie viel ist noch da?\n• Wo ist was gelagert?\n• Was müssen wir nachkaufen?\n\nSo trittst du „${houseName}" bei:\n1. App öffnen → https://gewuerzmanager.netlify.app\n2. Konto erstellen\n3. „Anderem Haushalt beitreten" wählen\n4. Einladungscode eingeben: ${displayCode}\n\nBis gleich! 👋`
+    }
+    return `Hey! 🌿\n\n${p}Kennst du den Gewürz-Manager? Eine kostenlose App um die eigene Gewürzsammlung im Griff zu behalten.\n\nWas du damit machen kannst:\n• Gewürze mit Foto, Menge & Lagerort erfassen\n• Ablaufdaten & Füllstand im Blick behalten\n• Einkaufsliste – optional mit Bring!-Anbindung\n• Haushalt mit Familie teilen (wenn du magst)\n\nEinfach kostenlos registrieren:\nhttps://gewuerzmanager.netlify.app\n\nViel Spaß! 👋`
   }
 
   function handleShare() {
-    const text = buildMessage()
     if (navigator.share) {
-      navigator.share({ text }).then(() => { setShared(true); setTimeout(() => setShared(false), 2500) })
+      navigator.share({ text: buildMessage() })
+        .then(() => { setShared(true); setTimeout(() => setShared(false), 2500) })
     } else {
       handleCopy()
     }
@@ -348,13 +332,47 @@ Bis gleich! 👋`
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
           <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Mitglied einladen</h3>
+        <h3 className="font-bold text-gray-800">Einladen</h3>
+      </div>
+
+      {/* Modus-Auswahl */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <button
+          onClick={() => setMode('household')}
+          className={`rounded-2xl p-3 text-left border-2 transition-all ${
+            mode === 'household' ? 'border-green-500 bg-green-50' : 'border-gray-100 bg-gray-50'
+          }`}
+        >
+          <div className="text-lg mb-0.5">🏠</div>
+          <div className="font-semibold text-sm text-gray-800">Familie / Mitbewohner</div>
+          <div className="text-xs text-gray-500 mt-0.5 leading-tight">Gemeinsame Gewürzsammlung verwalten</div>
+        </button>
+        <button
+          onClick={() => setMode('friend')}
+          className={`rounded-2xl p-3 text-left border-2 transition-all ${
+            mode === 'friend' ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-gray-50'
+          }`}
+        >
+          <div className="text-lg mb-0.5">👤</div>
+          <div className="font-semibold text-sm text-gray-800">Freunde</div>
+          <div className="text-xs text-gray-500 mt-0.5 leading-tight">Eigene Sammlung – unabhängig von dir</div>
+        </button>
+      </div>
+
+      {/* Hinweis je nach Modus */}
+      <div className={`text-xs rounded-xl px-3 py-2 mb-3 ${
+        mode === 'household' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+      }`}>
+        {mode === 'household'
+          ? `Einladungscode ${displayCode} wird automatisch eingefügt. Dein Kontakt tritt „${houseName}" bei.`
+          : 'Kein Einladungscode – dein Freund erstellt seinen eigenen Haushalt.'
+        }
       </div>
 
       {/* Persönliche Nachricht */}
@@ -365,7 +383,10 @@ Bis gleich! 👋`
         <textarea
           className="input resize-none text-sm"
           rows={2}
-          placeholder="z.B. Hey Max, damit verwalten wir unsere gemeinsamen Kochgewürze…"
+          placeholder={mode === 'household'
+            ? 'z.B. Hey Lisa, damit verwalten wir ab jetzt unsere Gewürze…'
+            : 'z.B. Hey Max, ich nutze das schon eine Weile und finds super…'
+          }
           value={personalMsg}
           onChange={e => setPersonalMsg(e.target.value)}
         />
@@ -374,52 +395,24 @@ Bis gleich! 👋`
       {/* Vorschau */}
       <div className="bg-gray-50 rounded-2xl p-4 mb-3 border border-gray-100">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vorschau</p>
-        <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">
-          {buildMessage()}
-        </pre>
+        <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">{buildMessage()}</pre>
       </div>
 
       {/* Aktionen */}
       <div className="flex gap-2">
-        <button
-          onClick={handleShare}
-          className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white rounded-2xl py-3 text-sm font-semibold hover:bg-green-700 transition-colors"
-        >
-          {shared ? (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Geteilt!
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Teilen
-            </>
-          )}
+        <button onClick={handleShare}
+          className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white rounded-2xl py-3 text-sm font-semibold hover:bg-green-700 transition-colors">
+          {shared
+            ? <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>Geteilt!</>
+            : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round"/></svg>Teilen</>
+          }
         </button>
-        <button
-          onClick={handleCopy}
-          className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-2xl py-3 text-sm font-semibold hover:bg-gray-200 transition-colors"
-        >
-          {copied ? (
-            <>
-              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="text-green-600">Kopiert!</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Kopieren
-            </>
-          )}
+        <button onClick={handleCopy}
+          className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-2xl py-3 text-sm font-semibold hover:bg-gray-200 transition-colors">
+          {copied
+            ? <><svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="text-green-600">Kopiert!</span></>
+            : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/></svg>Kopieren</>
+          }
         </button>
       </div>
     </div>
