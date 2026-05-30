@@ -11,6 +11,16 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="description" content="Gewürz-Verwaltung für den Haushalt" />
     <title>Gewürz Manager</title>
+    <script>
+      // Theme früh anwenden (vor React) → kein Flash beim Laden
+      (function () {
+        try {
+          var t = localStorage.getItem('gewuerz_theme') || 'system'
+          var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -48,7 +48,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800">
       <header className="bg-green-600 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-30 pt-safe">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🌿</span>
@@ -139,19 +139,19 @@ function StatsView() {
     { key: 'critical', label: 'Kritisch (< 1 Monat)', bg: 'bg-orange-100', text: 'text-orange-700' },
     { key: 'warning',  label: 'Bald (1–3 Monate)', bg: 'bg-yellow-100', text: 'text-yellow-700' },
     { key: 'ok',       label: 'Frisch (> 3 Monate)', bg: 'bg-green-100',  text: 'text-green-700'  },
-    { key: 'none',     label: 'Kein MHD',           bg: 'bg-gray-100',   text: 'text-gray-600'   },
+    { key: 'none',     label: 'Kein MHD',           bg: 'bg-gray-100 dark:bg-gray-700',   text: 'text-gray-600'   },
   ]
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
       <div className="card p-4">
-        <h2 className="font-bold text-gray-800 mb-3">Gesamtübersicht</h2>
+        <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-3">Gesamtübersicht</h2>
         <div className="text-4xl font-bold text-green-600 mb-1">{stats.total}</div>
         <div className="text-sm text-gray-500">Gewürze insgesamt</div>
       </div>
 
       <div className="card p-4">
-        <h2 className="font-bold text-gray-800 mb-3">Nach Verpackungstyp</h2>
+        <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-3">Nach Verpackungstyp</h2>
         <div className="space-y-2">
           {PACKAGING_TYPES.map(t => {
             const count = stats.byType[t.id] ?? 0
@@ -159,10 +159,10 @@ function StatsView() {
             return (
               <div key={t.id}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700 font-medium">{t.label}</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-medium">{t.label}</span>
                   <span className="text-gray-500">{count}</span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                 </div>
               </div>
@@ -172,7 +172,7 @@ function StatsView() {
       </div>
 
       <div className="card p-4">
-        <h2 className="font-bold text-gray-800 mb-3">MHD-Status</h2>
+        <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-3">MHD-Status</h2>
         <div className="space-y-2">
           {mhdRows.map(row => (
             <div key={row.key} className={`flex items-center justify-between rounded-xl px-3 py-2 ${row.bg}`}>
@@ -211,10 +211,10 @@ function UserMenu() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 min-w-[180px] fade-enter">
-            <div className="px-4 py-2.5 border-b border-gray-100">
+          <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50 min-w-[180px] fade-enter">
+            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
               <p className="text-xs text-gray-400 font-medium">Angemeldet als</p>
-              <p className="text-sm font-semibold text-gray-800">{currentUser?.name}</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{currentUser?.name}</p>
               <p className="text-xs text-gray-400 truncate">{currentUser?.email}</p>
             </div>
             <button

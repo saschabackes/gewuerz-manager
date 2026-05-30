@@ -37,21 +37,21 @@ export default function SettingsView({ onClose }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40 fade-enter" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl sheet-enter max-h-[92vh] flex flex-col">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl sheet-enter max-h-[92vh] flex flex-col">
         <div className="flex justify-center pt-3 pb-1 flex-none">
           <div className="w-10 h-1.5 rounded-full bg-gray-200" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round"/>
               <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Einstellungen
           </h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition-colors">
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -66,7 +66,7 @@ export default function SettingsView({ onClose }) {
               className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                 tab === 'settings'
                   ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200'
               }`}
             >
               Allgemein
@@ -77,7 +77,7 @@ export default function SettingsView({ onClose }) {
                 className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   tab === 'admin'
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 Mitglieder
@@ -89,7 +89,7 @@ export default function SettingsView({ onClose }) {
                 className={`relative flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   tab === 'super'
                     ? 'bg-rose-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 Betreiber
@@ -106,16 +106,18 @@ export default function SettingsView({ onClose }) {
         {/* Einstellungen-Tab */}
         {tab === 'settings' && (
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 pb-safe">
+            <AppearanceSection />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <HouseholdSection />
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <LocationsSection />
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <CategoriesSection />
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <BringSection />
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <ExportSection />
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <HelpSection />
           </div>
         )}
@@ -124,7 +126,7 @@ export default function SettingsView({ onClose }) {
         {tab === 'admin' && isOwner && (
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 pb-safe">
             <InviteSection />
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
             <MembersSection />
           </div>
         )}
@@ -212,7 +214,7 @@ function HouseholdSection() {
             <polyline points="9 22 9 12 15 12 15 22" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Haushalt</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Haushalt</h3>
       </div>
 
       {/* Haushaltsname */}
@@ -236,9 +238,9 @@ function HouseholdSection() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium">Haushaltsname</p>
-              <p className="font-semibold text-gray-900">{household?.name ?? '…'}</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{household?.name ?? '…'}</p>
             </div>
-            <button onClick={startEditName} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+            <button onClick={startEditName} className="p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -252,7 +254,7 @@ function HouseholdSection() {
         <p className="text-xs text-gray-400 font-medium mb-2">Einladungscode</p>
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <p className="text-2xl font-bold text-gray-900 tracking-widest font-mono">{displayCode}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-widest font-mono">{displayCode}</p>
             <p className="text-xs text-gray-400 mt-0.5">Teile diesen Code mit Familienmitgliedern</p>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -267,7 +269,7 @@ function HouseholdSection() {
             </button>
             <button
               onClick={copyCode}
-              className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-xl px-3 py-2 transition-colors hover:bg-gray-200"
+              className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 text-xs font-semibold rounded-xl px-3 py-2 transition-colors hover:bg-gray-200"
             >
               {copied ? (
                 <>
@@ -290,8 +292,8 @@ function HouseholdSection() {
       </div>
 
       {/* Haushalt beitreten */}
-      <div className="border border-dashed border-gray-200 rounded-2xl p-4 mb-3">
-        <p className="text-sm font-semibold text-gray-700 mb-1">Anderem Haushalt beitreten</p>
+      <div className="border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-4 mb-3">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Anderem Haushalt beitreten</p>
         <p className="text-xs text-gray-400 mb-3">
           Du verlässt deinen aktuellen Haushalt und siehst fortan die Daten des neuen Haushalts.
         </p>
@@ -392,7 +394,7 @@ function InviteSection() {
             <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Einladen</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Einladen</h3>
       </div>
 
       {/* Modus-Auswahl */}
@@ -400,21 +402,21 @@ function InviteSection() {
         <button
           onClick={() => setMode('household')}
           className={`rounded-2xl p-3 text-left border-2 transition-all ${
-            mode === 'household' ? 'border-green-500 bg-green-50' : 'border-gray-100 bg-gray-50'
+            mode === 'household' ? 'border-green-500 bg-green-50' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
           }`}
         >
           <div className="text-lg mb-0.5">🏠</div>
-          <div className="font-semibold text-sm text-gray-800">Familie / Mitbewohner</div>
+          <div className="font-semibold text-sm text-gray-800 dark:text-gray-100">Familie / Mitbewohner</div>
           <div className="text-xs text-gray-500 mt-0.5 leading-tight">Gemeinsame Gewürzsammlung verwalten</div>
         </button>
         <button
           onClick={() => setMode('friend')}
           className={`rounded-2xl p-3 text-left border-2 transition-all ${
-            mode === 'friend' ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-gray-50'
+            mode === 'friend' ? 'border-blue-500 bg-blue-50' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
           }`}
         >
           <div className="text-lg mb-0.5">👤</div>
-          <div className="font-semibold text-sm text-gray-800">Freunde</div>
+          <div className="font-semibold text-sm text-gray-800 dark:text-gray-100">Freunde</div>
           <div className="text-xs text-gray-500 mt-0.5 leading-tight">Eigene Sammlung – unabhängig von dir</div>
         </button>
       </div>
@@ -447,7 +449,7 @@ function InviteSection() {
       </div>
 
       {/* Vorschau */}
-      <div className="bg-gray-50 rounded-2xl p-4 mb-3 border border-gray-100">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 mb-3 border border-gray-100 dark:border-gray-700">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vorschau</p>
         <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">{buildMessage()}</pre>
       </div>
@@ -462,7 +464,7 @@ function InviteSection() {
           }
         </button>
         <button onClick={handleCopy}
-          className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-2xl py-3 text-sm font-semibold hover:bg-gray-200 transition-colors">
+          className="flex-1 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl py-3 text-sm font-semibold hover:bg-gray-200 transition-colors">
           {copied
             ? <><svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg><span className="text-green-600">Kopiert!</span></>
             : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/></svg>Kopieren</>
@@ -552,7 +554,7 @@ function MembersSection() {
             <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Mitglieder</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Mitglieder</h3>
         {members.length > 0 && (
           <span className="ml-auto text-xs text-gray-400 font-medium">{members.length} Personen</span>
         )}
@@ -580,11 +582,11 @@ function MembersSection() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-900 text-sm">{m.name}</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{m.name}</span>
                     <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${
                       m.role === 'owner'
                         ? 'bg-indigo-100 text-indigo-700'
-                        : 'bg-gray-100 text-gray-600'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
                     }`}>
                       {m.role === 'owner' ? 'Inhaber' : 'Mitglied'}
                     </span>
@@ -606,7 +608,7 @@ function MembersSection() {
                 {!isMe && (
                   <button
                     onClick={() => setExpanded(e => e === m.id ? null : m.id)}
-                    className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors flex-none"
+                    className="p-2 rounded-xl hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors flex-none"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
@@ -617,7 +619,7 @@ function MembersSection() {
 
               {/* Action-Panel */}
               {isOpen && !isMe && (
-                <div className="border-t border-gray-100 px-4 py-3 bg-gray-50 grid grid-cols-2 gap-2">
+                <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800 grid grid-cols-2 gap-2">
                   {/* Passwort zurücksetzen */}
                   <button
                     disabled={!!busy}
@@ -684,7 +686,7 @@ function MembersSection() {
                       if (!confirm(`${m.name} aus dem Haushalt entfernen? Die Person verliert den Zugriff auf alle Daten.`)) return
                       handleAction(() => adminRemoveMember(household.id, m.id))
                     }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-100 rounded-xl px-3 py-2.5 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-xl px-3 py-2.5 hover:bg-gray-200 transition-colors disabled:opacity-50"
                   >
                     <svg className="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6h13m5-4l-3 3m0 0l-3-3m3 3V10" strokeLinecap="round" strokeLinejoin="round"/>
@@ -791,11 +793,11 @@ function SuperAdminSection() {
             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Betreiber-Bereich</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Betreiber-Bereich</h3>
         <button
           onClick={loadAll}
           disabled={loading}
-          className="ml-auto p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors disabled:opacity-50"
+          className="ml-auto p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors disabled:opacity-50"
           title="Aktualisieren"
         >
           <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -807,15 +809,15 @@ function SuperAdminSection() {
       {/* Statistik */}
       <div className="grid grid-cols-3 gap-2">
         <div className="card px-3 py-3 text-center">
-          <div className="text-2xl font-bold text-gray-900">{users.length}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{users.length}</div>
           <div className="text-xs text-gray-400 font-medium mt-0.5">Nutzer</div>
         </div>
         <div className="card px-3 py-3 text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats?.households ?? '—'}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.households ?? '—'}</div>
           <div className="text-xs text-gray-400 font-medium mt-0.5">Haushalte</div>
         </div>
         <div className="card px-3 py-3 text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats?.spices ?? '—'}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.spices ?? '—'}</div>
           <div className="text-xs text-gray-400 font-medium mt-0.5">Gewürze</div>
         </div>
       </div>
@@ -843,7 +845,7 @@ function SuperAdminSection() {
         </svg>
         <input
           type="search"
-          className="input pl-9 py-2.5 bg-gray-50 text-sm"
+          className="input pl-9 py-2.5 bg-gray-50 dark:bg-gray-800 text-sm"
           placeholder="Nach Name, E-Mail, Haushalt…"
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -865,7 +867,7 @@ function SuperAdminSection() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-semibold text-gray-900 text-sm">{u.name}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{u.name}</span>
                       {u.email.toLowerCase() === SUPER_ADMIN_EMAIL && (
                         <span className="text-xs bg-rose-600 text-white font-semibold rounded-full px-2 py-0.5">Betreiber</span>
                       )}
@@ -881,7 +883,7 @@ function SuperAdminSection() {
                   </div>
                   <button
                     onClick={() => setExpanded(e => e === u.id ? null : u.id)}
-                    className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors flex-none"
+                    className="p-2 rounded-xl hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors flex-none"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
@@ -890,7 +892,7 @@ function SuperAdminSection() {
                 </div>
 
                 {isOpen && (
-                  <div className="border-t border-gray-100 px-4 py-3 bg-gray-50 grid grid-cols-2 gap-2">
+                  <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800 grid grid-cols-2 gap-2">
                     <button
                       disabled={busy}
                       onClick={() => { if (confirm(`Passwort-Reset-Mail an ${u.email}?`)) act(() => superResetPassword(u.email), false) }}
@@ -990,7 +992,7 @@ function BringSection() {
         <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center text-base leading-none">
           🛍
         </div>
-        <h3 className="font-bold text-gray-800">Einkaufsliste</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Einkaufsliste</h3>
       </div>
 
       {/* Verbunden */}
@@ -999,10 +1001,10 @@ function BringSection() {
           <div className="flex items-start gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-sm font-semibold text-gray-900">Bring!</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Bring!</span>
                 <span className="text-xs bg-green-100 text-green-700 font-semibold rounded-full px-2 py-0.5">Aktiv</span>
               </div>
-              <p className="text-xs text-gray-500">Liste: <span className="font-medium text-gray-700">{bringSettings.listName}</span></p>
+              <p className="text-xs text-gray-500">Liste: <span className="font-medium text-gray-700 dark:text-gray-200">{bringSettings.listName}</span></p>
               <p className="text-xs text-gray-400">{bringSettings.email}</p>
             </div>
             <button
@@ -1012,7 +1014,7 @@ function BringSection() {
               Trennen
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
             "Einkaufen"-Aktionen schreiben direkt in diese Bring!-Liste.
           </p>
         </div>
@@ -1020,8 +1022,8 @@ function BringSection() {
 
       {/* Nicht verbunden – Hinweis + Formular starten */}
       {!bringSettings?.listUuid && step === 'idle' && (
-        <div className="border border-dashed border-gray-200 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-700 mb-1">Mit Bring! verbinden</p>
+        <div className="border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Mit Bring! verbinden</p>
           <p className="text-xs text-gray-400 mb-3">
             Nutze deine bestehende Bring!-Liste statt der eingebauten Einkaufsliste.
             Funktioniert auch mit Alexa: „Öffne Bring und füge … hinzu".
@@ -1038,7 +1040,7 @@ function BringSection() {
       {/* Login-Formular */}
       {step === 'login' && (
         <form onSubmit={handleLogin} className="border border-dashed border-orange-200 rounded-2xl p-4 space-y-3 bg-orange-50/30">
-          <p className="text-sm font-semibold text-gray-700">Bring!-Konto anmelden</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">Bring!-Konto anmelden</p>
           <input
             type="email"
             className="input py-2.5 text-sm"
@@ -1080,7 +1082,7 @@ function BringSection() {
       {/* Listauswahl */}
       {step === 'selectList' && (
         <div className="border border-dashed border-orange-200 rounded-2xl p-4 bg-orange-50/30">
-          <p className="text-sm font-semibold text-gray-700 mb-3">Welche Liste verwenden?</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Welche Liste verwenden?</p>
           {lists.length === 0 && (
             <p className="text-sm text-gray-400">Keine Listen gefunden.</p>
           )}
@@ -1092,7 +1094,7 @@ function BringSection() {
                 disabled={loading}
                 className="w-full text-left card px-4 py-3 flex items-center justify-between hover:ring-2 hover:ring-orange-300 transition-all disabled:opacity-50"
               >
-                <span className="font-medium text-gray-800 text-sm">{list.name}</span>
+                <span className="font-medium text-gray-800 dark:text-gray-100 text-sm">{list.name}</span>
                 <svg className="w-4 h-4 text-gray-400 flex-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -1179,7 +1181,7 @@ function CategoriesSection() {
             <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Kategorien</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Kategorien</h3>
         {categories.length > 0 && (
           <span className="ml-auto text-xs text-gray-400 font-medium">{categories.length} Kategorien</span>
         )}
@@ -1226,7 +1228,7 @@ function CategoriesSection() {
               <div className="flex gap-1 flex-none">
                 <button
                   onClick={() => startEdit(cat)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1246,7 +1248,7 @@ function CategoriesSection() {
         })}
       </div>
 
-      <form onSubmit={handleAdd} className="space-y-3 border-t border-gray-100 pt-4">
+      <form onSubmit={handleAdd} className="space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Neue Kategorie</p>
         <input
           type="text"
@@ -1266,6 +1268,45 @@ function CategoriesSection() {
           Kategorie hinzufügen
         </button>
       </form>
+    </div>
+  )
+}
+
+// ── Darstellung (Dark Mode) ───────────────────────────────────────────────────
+
+function AppearanceSection() {
+  const { theme, setTheme } = useStore()
+  const options = [
+    { id: 'system', label: 'System', emoji: '⚙️' },
+    { id: 'light',  label: 'Hell',   emoji: '☀️' },
+    { id: 'dark',   label: 'Dunkel', emoji: '🌙' },
+  ]
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Darstellung</h3>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {options.map(o => (
+          <button
+            key={o.id}
+            onClick={() => setTheme(o.id)}
+            className={`rounded-2xl py-3 flex flex-col items-center gap-1 border-2 transition-all ${
+              theme === o.id
+                ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+            }`}
+          >
+            <span className="text-xl">{o.emoji}</span>
+            <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{o.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -1338,7 +1379,7 @@ function HelpSection() {
             <circle cx="12" cy="17" r=".5" fill="currentColor"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Hilfe</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Hilfe</h3>
       </div>
 
       <div className="space-y-1">
@@ -1349,7 +1390,7 @@ function HelpSection() {
               className="w-full flex items-center gap-3 px-4 py-3 text-left"
             >
               <span className="text-base flex-none">{item.emoji}</span>
-              <span className="flex-1 font-semibold text-sm text-gray-800">{item.title}</span>
+              <span className="flex-1 font-semibold text-sm text-gray-800 dark:text-gray-100">{item.title}</span>
               <svg
                 className={`w-4 h-4 text-gray-400 flex-none transition-transform ${openIdx === i ? 'rotate-180' : ''}`}
                 fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
@@ -1359,7 +1400,7 @@ function HelpSection() {
             </button>
             {openIdx === i && (
               <div className="px-4 pb-4 pt-0">
-                <div className="h-px bg-gray-100 mb-3" />
+                <div className="h-px bg-gray-100 dark:bg-gray-700 mb-3" />
                 <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
               </div>
             )}
@@ -1400,11 +1441,11 @@ function ExportSection() {
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Datensicherung</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Datensicherung</h3>
       </div>
 
       <div className="card px-4 py-3">
-        <p className="text-sm text-gray-700 mb-0.5">
+        <p className="text-sm text-gray-700 dark:text-gray-200 mb-0.5">
           <span className="font-semibold">{spices.length} Gewürze</span>
           {categories.length > 0 && <span className="text-gray-400"> · {categories.length} Kategorien</span>}
           {locations.length  > 0 && <span className="text-gray-400"> · {locations.length} Lagerorte</span>}
@@ -1491,7 +1532,7 @@ function LocationsSection() {
             <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-bold text-gray-800">Lagerorte</h3>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Lagerorte</h3>
         {locations.length > 0 && (
           <span className="ml-auto text-xs text-gray-400 font-medium">{locations.length} Orte</span>
         )}
@@ -1525,7 +1566,7 @@ function LocationsSection() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-gray-900 text-sm">{loc.name}</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{loc.name}</div>
                 {loc.description && <div className="text-xs text-gray-400">{loc.description}</div>}
                 <div className="text-xs text-gray-400 mt-0.5">
                   {count === 0 ? 'Keine Gewürze' : `${count} Gewürz${count !== 1 ? 'e' : ''}`}
@@ -1533,7 +1574,7 @@ function LocationsSection() {
               </div>
               <div className="flex gap-1 flex-none">
                 <button onClick={() => startEdit(loc)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -1550,7 +1591,7 @@ function LocationsSection() {
         })}
       </div>
 
-      <form onSubmit={handleAdd} className="space-y-2 border-t border-gray-100 pt-4">
+      <form onSubmit={handleAdd} className="space-y-2 border-t border-gray-100 dark:border-gray-700 pt-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Neuer Lagerort</p>
         <input type="text" className="input py-2.5 text-sm" placeholder="z.B. Oberschrank links, Kiste 1…"
           value={newName} onChange={e => setNewName(e.target.value)} />

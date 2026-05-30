@@ -56,7 +56,7 @@ export default function ExpiryView({ onEdit }) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-6">
         <div className="text-5xl mb-4">📅</div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-1">Keine Gewürze vorhanden</h3>
+        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">Keine Gewürze vorhanden</h3>
         <p className="text-sm text-gray-400">Füge zuerst Gewürze mit MHD hinzu</p>
       </div>
     )
@@ -65,7 +65,7 @@ export default function ExpiryView({ onEdit }) {
   return (
     <div className="flex flex-col h-full">
       {/* Summary cards */}
-      <div className="bg-white border-b border-gray-100 px-4 py-3">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3">
         <div className="grid grid-cols-4 gap-2">
           {[
             { status: 'expired', count: counts.expired, label: 'Abgelauf.', bg: 'bg-red-50', text: 'text-red-600' },
@@ -88,13 +88,13 @@ export default function ExpiryView({ onEdit }) {
       </div>
 
       {/* Filter pills */}
-      <div className="bg-white border-b border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex gap-2 overflow-x-auto">
         {STATUS_FILTERS.map(f => (
           <button
             key={f.id}
             onClick={() => setStatusFilter(f.id)}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              statusFilter === f.id ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'
+              statusFilter === f.id ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
             }`}
           >
             {f.label}
@@ -144,13 +144,13 @@ function ExpiryCard({ spice, onEdit }) {
     <div className={`card ${rowClass} px-4 py-3 flex items-center justify-between gap-3`}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {spice.imageUrl && (
-          <div className="flex-none w-10 h-10 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+          <div className="flex-none w-10 h-10 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
             <img src={spice.imageUrl} alt={spice.name} className="w-full h-full object-contain" />
           </div>
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-900">{spice.name}</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">{spice.name}</span>
             <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${pkgColor.bg} ${pkgColor.text}`}>
               {pkgLabel}
             </span>

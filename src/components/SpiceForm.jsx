@@ -150,16 +150,16 @@ export default function SpiceForm({ spice, onClose }) {
     <>
       <div className="fixed inset-0 bg-black/40 z-40 fade-enter" onClick={onClose} />
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl sheet-enter max-h-[92vh] flex flex-col">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl sheet-enter max-h-[92vh] flex flex-col">
         <div className="flex justify-center pt-3 pb-1 flex-none">
           <div className="w-10 h-1.5 rounded-full bg-gray-200" />
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {isEdit ? 'Gewürz bearbeiten' : 'Gewürz hinzufügen'}
           </h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition-colors">
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -173,7 +173,7 @@ export default function SpiceForm({ spice, onClose }) {
             <label className="label">Produktbild (optional)</label>
             <div className="flex gap-3 items-start">
               {/* Vorschau */}
-              <div className="flex-none w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+              <div className="flex-none w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                 {form.imageUrl ? (
                   <img src={form.imageUrl} alt="Produktbild" className="w-full h-full object-contain" />
                 ) : (
@@ -256,7 +256,7 @@ export default function SpiceForm({ spice, onClose }) {
                       type="button"
                       onClick={() => selectSearchImage(r.fullUrl)}
                       title={[r.brand, r.name].filter(Boolean).join(' – ')}
-                      className="w-20 h-20 rounded-xl border-2 border-transparent hover:border-green-400 active:border-green-500 overflow-hidden bg-gray-50 transition-all shadow-sm block"
+                      className="w-20 h-20 rounded-xl border-2 border-transparent hover:border-green-400 active:border-green-500 overflow-hidden bg-gray-50 dark:bg-gray-800 transition-all shadow-sm block"
                     >
                       <img src={r.thumbUrl} alt={r.name} className="w-full h-full object-contain" loading="lazy" />
                     </button>
@@ -298,7 +298,7 @@ export default function SpiceForm({ spice, onClose }) {
                 />
                 {showSuggestions && suggestions.length > 0 && (
                   <div
-                    className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 mt-1 max-h-48 overflow-y-auto"
+                    className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 mt-1 max-h-48 overflow-y-auto"
                     onMouseDown={() => clearTimeout(suggestionTimeout.current)}
                   >
                     {suggestions.map(s => (
@@ -334,7 +334,7 @@ export default function SpiceForm({ spice, onClose }) {
                 return (
                   <button key={t.id} type="button" onClick={() => set('packagingType', t.id)}
                     className={`rounded-xl p-3 text-left transition-all border-2 ${
-                      active ? `${col.bg} ${col.text} border-current` : 'border-gray-100 bg-gray-50 text-gray-600'
+                      active ? `${col.bg} ${col.text} border-current` : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600'
                     }`}>
                     <div className="font-semibold text-sm">{t.label}</div>
                     <div className="text-xs mt-0.5 opacity-70 leading-tight">{t.description}</div>
@@ -397,7 +397,7 @@ export default function SpiceForm({ spice, onClose }) {
                   className={`flex-1 py-2.5 rounded-xl flex flex-col items-center gap-1.5 border-2 transition-all ${
                     form.fillLevel === lvl
                       ? 'border-green-500 bg-green-50'
-                      : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                      : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-gray-200 dark:border-gray-700'
                   }`}
                 >
                   <FillBar level={lvl} />

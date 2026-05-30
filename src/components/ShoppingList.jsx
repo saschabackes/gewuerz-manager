@@ -128,7 +128,7 @@ export default function ShoppingList() {
       )}
 
       {/* Add item form */}
-      <div className="bg-white border-b border-gray-100 px-4 py-3">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3">
         <form onSubmit={addItem} className="space-y-2">
           <div className="relative">
             <input
@@ -142,7 +142,7 @@ export default function ShoppingList() {
             />
             {showSugg && suggestions.length > 0 && (
               <div
-                className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-20 mt-1"
+                className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-20 mt-1"
                 onMouseDown={() => clearTimeout(suggTimeout.current)}
               >
                 {suggestions.map(s => (
@@ -177,15 +177,15 @@ export default function ShoppingList() {
 
       {/* Toolbar – Bring!-Modus */}
       {bringActive && (
-        <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between gap-3">
+        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex items-center justify-between gap-3">
           {/* Filter-Toggle */}
-          <div className="flex bg-white border border-gray-200 rounded-lg p-0.5 gap-0.5">
+          <div className="flex bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-0.5 gap-0.5">
             <button
               onClick={() => setBringFilter('spices')}
               className={`text-xs font-semibold px-3 py-1 rounded-md transition-colors ${
                 bringFilter === 'spices'
                   ? 'bg-green-500 text-white'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-200'
               }`}
             >
               🧂 Gewürze
@@ -195,7 +195,7 @@ export default function ShoppingList() {
               className={`text-xs font-semibold px-3 py-1 rounded-md transition-colors ${
                 bringFilter === 'all'
                   ? 'bg-orange-400 text-white'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-200'
               }`}
             >
               Alle
@@ -216,7 +216,7 @@ export default function ShoppingList() {
 
       {/* Toolbar – eingebaute Liste */}
       {!bringActive && items.length > 0 && (
-        <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between">
+        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
           <span className="text-sm text-gray-500">
             {items.length} Artikel{checkedCount > 0 ? `, ${checkedCount} erledigt` : ''}
           </span>
@@ -242,20 +242,20 @@ export default function ShoppingList() {
               {showExport && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 min-w-[170px]">
-                    <button onClick={handleShare} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                  <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-20 min-w-[170px]">
+                    <button onClick={handleShare} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:bg-gray-800 flex items-center gap-2 transition-colors">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       Teilen / Text-Export
                     </button>
-                    <button onClick={handleExportText} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                    <button onClick={handleExportText} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:bg-gray-800 flex items-center gap-2 transition-colors">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       Als .txt herunterladen
                     </button>
-                    <button onClick={handleExportPDF} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                    <button onClick={handleExportPDF} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:bg-gray-800 flex items-center gap-2 transition-colors">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -287,7 +287,7 @@ export default function ShoppingList() {
             {!bringItemsError && visibleSpices.length === 0 && visibleOthers.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="text-5xl mb-4">{bringFilter === 'spices' ? '🧂' : '🛍'}</div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-1">
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">
                   {bringFilter === 'spices' ? 'Keine Gewürze auf der Liste' : 'Bring!-Liste ist leer'}
                 </h3>
                 <p className="text-sm text-gray-400">
@@ -341,7 +341,7 @@ export default function ShoppingList() {
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="text-5xl mb-4">🛒</div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-1">Einkaufsliste ist leer</h3>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">Einkaufsliste ist leer</h3>
               <p className="text-sm text-gray-400">Füge Artikel hinzu, die du kaufen möchtest</p>
             </div>
           ) : (
@@ -412,7 +412,7 @@ function BringListItem({ item, onRemove, isSpice = false }) {
       </button>
 
       <div className="flex-1 min-w-0">
-        <span className="font-medium text-gray-900">{item.name}</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
         {item.specification && (
           <span className="text-sm text-gray-400 ml-2">{item.specification}</span>
         )}
@@ -474,7 +474,7 @@ function ShoppingItem({ item, isEditing, editName, editAmount, onEditNameChange,
       </button>
 
       <div className="flex-1 min-w-0">
-        <span className={`font-medium text-gray-900 ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
+        <span className={`font-medium text-gray-900 dark:text-gray-100 ${item.checked ? 'line-through' : ''}`}>{item.name}</span>
         {item.amount && (
           <span className="text-sm text-gray-400 ml-2">{item.amount}</span>
         )}
@@ -482,7 +482,7 @@ function ShoppingItem({ item, isEditing, editName, editAmount, onEditNameChange,
 
       <div className="flex-none flex items-center gap-1">
         {!item.checked && (
-          <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+          <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

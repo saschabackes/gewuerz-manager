@@ -1,6 +1,6 @@
 export default function Navigation({ current, onChange, onAdd }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-30 pb-safe">
       <div className="flex items-center">
         <NavItem
           icon={<SpicesIcon />}

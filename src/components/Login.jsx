@@ -65,16 +65,16 @@ export default function Login() {
       </div>
 
       {/* Form Card */}
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
+      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
         {/* Bestätigungs-Hinweis nach Registrierung */}
         {mode === 'confirm' ? (
           <div className="text-center py-4">
             <div className="text-5xl mb-4">📬</div>
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Mail bestätigen</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Mail bestätigen</h2>
             <p className="text-sm text-gray-500 mb-1">
               Wir haben eine Bestätigungs-Mail an
             </p>
-            <p className="text-sm font-semibold text-gray-800 mb-3">{email}</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">{email}</p>
             <p className="text-sm text-gray-500 mb-6">
               Klicke den Link in der Mail um dein Konto zu aktivieren. Danach kannst du dich anmelden.
             </p>
@@ -96,7 +96,7 @@ export default function Login() {
           </div>
         ) : (
         <>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
           {mode === 'login' ? 'Anmelden' : mode === 'register' ? 'Neues Konto erstellen' : 'Passwort zurücksetzen'}
         </h2>
         {mode === 'reset' && (

@@ -79,12 +79,39 @@ function catToJS(row) {
   }
 }
 
+// ── Theme (Dark Mode) ─────────────────────────────────────────────────────────
+
+function applyTheme(theme) {
+  if (typeof document === 'undefined') return
+  const dark = theme === 'dark' ||
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.classList.toggle('dark', dark)
+}
+
+const initialTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('gewuerz_theme')) || 'system'
+
+// Bei System-Modus auf OS-Änderungen reagieren
+if (typeof window !== 'undefined') {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const t = localStorage.getItem('gewuerz_theme') || 'system'
+    if (t === 'system') applyTheme('system')
+  })
+}
+
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 const useStore = create((set, get) => ({
   // Auth
   user:        null,
   authLoading: true,
+
+  // Theme: 'system' | 'light' | 'dark'
+  theme: initialTheme,
+  setTheme(theme) {
+    localStorage.setItem('gewuerz_theme', theme)
+    applyTheme(theme)
+    set({ theme })
+  },
 
   // Haushalt
   household: null,   // { id, name, inviteCode }

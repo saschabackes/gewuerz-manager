@@ -93,15 +93,15 @@ export default function BarcodeScanner({ onDetected, onClose }) {
     <>
       <div className="fixed inset-0 bg-black/70 z-50 fade-enter" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 pointer-events-none">
-        <div className="bg-white rounded-2xl overflow-hidden w-full max-w-sm shadow-2xl pointer-events-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden w-full max-w-sm shadow-2xl pointer-events-auto">
 
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div>
-              <h3 className="font-bold text-gray-900">Barcode scannen</h3>
+              <h3 className="font-bold text-gray-900 dark:text-gray-100">Barcode scannen</h3>
               <p className="text-xs text-gray-400">EAN-13 / EAN-8 / Code128</p>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition-colors">
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -114,7 +114,7 @@ export default function BarcodeScanner({ onDetected, onClose }) {
               {cameras.map((cam, i) => (
                 <button key={cam.id} onClick={() => switchCamera(cam.id)}
                   className={`text-xs rounded-full px-3 py-1 font-medium transition-colors ${
-                    activeCamId === cam.id ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'
+                    activeCamId === cam.id ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
                   }`}>
                   {cam.label || `Kamera ${i + 1}`}
                 </button>
