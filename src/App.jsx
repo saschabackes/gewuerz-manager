@@ -8,6 +8,7 @@ import ExpiryView from './components/ExpiryView'
 import ShoppingList from './components/ShoppingList'
 import SettingsView from './components/SettingsView'
 import HelpView from './components/HelpView'
+import ActivityView from './components/ActivityView'
 import { getMhdStatus } from './utils/mhd'
 import { PACKAGING_TYPES } from './data/spices'
 
@@ -20,6 +21,7 @@ export default function App() {
   const [editingSpice, setEditingSpice] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showActivity, setShowActivity] = useState(false)
 
   useEffect(() => { init() }, [])
 
@@ -57,6 +59,16 @@ export default function App() {
           <h1 className="text-lg font-bold tracking-tight">Gewürz Manager</h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowActivity(true)}
+            className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
+            title="Aktivitätsverlauf"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
           <button
             onClick={() => setShowHelp(true)}
             className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
@@ -112,6 +124,10 @@ export default function App() {
 
       {showHelp && (
         <HelpView onClose={() => setShowHelp(false)} />
+      )}
+
+      {showActivity && (
+        <ActivityView onClose={() => setShowActivity(false)} />
       )}
     </div>
   )

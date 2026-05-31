@@ -126,8 +126,46 @@ const useStore = create((set, get) => ({
   shoppingItems: [],
   locations:     [],
   categories:    [],
+  activityLog:   [],
   dataLoading:   false,
   dataError:     null,
+
+  // ── Aktivitätsverlauf ───────────────────────────────────────────────────
+
+  // Fire-and-forget: schreibt einen Verlaufseintrag (denormalisiert für Lesbarkeit)
+  _logActivity(action, targetName = null, detail = null) {
+    const { household, user } = get()
+    if (!household) return
+    const userName = user?.user_metadata?.name ?? user?.email?.split('@')[0] ?? 'Jemand'
+    supabase.from('activity_log').insert([{
+      household_id: household.id,
+      user_id:      user?.id ?? null,
+      user_name:    userName,
+      action,
+      target_name:  targetName,
+      detail,
+    }]).then(({ error }) => { if (error) console.error('logActivity:', error) })
+  },
+
+  async loadActivity() {
+    const { household } = get()
+    if (!household) return
+    const { data, error } = await supabase
+      .from('activity_log')
+      .select('*')
+      .eq('household_id', household.id)
+      .order('created_at', { ascending: false })
+      .limit(150)
+    if (error) { console.error('loadActivity:', error); return }
+    set({ activityLog: (data ?? []).map(r => ({
+      id:        r.id,
+      userName:  r.user_name ?? 'Jemand',
+      action:    r.action,
+      target:    r.target_name ?? '',
+      detail:    r.detail ?? '',
+      createdAt: r.created_at,
+    })) })
+  },
 
   // ── Auth ──────────────────────────────────────────────────────────────
 
@@ -452,10 +490,12 @@ const useStore = create((set, get) => ({
           set(s => ({ spices: s.spices.filter(sp => sp.id !== id) }))
         }
       })
+    get()._logActivity('spice_added', data.name)
   },
 
   updateSpice(id, data) {
     const now = new Date().toISOString()
+    const prev = get().spices.find(sp => sp.id === id)
     set(s => ({
       spices: s.spices.map(sp => sp.id === id ? { ...sp, ...data, updatedAt: now } : sp),
     }))
@@ -463,21 +503,27 @@ const useStore = create((set, get) => ({
       .update({ ...toDB(data), updated_at: now })
       .eq('id', id)
       .then(({ error }) => { if (error) console.error('updateSpice:', error) })
+    get()._logActivity('spice_updated', data.name ?? prev?.name ?? '')
   },
 
   updateFillLevel(id, level) {
+    const FILL_LABELS = ['Fast leer', 'Wenig', 'Halb', 'Gut', 'Voll']
     const clamped = Math.max(0, Math.min(4, level))
+    const sp = get().spices.find(s => s.id === id)
     set(s => ({
       spices: s.spices.map(sp => sp.id === id ? { ...sp, fillLevel: clamped } : sp),
     }))
     supabase.from('spices').update({ fill_level: clamped }).eq('id', id)
       .then(({ error }) => { if (error) console.error('updateFillLevel:', error) })
+    if (sp) get()._logActivity('fill_changed', sp.name, FILL_LABELS[clamped])
   },
 
   deleteSpice(id) {
+    const sp = get().spices.find(s => s.id === id)
     set(s => ({ spices: s.spices.filter(sp => sp.id !== id) }))
     supabase.from('spices').delete().eq('id', id)
       .then(({ error }) => { if (error) console.error('deleteSpice:', error) })
+    if (sp) get()._logActivity('spice_deleted', sp.name)
   },
 
   // ── Lagerorte ─────────────────────────────────────────────────────────
@@ -558,6 +604,7 @@ const useStore = create((set, get) => ({
           console.error('🔴 Bring! addItem:', err)
           set({ dataError: `Bring!-Fehler: ${err.message}` })
         })
+      get()._logActivity('shopping_added', name.trim())
       return
     }
 
@@ -568,6 +615,7 @@ const useStore = create((set, get) => ({
     supabase.from('shopping_items')
       .insert([{ id, name: name.trim(), amount: amount.trim() || null, added_by: user?.id, household_id: household?.id }])
       .then(({ error }) => { if (error) console.error('addShoppingItem:', error) })
+    get()._logActivity('shopping_added', name.trim())
   },
 
   toggleShoppingItem(id) {
