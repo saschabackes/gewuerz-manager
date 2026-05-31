@@ -9,11 +9,14 @@ import ShoppingList from './components/ShoppingList'
 import SettingsView from './components/SettingsView'
 import HelpView from './components/HelpView'
 import ActivityView from './components/ActivityView'
+import OnboardingView from './components/OnboardingView'
 import { getMhdStatus } from './utils/mhd'
 import { PACKAGING_TYPES } from './data/spices'
 
 export default function App() {
   const { user, authLoading, init } = useStore()
+  const onboardingReplay = useStore(s => s.onboardingReplay)
+  const finishOnboarding = useStore(s => s.finishOnboarding)
   const dataError = useStore(s => s.dataError)
   const currentUser = useStore(s => s.currentUser())
   const [view, setView] = useState('spices')
@@ -40,6 +43,12 @@ export default function App() {
 
   // Nicht eingeloggt → Login anzeigen
   if (!user) return <Login />
+
+  // Erstnutzer (oder erneut gestartet) → Willkommens-Tour
+  const showOnboarding = !user.user_metadata?.onboarding_done || onboardingReplay
+  if (showOnboarding) {
+    return <OnboardingView onFinish={finishOnboarding} />
+  }
 
   function handleEditSpice(spice) {
     setEditingSpice(spice)

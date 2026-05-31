@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import useStore from '../store/useStore'
 
 // Hilfe-Inhalte, gruppiert nach Themenbereich
 const HELP_GROUPS = [
@@ -187,6 +188,7 @@ const HELP_GROUPS = [
 
 export default function HelpView({ onClose }) {
   const [openKey, setOpenKey] = useState(null)
+  const startOnboarding = useStore(s => s.startOnboarding)
 
   return (
     <>
@@ -221,6 +223,18 @@ export default function HelpView({ onClose }) {
               Tippe auf ein Thema, um die Erklärung auszuklappen.
             </p>
           </div>
+
+          {/* Einführung erneut starten */}
+          <button
+            onClick={() => { startOnboarding(); onClose() }}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 text-white rounded-2xl py-3 text-sm font-semibold hover:bg-green-700 transition-colors mb-5"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="12" r="9"/>
+            </svg>
+            Einführung erneut ansehen
+          </button>
 
           {HELP_GROUPS.map(group => (
             <div key={group.group} className="mb-5">

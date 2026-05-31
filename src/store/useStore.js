@@ -113,6 +113,17 @@ const useStore = create((set, get) => ({
     set({ theme })
   },
 
+  // Onboarding (Willkommens-Tour)
+  onboardingReplay: false,
+  startOnboarding() { set({ onboardingReplay: true }) },
+  async finishOnboarding() {
+    set({ onboardingReplay: false })
+    const { user } = get()
+    if (user && !user.user_metadata?.onboarding_done) {
+      await supabase.auth.updateUser({ data: { onboarding_done: true } })
+    }
+  },
+
   // Haushalt
   household: null,   // { id, name, inviteCode }
 
