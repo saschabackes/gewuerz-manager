@@ -88,6 +88,20 @@ function keywords(name) {
   return [...out]
 }
 
+// Ist die Mengenangabe „gewürz-typisch"? Gewürze werden klein dosiert
+// (TL/EL/Prise/Msp oder wenige Gramm) – Gemüse in Stück/großen Mengen.
+export function isSpiceLike(amount) {
+  if (!amount || !amount.trim()) return true            // ohne Menge → erlauben
+  const a = amount.toLowerCase().replace(',', '.')
+  // kleine Dosier-Einheiten → klar Gewürz
+  if (/\b(tl|el|prise|prisen|msp|messerspitze|teel|essl)\b/.test(a)) return true
+  // reine Grammangabe: nur kleine Mengen (≤ 20 g)
+  const g = a.match(/(\d+(?:\.\d+)?)\s*g\b/)
+  if (g) return parseFloat(g[1]) <= 20
+  // alles andere (Stück, Bund, Zehe, Stange, Scheibe, ml/l, bloße Zahl) → kein Gewürz
+  return false
+}
+
 // Prioritäts-Sortierung: ältestes MHD → niedrigster Füllstand → kleinste Menge
 function byPriority(a, b) {
   const da = a.expiryDate ? Date.parse(a.expiryDate) : Infinity
@@ -114,10 +128,12 @@ function matchSpices(recipeName, spices) {
 // Baut den Kochplan: matched (mit sortierten Gläsern) + unmatched
 export function buildCookPlan(ingredients, spices) {
   const matched = []
-  const unmatched = []
+  const unmatched = []   // gewürz-typisch, aber nicht im Bestand
+  const ignored = []     // keine Gewürze (Gemüse, große Mengen, Stück…)
   const usedSpiceIds = new Set()
 
   ingredients.forEach(ing => {
+    if (!isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
     const hits = matchSpices(ing.name, spices).filter(sp => !usedSpiceIds.has(sp.id))
     if (hits.length === 0) {
       unmatched.push(ing.name)
@@ -128,5 +144,5 @@ export function buildCookPlan(ingredients, spices) {
     matched.push({ recipeName: ing.name, amount: ing.amount, jars })
   })
 
-  return { matched, unmatched }
+  return { matched, unmatched, ignored }
 }
