@@ -1,0 +1,132 @@
+// ── Rezept-Text parsen ────────────────────────────────────────────────────────
+// Erwartetes Format (z.B. aus Cookidoo-Web kopiert):
+//   <Name>
+//   <Zubereitungsnotiz?>          (optional, enthält Kommas/Klammern/Verben)
+//   <Menge>                       (kurze Zeile: Zahl + optionale Einheit)
+//   <Alternative?>                (optional, wird ignoriert)
+//   <Leerzeile>  → trennt Blöcke
+
+const UNITS = 'g|kg|ml|l|TL|EL|Prise|Prisen|Stängel|Stange|Stangen|Würfel|Stück|Bund|Zehe|Zehen|Dose|Dosen|Pck\\.?|Packung|Msp\\.?|Tropfen|Blatt|Blätter|Becher|Tasse|Glas|cm'
+const QUALIFIERS = 'geh\\.|gestr\\.|ca\\.|knapp|gut|etwa|je'
+
+// Ist die Zeile eine reine Mengenangabe (nicht Name, nicht Notiz)?
+function isAmountLine(line) {
+  const l = line.trim()
+  if (!l) return false
+  if (/[(),]/.test(l)) return false            // Klammern/Kommas → Notiz
+  if (!/\d|½|¼|¾|⅓|⅔|eine?\b|etwas/i.test(l)) return false
+  // Alles Bekannte entfernen – bleibt fast nichts übrig → echte Menge
+  const rest = l
+    .replace(/\d+[.,]?\d*/g, '')
+    .replace(new RegExp(`\\b(${QUALIFIERS})`, 'gi'), '')
+    .replace(new RegExp(`\\b(${UNITS})\\b`, 'gi'), '')
+    .replace(/[½¼¾⅓⅔/.\-\s]/g, '')
+    .trim()
+  return rest.length <= 2
+}
+
+export function parseRecipeText(text) {
+  if (!text || !text.trim()) return []
+  const lines = text.replace(/\r/g, '').split('\n')
+
+  const blocks = []
+  let current = []
+  for (const raw of lines) {
+    if (raw.trim() === '') {
+      if (current.length) { blocks.push(current); current = [] }
+    } else {
+      current.push(raw.trim())
+    }
+  }
+  if (current.length) blocks.push(current)
+
+  const ingredients = []
+  for (const block of blocks) {
+    const name = block[0]
+    if (!name) continue
+    let amount = ''
+    for (let i = 1; i < block.length; i++) {
+      if (isAmountLine(block[i])) { amount = block[i]; break }
+    }
+    // Fallback: manchmal steht die Menge direkt nach dem Namen ohne Notiz
+    if (!amount && block.length === 1 && isAmountLine(block[0])) continue
+    ingredients.push({ name: name.replace(/\s+/g, ' ').trim(), amount })
+  }
+  return ingredients
+}
+
+// ── Zuordnung zum Bestand + Zuteilung ─────────────────────────────────────────
+
+// Recipe-Begriff → Bestands-Stichwort (für gängige Abweichungen)
+const SYNONYMS = {
+  kumin: 'kreuzkümmel',
+  cumin: 'kreuzkümmel',
+  muskat: 'muskatnuss',
+  peffer: 'pfeffer',
+  chili: 'chili',
+  paprikapulver: 'paprika',
+}
+
+function normalize(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[.,()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// Bedeutungstragende Wörter aus dem Rezeptnamen (ohne Notizteile)
+function keywords(name) {
+  const n = normalize(name)
+  // Notiz nach erstem Komma o.ä. abschneiden ist schon via normalize entfernt
+  const words = n.split(' ').filter(w => w.length >= 3)
+  const out = new Set()
+  words.forEach(w => {
+    out.add(w)
+    if (SYNONYMS[w]) out.add(SYNONYMS[w])
+  })
+  return [...out]
+}
+
+// Prioritäts-Sortierung: ältestes MHD → niedrigster Füllstand → kleinste Menge
+function byPriority(a, b) {
+  const da = a.expiryDate ? Date.parse(a.expiryDate) : Infinity
+  const db = b.expiryDate ? Date.parse(b.expiryDate) : Infinity
+  if (da !== db) return da - db
+  const fa = a.fillLevel ?? 4
+  const fb = b.fillLevel ?? 4
+  if (fa !== fb) return fa - fb
+  const ga = a.amountGrams ?? Infinity
+  const gb = b.amountGrams ?? Infinity
+  return ga - gb
+}
+
+// Findet zu einem Rezept-Namen passende Bestands-Gewürze
+function matchSpices(recipeName, spices) {
+  const keys = keywords(recipeName)
+  if (keys.length === 0) return []
+  return spices.filter(sp => {
+    const inv = normalize(sp.name)
+    return keys.some(k => inv.includes(k) || k.includes(inv.split(' ')[0]))
+  })
+}
+
+// Baut den Kochplan: matched (mit sortierten Gläsern) + unmatched
+export function buildCookPlan(ingredients, spices) {
+  const matched = []
+  const unmatched = []
+  const usedSpiceIds = new Set()
+
+  ingredients.forEach(ing => {
+    const hits = matchSpices(ing.name, spices).filter(sp => !usedSpiceIds.has(sp.id))
+    if (hits.length === 0) {
+      unmatched.push(ing.name)
+      return
+    }
+    hits.forEach(sp => usedSpiceIds.add(sp.id))
+    const jars = [...hits].sort(byPriority)
+    matched.push({ recipeName: ing.name, amount: ing.amount, jars })
+  })
+
+  return { matched, unmatched }
+}

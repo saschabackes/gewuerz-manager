@@ -10,6 +10,7 @@ import SettingsView from './components/SettingsView'
 import HelpView from './components/HelpView'
 import ActivityView from './components/ActivityView'
 import OnboardingView from './components/OnboardingView'
+import CookView from './components/CookView'
 import { getMhdStatus } from './utils/mhd'
 import { PACKAGING_TYPES } from './data/spices'
 
@@ -25,6 +26,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showActivity, setShowActivity] = useState(false)
+  const [showCook, setShowCook] = useState(false)
 
   useEffect(() => { init() }, [])
 
@@ -68,6 +70,13 @@ export default function App() {
           <h1 className="text-lg font-bold tracking-tight">Gewürz Manager</h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCook(true)}
+            className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
+            title="Kochen"
+          >
+            <span className="block text-base leading-none w-4 h-4 flex items-center justify-center">🍲</span>
+          </button>
           <button
             onClick={() => setShowActivity(true)}
             className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
@@ -137,6 +146,10 @@ export default function App() {
 
       {showActivity && (
         <ActivityView onClose={() => setShowActivity(false)} />
+      )}
+
+      {showCook && (
+        <CookView onClose={() => setShowCook(false)} />
       )}
     </div>
   )
