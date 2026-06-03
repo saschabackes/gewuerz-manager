@@ -1,15 +1,36 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
 import { parseRecipeText, buildCookPlan } from '../utils/recipeParser'
+import { cookidooFetchRecipe } from '../lib/cookidoo'
 import { formatMhdDate, getMhdStatus, MHD_STYLES } from '../utils/mhd'
 import FillBar, { FILL_LABELS } from './FillBar'
 
 export default function CookView({ onClose }) {
-  const { spices, locations, addShoppingItem } = useStore()
+  const { spices, locations, addShoppingItem, cookidooSettings } = useStore()
   const [text, setText]       = useState('')
+  const [link, setLink]       = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
+  const [recipeTitle, setRecipeTitle] = useState('')
   const [plan, setPlan]       = useState(null)   // { matched, unmatched }
   const [dismissed, setDismissed] = useState(new Set())  // ignorierte Rezeptzeilen
   const [added, setAdded]     = useState(new Set())      // auf Einkauf gesetzt
+
+  async function importFromCookidoo() {
+    if (!link.trim()) return
+    setImporting(true)
+    setImportError('')
+    try {
+      const { title, ingredients } = await cookidooFetchRecipe(cookidooSettings.email, cookidooSettings.password, link.trim())
+      setRecipeTitle(title)
+      setPlan(buildCookPlan(ingredients, spices))
+      setDismissed(new Set())
+    } catch (e) {
+      setImportError(e.message)
+    } finally {
+      setImporting(false)
+    }
+  }
 
   function locName(id) {
     return locations.find(l => l.id === id)?.name ?? null
@@ -23,6 +44,9 @@ export default function CookView({ onClose }) {
 
   function reset() {
     setText('')
+    setLink('')
+    setRecipeTitle('')
+    setImportError('')
     setPlan(null)
     setDismissed(new Set())
     setAdded(new Set())
@@ -55,10 +79,45 @@ export default function CookView({ onClose }) {
             <>
               <div className="bg-sky-50 dark:bg-sky-950/40 rounded-2xl px-4 py-3 mb-4">
                 <p className="text-sm text-sky-800 dark:text-sky-200 leading-relaxed">
-                  Füge die Zutatenliste deines Rezepts ein (z.B. aus Cookidoo oder einer Website kopiert).
-                  Der Gewürz-Manager sucht heraus, welche deiner Gewürze du verwenden kannst – und welches Glas zuerst.
+                  Gib dein Rezept ein – der Gewürz-Manager sucht heraus, welche deiner Gewürze du verwenden kannst und welches Glas zuerst.
                 </p>
               </div>
+
+              {/* Cookidoo-Direktimport */}
+              {cookidooSettings?.email ? (
+                <div className="mb-4">
+                  <label className="label flex items-center gap-1.5">
+                    <span className="text-base">🥄</span> Cookidoo-Rezept importieren
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      className="input py-2.5 text-sm flex-1"
+                      placeholder="cookidoo.de/recipes/recipe/…"
+                      value={link}
+                      onChange={e => setLink(e.target.value)}
+                    />
+                    <button
+                      onClick={importFromCookidoo}
+                      disabled={!link.trim() || importing}
+                      className="btn-primary px-4 py-2.5 text-sm flex-none disabled:opacity-50"
+                    >
+                      {importing ? '…' : 'Holen'}
+                    </button>
+                  </div>
+                  {importError && <p className="text-xs text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2 mt-2">{importError}</p>}
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
+                    <span className="text-xs text-gray-400">oder Zutaten einfügen</span>
+                    <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 mb-3">
+                  Tipp: Verbinde Cookidoo in den Einstellungen, um Rezeptlinks direkt zu importieren.
+                </p>
+              )}
+
               <textarea
                 className="input resize-none text-sm font-mono"
                 rows={12}
@@ -80,6 +139,11 @@ export default function CookView({ onClose }) {
           ) : (
             /* ── Ergebnis ── */
             <>
+              {recipeTitle && (
+                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span>🥄</span> {recipeTitle}
+                </h3>
+              )}
               {visibleMatched.length === 0 && (
                 <div className="text-center py-10">
                   <div className="text-5xl mb-3">🤔</div>

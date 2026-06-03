@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { bringLogin, bringGetLists, bringAddItem, bringGetItems, bringRemoveItem } from '../lib/bring'
+import { cookidooVerify } from '../lib/cookidoo'
 
 // ── Einladungscode generieren ─────────────────────────────────────────────────
 // Verwirrbaren Zeichen (0/O, 1/I/l) ausgeschlossen
@@ -132,6 +133,21 @@ const useStore = create((set, get) => ({
   bringItems:      [], // [{ uuid, name, specification }] – aktuelle Artikel der Bring!-Liste
   bringItemsError: null,
 
+  // Cookidoo
+  cookidooSettings: null, // null | { email, password }
+
+  async connectCookidoo(email, password) {
+    await cookidooVerify(email, password)  // wirft bei falschen Daten
+    const settings = { email, password }
+    set({ cookidooSettings: settings })
+    await supabase.auth.updateUser({ data: { cookidoo: settings } })
+  },
+
+  async disconnectCookidoo() {
+    set({ cookidooSettings: null })
+    await supabase.auth.updateUser({ data: { cookidoo: null } })
+  },
+
   // Data
   spices:        [],
   shoppingItems: [],
@@ -186,14 +202,16 @@ const useStore = create((set, get) => ({
 
     const { data: { session } } = await supabase.auth.getSession()
     const bringSettings = session?.user?.user_metadata?.bring_settings ?? null
-    set({ user: session?.user ?? null, authLoading: false, bringSettings })
+    const cookidooSettings = session?.user?.user_metadata?.cookidoo ?? null
+    set({ user: session?.user ?? null, authLoading: false, bringSettings, cookidooSettings })
 
     supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null
       const bringSettings = user?.user_metadata?.bring_settings ?? null
-      set({ user, bringSettings })
+      const cookidooSettings = user?.user_metadata?.cookidoo ?? null
+      set({ user, bringSettings, cookidooSettings })
       if (user) get().loadData()
-      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null })
+      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, cookidooSettings: null })
     })
   },
 
@@ -223,7 +241,7 @@ const useStore = create((set, get) => ({
 
   async signOut() {
     await supabase.auth.signOut({ scope: 'local' })
-    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, _initialized: false })
+    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, cookidooSettings: null, _initialized: false })
   },
 
   currentUser() {
