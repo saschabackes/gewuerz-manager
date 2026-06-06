@@ -64,7 +64,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800">
-      <header className="bg-green-600 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-30 pt-safe">
+      <header
+        className="bg-green-600 text-white px-4 pb-3 flex items-center justify-between sticky top-0 z-30"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+      >
         <div className="flex items-center gap-2">
           <span className="text-2xl">🌿</span>
           <h1 className="text-lg font-bold tracking-tight">Gewürz Manager</h1>
