@@ -19,17 +19,18 @@ export default function BarcodeScanner({ onDetected, onClose }) {
     return () => { instanceRef.current?.stop().catch(() => {}) }
   }, [])
 
-  // Hochauflösende Constraints mit kontinuierlichem Autofokus
-  function buildConstraints(cameraId) {
-    const base = {
+  // Erstes start()-Argument: Kamera-Wahl – MUSS genau einen Key haben
+  function camSelector(cameraId) {
+    return { deviceId: { exact: cameraId } }
+  }
+  // Zweites Argument (videoConstraints): Auflösung + kontinuierlicher Autofokus
+  function videoConstraints(cameraId) {
+    return {
+      deviceId: { exact: cameraId },
       width:  { ideal: 1920 },
       height: { ideal: 1080 },
-      focusMode: 'continuous',
       advanced: [{ focusMode: 'continuous' }],
     }
-    return cameraId
-      ? { deviceId: { exact: cameraId }, ...base }
-      : { facingMode: { ideal: 'environment' }, ...base }
   }
 
   async function detectTorch() {
@@ -87,13 +88,14 @@ export default function BarcodeScanner({ onDetected, onClose }) {
       instanceRef.current = scanner
 
       await scanner.start(
-        buildConstraints(cameraId),
+        camSelector(cameraId),
         {
           fps: 10,
           qrbox: (vw, vh) => {
             const w = Math.round(Math.min(vw * 0.92, 340))
             return { width: w, height: Math.round(Math.min(vh * 0.6, 160)) }
           },
+          videoConstraints: videoConstraints(cameraId),
         },
         handleDecode,
         () => {}
