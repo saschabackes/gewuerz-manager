@@ -1,94 +1,102 @@
-# 🌿 Gewürz Manager
+# 🌿 Gewürz-Manager
 
-Progressive Web App zur Verwaltung von Gewürzen im Haushalt.
+Eine Progressive Web App (PWA) zur Verwaltung des Gewürz-Vorrats im Haushalt –
+mit Foto, Füllstand, Mindesthaltbarkeit, Einkaufsliste, Haushalts-Teilen und
+einem „Kochen"-Modus, der zu einem Rezept die passenden Gläser (ältestes/leerstes
+zuerst) vorschlägt.
 
 ## Features
 
-- **Mehrere Benutzer** – Jeder Haushaltsbewohner hat ein eigenes Konto (lokale Speicherung)
-- **4 Verpackungstypen**: Fertigstreuer, Nachfüllpackung, Ganze Gewürze, Eigener Metallstreuer
-- **Vorausgefüllte Gewürzliste** mit 100+ deutschen Gewürzen und Mischungen + manuelle Eingabe
-- **MHD-Verwaltung** mit farblicher Warnung (grün/gelb/orange/rot)
-- **Einkaufsliste** mit Export als PDF oder Text / Teilen-Funktion
-- **Barcode-Scanner** via Kamera (für EAN-Codes)
+- **Vorratsverwaltung** – Gewürze mit Foto, Marke, Verpackungstyp, Menge, Lagerort & Kategorie
+- **Produktfoto-Suche** – automatisch über Google Images (SerpAPI), Fallback Open Food Facts
+- **Barcode-Scanner** – Produkt per EAN anlegen (Open Food Facts)
+- **Füllstand & Nachkaufen** – 4-stufiger Füllstand, automatischer Nachkauf-Hinweis (gruppenbewusst)
+- **MHD-Tracking** – Ablaufdaten mit Warnstufen, eigene MHD-Ansicht
+- **Einkaufsliste** – eingebaut oder direkt in **Bring!** (auch per Alexa)
+- **Haushalt teilen** – Familie per Einladungscode, Freunde mit eigener Sammlung
+- **Benutzerverwaltung** – Haushaltsinhaber & globaler Betreiber-Bereich (Super-Admin)
+- **Aktivitätsverlauf** – wer hat was geändert (für geteilte Haushalte)
+- **Kochen** – Rezept als Text einfügen oder **Cookidoo-Link** importieren →
+  Zuteilung der Gewürze nach MHD/Füllstand
+- **Dark Mode**, Onboarding-Tour, ausführliche In-App-Hilfe
 - **PWA** – installierbar auf iOS, Android und Desktop
 
-## Setup & Entwicklung
+## Tech-Stack
 
-### Voraussetzungen
-- [Node.js](https://nodejs.org/) v18 oder neuer
+- **Frontend:** React 18 + Vite, Zustand (State), Tailwind CSS
+- **Backend:** Supabase (PostgreSQL + Auth + Row Level Security)
+- **Serverless:** Netlify Functions (Proxys für Bring!, Cookidoo, Bildsuche, User-Admin)
+- **Weitere:** html5-qrcode (Scanner), date-fns, vite-plugin-pwa
+- **Hosting:** Netlify
 
-### Installation
+## Lokale Entwicklung
+
+Voraussetzung: [Node.js](https://nodejs.org/) v18+
 
 ```bash
-cd gewuerz-manager
 npm install
-npm run dev
+npm run dev      # Dev-Server (http://localhost:5173)
+npm run build    # Production-Build (→ dist/)
+npm run preview  # Build lokal testen
 ```
 
-Die App ist dann unter `http://localhost:5173` erreichbar.
+## Environment-Variablen
 
-### Build für Produktion
+Alle Secrets liegen in Umgebungsvariablen – **nichts davon gehört in den Code**.
+Lokal in eine `.env` (steht in `.gitignore`), in Produktion in den
+Netlify-Environment-Variablen.
 
-```bash
-npm run build
-npm run preview     # lokale Vorschau des Builds
-```
+### Frontend (Build-Zeit, Präfix `VITE_`)
 
-Der `dist/`-Ordner kann auf jeden statischen Hosting-Dienst deployt werden.
+| Variable | Zweck |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase Projekt-URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase Anon-Key (öffentlich, durch RLS abgesichert) |
+| `VITE_SUPER_ADMIN_EMAIL` | E-Mail, die den Betreiber-Tab sichtbar macht |
 
-## Deployment
+### Netlify Functions (serverseitig, geheim)
 
-### Option A – Netlify / Vercel (empfohlen)
+| Variable | Zweck |
+|---|---|
+| `SUPABASE_URL` | Supabase Projekt-URL (serverseitig) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service-Role-Key – **streng geheim**, umgeht RLS |
+| `SUPER_ADMIN_EMAIL` | E-Mail des Betreibers (serverseitige Berechtigungsprüfung) |
+| `SERP_API_KEY` | SerpAPI-Key für die Produktfoto-Suche (optional) |
 
-1. `npm run build` ausführen
-2. `dist/`-Ordner hochladen oder Git-Repo verbinden
-3. Build-Command: `npm run build`, Publish-Dir: `dist`
+> Bring!- und Cookidoo-Zugangsdaten werden **nicht** als Env-Var gespeichert,
+> sondern pro Nutzer zur Laufzeit eingegeben (Cookidoo: in den Supabase-User-Metadaten).
 
-### Option B – GitHub Pages
+## Datenbank (Supabase)
 
-```bash
-# vite.config.js: base: '/repo-name/' eintragen
-npm run build
-# dist/ in gh-pages Branch pushen
-```
+Tabellen, alle mit aktivierter **Row Level Security** (haushaltsbasiert):
 
-### Option C – Lokal öffnen (ohne Server)
+- `households`, `household_members`
+- `spices`, `spice_categories`, `storage_locations`
+- `shopping_items`
+- `activity_log`
 
-Da die App eine SPA ist, funktioniert das direkte Öffnen der `dist/index.html` **nicht**. Immer einen kleinen Webserver verwenden:
+Auth über Supabase Auth (E-Mail-Bestätigung + Passwort-Reset aktiviert).
 
-```bash
-npm run preview
-# oder: npx serve dist
-```
+## Deployment (Netlify)
 
-## PWA-Icons generieren
+1. Repo mit Netlify verbinden
+2. Build-Command `npm run build`, Publish-Dir `dist`
+3. Alle Environment-Variablen (siehe oben) in Netlify hinterlegen
+4. Functions liegen automatisch unter `netlify/functions/`
 
-Für vollständige PWA-Unterstützung (inklusive iOS-Homescreen-Icon) werden PNG-Icons benötigt:
+## Sicherheit
 
-```bash
-npm install -D sharp
-node -e "
-const sharp = require('sharp');
-const svg = Buffer.from('<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><rect width=\"100\" height=\"100\" rx=\"22\" fill=\"#16a34a\"/><text y=\".9em\" font-size=\"72\" x=\"50%\" text-anchor=\"middle\" dominant-baseline=\"hanging\" dy=\"10\">🌿</text></svg>');
-sharp(svg).resize(192).png().toFile('public/pwa-192x192.png');
-sharp(svg).resize(512).png().toFile('public/pwa-512x512.png');
-sharp(svg).resize(180).png().toFile('public/apple-touch-icon.png');
-console.log('Icons generiert!');
-"
-```
+- Keine Secrets im Repo oder in der Git-Historie
+- Datenzugriff ausschließlich über RLS-Policies (haushaltsgebunden)
+- Service-Role-Key nur serverseitig in Netlify Functions
+- Drittanbieter-Logins (Bring!, Cookidoo) laufen über serverseitige Proxys
 
-Oder einen Online-Dienst wie [RealFaviconGenerator](https://realfavicongenerator.net/) nutzen.
+## Hinweis zu Drittanbieter-Integrationen
 
-## Daten & Datenschutz
+Die Bring!- und Cookidoo-Anbindungen nutzen **inoffizielle, reverse-engineerte
+APIs**. Sie können sich jederzeit ändern und sind nicht von den jeweiligen
+Anbietern unterstützt. Nutzung auf eigene Verantwortung mit dem eigenen Konto.
 
-Alle Daten werden ausschließlich **lokal im Browser** (localStorage) gespeichert – kein Server, kein Cloud-Sync. Daten werden nur auf dem jeweiligen Gerät gespeichert.
+## Lizenz
 
-## Tech Stack
-
-- **React 18** + **Vite** – schnelle Entwicklung und Build
-- **Tailwind CSS** – utility-first Styling
-- **Zustand** – State Management mit localStorage-Persistenz
-- **vite-plugin-pwa** – Service Worker + Web App Manifest
-- **html5-qrcode** – Barcode-/QR-Scanner
-- **jsPDF** – PDF-Export der Einkaufsliste
-- **date-fns** – Datums-Berechnungen
+Privates Projekt – alle Rechte vorbehalten, sofern nicht anders angegeben.
