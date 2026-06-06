@@ -99,4 +99,4 @@ Anbietern unterstützt. Nutzung auf eigene Verantwortung mit dem eigenen Konto.
 
 ## Lizenz
 
-Privates Projekt – alle Rechte vorbehalten, sofern nicht anders angegeben.
+[MIT](./LICENSE) © 2026 Sascha Backes
