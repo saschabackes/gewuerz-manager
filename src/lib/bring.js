@@ -19,8 +19,13 @@ async function callProxy(action, params = {}) {
 // ── Öffentliche API ───────────────────────────────────────────────────────────
 
 export async function bringLogin(email, password) {
-  // Gibt { uuid, access_token, name, email, ... } zurück
+  // Gibt { uuid, access_token, refresh_token, name, email, ... } zurück
   return callProxy('login', { email, password })
+}
+
+// Neuen access_token via refresh_token holen → { access_token, refresh_token? }
+export async function bringRefreshToken(refreshToken) {
+  return callProxy('refreshToken', { refreshToken })
 }
 
 export async function bringGetLists(userUuid, rawUuid, accessToken) {

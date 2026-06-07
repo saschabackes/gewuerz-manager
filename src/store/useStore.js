@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
-import { bringLogin, bringGetLists, bringAddItem, bringGetItems, bringRemoveItem } from '../lib/bring'
+import { bringLogin, bringGetLists, bringAddItem, bringGetItems, bringRemoveItem, bringRefreshToken } from '../lib/bring'
 import { cookidooVerify } from '../lib/cookidoo'
 
 // ── Einladungscode generieren ─────────────────────────────────────────────────
@@ -407,9 +407,32 @@ const useStore = create((set, get) => ({
       throw new Error(listsError || 'Keine Bring!-Listen gefunden')
     }
 
-    // Temporär speichern bis Liste gewählt wurde
-    set({ _bringAuth: { accessToken: auth.access_token, userUuid, email } })
+    // Temporär speichern bis Liste gewählt wurde (inkl. refresh_token)
+    set({ _bringAuth: { accessToken: auth.access_token, refreshToken: auth.refresh_token ?? null, userUuid, email } })
     return lists
+  },
+
+  // Access-Token via refresh_token erneuern; aktualisiert State + user_metadata.
+  // Gibt den neuen Token zurück oder null.
+  async _refreshBringToken() {
+    const { bringSettings } = get()
+    if (!bringSettings?.refreshToken) return null
+    try {
+      const data = await bringRefreshToken(bringSettings.refreshToken)
+      const newToken = data.access_token
+      if (!newToken) return null
+      const updated = {
+        ...bringSettings,
+        accessToken: newToken,
+        refreshToken: data.refresh_token ?? bringSettings.refreshToken,
+      }
+      set({ bringSettings: updated })
+      supabase.auth.updateUser({ data: { bring_settings: updated } })
+      return newToken
+    } catch (e) {
+      console.error('🔴 Bring! refresh:', e.message)
+      return null
+    }
   },
 
   // Schritt 2: Liste auswählen + persistent speichern
@@ -427,7 +450,7 @@ const useStore = create((set, get) => ({
   },
 
   // Aktuelle Artikel aus der Bring!-Liste laden
-  async loadBringItems() {
+  async loadBringItems(_retried = false) {
     const { bringSettings } = get()
     if (!bringSettings?.listUuid || !bringSettings?.accessToken) return
     try {
@@ -444,6 +467,11 @@ const useStore = create((set, get) => ({
       })
     } catch (e) {
       console.error('🔴 loadBringItems:', e.message)
+      // Token abgelaufen → einmal erneuern und erneut versuchen
+      if (!_retried && /401/.test(e.message)) {
+        const t = await get()._refreshBringToken()
+        if (t) return get().loadBringItems(true)
+      }
       // Rate-Limit: kein roter Fehler, vorhandene Liste bleibt angezeigt
       if (e.message.includes('usage_exceeded')) return
       set({ bringItemsError: e.message })
@@ -451,17 +479,20 @@ const useStore = create((set, get) => ({
   },
 
   // Artikel aus der Bring!-Liste entfernen (→ "Kürzlich gekauft")
-  async removeBringItem(name) {
+  async removeBringItem(name, _retried = false) {
     const { bringSettings } = get()
     if (!bringSettings?.listUuid || !bringSettings?.accessToken) return
     // Optimistisch aus der lokalen Liste entfernen
     set(s => ({ bringItems: s.bringItems.filter(i => i.name !== name) }))
     try {
       await bringRemoveItem(bringSettings.listUuid, bringSettings.accessToken, name)
-      // Nach Entfernen neu laden um sicherzugehen
       get().loadBringItems()
     } catch (e) {
       console.error('🔴 removeBringItem:', e.message)
+      if (!_retried && /401/.test(e.message)) {
+        const t = await get()._refreshBringToken()
+        if (t) return get().removeBringItem(name, true)
+      }
       get().loadBringItems()
     }
   },
@@ -627,12 +658,20 @@ const useStore = create((set, get) => ({
     if (bringSettings?.listUuid && bringSettings?.accessToken) {
       // Gewürze bekommen "Gewürz" als Specification – so können wir sie in der Ansicht filtern
       const spec = isSpice ? 'Gewürz' : amount.trim()
-      bringAddItem(bringSettings.listUuid, bringSettings.accessToken, name.trim(), spec)
-        .then(() => get().loadBringItems())
-        .catch(err => {
+      const addOnce = async (token, retried) => {
+        try {
+          await bringAddItem(bringSettings.listUuid, token, name.trim(), spec)
+          get().loadBringItems()
+        } catch (err) {
           console.error('🔴 Bring! addItem:', err)
+          if (!retried && /401/.test(err.message)) {
+            const t = await get()._refreshBringToken()
+            if (t) return addOnce(t, true)
+          }
           set({ dataError: `Bring!-Fehler: ${err.message}` })
-        })
+        }
+      }
+      addOnce(bringSettings.accessToken, false)
       get()._logActivity('shopping_added', name.trim())
       return
     }

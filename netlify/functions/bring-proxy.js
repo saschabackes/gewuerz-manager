@@ -68,6 +68,25 @@ exports.handler = async function(event) {
     }
   }
 
+  // ── Token erneuern (refresh_token) ───────────────────────────────────────
+  if (action === 'refreshToken') {
+    if (!p.refreshToken) return err('refreshToken erforderlich')
+    try {
+      var rt = await fetch(BASE_URL + '/bringauth/token', {
+        method:  'POST',
+        headers: Object.assign({}, BRING_HEADERS, { 'Content-Type': 'application/x-www-form-urlencoded' }),
+        body:    'grant_type=refresh_token&refresh_token=' + encodeURIComponent(p.refreshToken),
+      })
+      var rtResult = await safeJson(rt)
+      if (!rtResult.ok || !rtResult.httpOk) {
+        return err('Bring! refresh HTTP ' + rtResult.status + ': ' + (rtResult.error || ''))
+      }
+      return ok(rtResult.data)   // enthält neuen access_token (ggf. neuen refresh_token)
+    } catch (e) {
+      return err('Bring! refresh exception: ' + e.message)
+    }
+  }
+
   // ── Listen laden ─────────────────────────────────────────────────────
   if (action === 'getLists') {
     if (!p.accessToken) return err('Token erforderlich')
