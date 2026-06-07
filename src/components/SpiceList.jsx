@@ -229,7 +229,7 @@ export default function SpiceList({ onEdit, onAdd }) {
               expanded={expandedId === spice.id}
               onToggle={() => setExpandedId(id => id === spice.id ? null : spice.id)}
               onEdit={() => { onEdit(spice); setExpandedId(null) }}
-              onAddToShopping={() => addShoppingItem(spice.name, '', true)}
+              onAddToShopping={() => addShoppingItem(spice.name, '', true, { spiceId: spice.id, brand: spice.brand })}
               onZoomImage={(url, name) => setZoomedImage({ url, name })}
               needsReorder={reorderNeeded.has(spice.name.toLowerCase().trim())}
               onFillChange={level => updateFillLevel(spice.id, level)}

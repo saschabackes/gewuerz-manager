@@ -13,6 +13,8 @@ export default function ShoppingList() {
   const bringItemsError  = useStore(s => s.bringItemsError)
   const loadBringItems   = useStore(s => s.loadBringItems)
   const removeBringItem  = useStore(s => s.removeBringItem)
+  const markPurchased    = useStore(s => s.markPurchased)
+  const cancelPendingByName = useStore(s => s.cancelPendingByName)
   const currentUser      = useStore(s => s.currentUser())
 
   const [newName, setNewName] = useState('')
@@ -309,7 +311,8 @@ export default function ShoppingList() {
                 )}
                 {visibleSpices.map(item => (
                   <BringListItem key={item.uuid || item.name} item={item} isSpice
-                    onRemove={() => removeBringItem(item.name)} />
+                    onPurchased={() => { markPurchased(item.name, null, null); removeBringItem(item.name) }}
+                    onDiscard={() => { cancelPendingByName(item.name); removeBringItem(item.name) }} />
                 ))}
               </>
             )}
@@ -325,7 +328,8 @@ export default function ShoppingList() {
                 )}
                 {visibleOthers.map(item => (
                   <BringListItem key={item.uuid || item.name} item={item}
-                    onRemove={() => removeBringItem(item.name)} />
+                    onPurchased={() => removeBringItem(item.name)}
+                    onDiscard={() => removeBringItem(item.name)} />
                 ))}
               </>
             )}
@@ -397,31 +401,31 @@ export default function ShoppingList() {
 
 // ── Bring!-Artikel-Karte ──────────────────────────────────────────────────────
 
-function BringListItem({ item, onRemove, isSpice = false }) {
+function BringListItem({ item, onPurchased, onDiscard, isSpice = false }) {
   return (
     <div className={`card flex items-center gap-3 px-4 py-3 ${isSpice ? 'border-l-2 border-green-400' : ''}`}>
-      {/* Checkmark-Button → entfernt aus Bring!-Liste (= "gekauft") */}
+      {/* Häkchen → gekauft (Gewürze landen danach unter „Einräumen") */}
       <button
-        onClick={onRemove}
-        className="flex-none w-6 h-6 rounded-full border-2 border-gray-300 hover:border-orange-400 flex items-center justify-center transition-all"
-        title="Als gekauft markieren"
+        onClick={onPurchased}
+        className="flex-none w-6 h-6 rounded-full border-2 border-gray-300 hover:border-green-500 flex items-center justify-center transition-all"
+        title={isSpice ? 'Gekauft – zum Einräumen' : 'Als gekauft markieren'}
       >
-        <svg className="w-3 h-3 text-gray-300 hover:text-orange-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-3 h-3 text-gray-300 hover:text-green-500" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
       <div className="flex-1 min-w-0">
         <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
-        {item.specification && (
+        {item.specification && item.specification !== 'Gewürz' && (
           <span className="text-sm text-gray-400 ml-2">{item.specification}</span>
         )}
       </div>
 
       <button
-        onClick={onRemove}
-        className="flex-none p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
-        title="Entfernen"
+        onClick={onDiscard}
+        className="flex-none p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
+        title={isSpice ? 'Nicht gekauft – nur entfernen' : 'Entfernen'}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>

@@ -20,7 +20,7 @@ const DEFAULT_FORM = {
   fillLevel: 4,
 }
 
-export default function SpiceForm({ spice, onClose }) {
+export default function SpiceForm({ spice, prefill, onClose }) {
   const { addSpice, updateSpice, locations, categories } = useStore()
   const isEdit = !!spice
 
@@ -37,7 +37,7 @@ export default function SpiceForm({ spice, onClose }) {
     locationId: spice.locationId ?? '',
     category: spice.category ?? '',
     fillLevel: spice.fillLevel ?? 4,
-  } : DEFAULT_FORM)
+  } : { ...DEFAULT_FORM, name: prefill?.name ?? '', brand: prefill?.brand ?? '' })
 
   const [suggestions, setSuggestions]       = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)

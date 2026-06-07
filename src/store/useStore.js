@@ -154,6 +154,7 @@ const useStore = create((set, get) => ({
   locations:     [],
   categories:    [],
   activityLog:   [],
+  pendingInventory: [],   // [{ id, name, brand, spiceId, status, seenOnList }]
   dataLoading:   false,
   dataError:     null,
 
@@ -211,7 +212,7 @@ const useStore = create((set, get) => ({
       const cookidooSettings = user?.user_metadata?.cookidoo ?? null
       set({ user, bringSettings, cookidooSettings })
       if (user) get().loadData()
-      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, cookidooSettings: null })
+      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], pendingInventory: [], bringSettings: null, cookidooSettings: null })
     })
   },
 
@@ -241,7 +242,7 @@ const useStore = create((set, get) => ({
 
   async signOut() {
     await supabase.auth.signOut({ scope: 'local' })
-    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], bringSettings: null, cookidooSettings: null, _initialized: false })
+    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], pendingInventory: [], bringSettings: null, cookidooSettings: null, _initialized: false })
   },
 
   currentUser() {
@@ -465,6 +466,8 @@ const useStore = create((set, get) => ({
           ? `Keine Artikel gefunden. API-Antwort: ${debugInfo}`
           : null,
       })
+      // Nachkauf-Abgleich: abgehakte Gewürze → 'ready'
+      get()._reconcilePending(items.map(i => i.name))
     } catch (e) {
       console.error('🔴 loadBringItems:', e.message)
       // Token abgelaufen → einmal erneuern und erneut versuchen
@@ -497,6 +500,91 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // ── Nachkauf / Einräumen ────────────────────────────────────────────────
+
+  _pendingToJS(r) {
+    return { id: r.id, name: r.name, brand: r.brand ?? null, spiceId: r.spice_id ?? null, status: r.status, seenOnList: !!r.seen_on_list }
+  },
+
+  async loadPendingInventory() {
+    const { household } = get()
+    if (!household) return
+    const { data } = await supabase
+      .from('pending_inventory')
+      .select('*')
+      .eq('household_id', household.id)
+      .order('created_at', { ascending: false })
+    set({ pendingInventory: (data ?? []).map(get()._pendingToJS) })
+  },
+
+  // Beim Auf-die-Liste-Setzen eines Gewürzes einen Nachkauf-Eintrag anlegen
+  _addPending(name, spiceId = null, brand = null) {
+    const { household, pendingInventory } = get()
+    if (!household) return
+    const cleanName = name.trim()
+    // Doppelte vermeiden (gleicher Name, noch offen)
+    if (pendingInventory.some(p => p.name.toLowerCase() === cleanName.toLowerCase())) return
+    const id = crypto.randomUUID()
+    const row = { id, name: cleanName, brand, spiceId, status: 'shopping', seenOnList: false }
+    set(s => ({ pendingInventory: [row, ...s.pendingInventory] }))
+    supabase.from('pending_inventory').insert([{
+      id, household_id: household.id, name: cleanName, brand, spice_id: spiceId, status: 'shopping', seen_on_list: false,
+    }]).then(({ error }) => { if (error) console.error('addPending:', error) })
+  },
+
+  // Abgleich mit der aktuellen Bring!-Liste: abgehakte Gewürze → 'ready'
+  _reconcilePending(activeNames) {
+    const { pendingInventory } = get()
+    const active = new Set(activeNames.map(n => n.toLowerCase()))
+    pendingInventory.filter(p => p.status === 'shopping').forEach(p => {
+      const onList = active.has(p.name.toLowerCase())
+      if (onList && !p.seenOnList) {
+        set(s => ({ pendingInventory: s.pendingInventory.map(x => x.id === p.id ? { ...x, seenOnList: true } : x) }))
+        supabase.from('pending_inventory').update({ seen_on_list: true }).eq('id', p.id).then(() => {})
+      } else if (!onList && p.seenOnList) {
+        set(s => ({ pendingInventory: s.pendingInventory.map(x => x.id === p.id ? { ...x, status: 'ready' } : x) }))
+        supabase.from('pending_inventory').update({ status: 'ready' }).eq('id', p.id).then(() => {})
+      }
+    })
+  },
+
+  // Manuell als eingekauft markieren (→ wartet auf Einräumen)
+  markPurchased(name, spiceId = null, brand = null) {
+    const { pendingInventory } = get()
+    const existing = pendingInventory.find(p => p.name.toLowerCase() === name.trim().toLowerCase())
+    if (existing) {
+      set(s => ({ pendingInventory: s.pendingInventory.map(x => x.id === existing.id ? { ...x, status: 'ready' } : x) }))
+      supabase.from('pending_inventory').update({ status: 'ready' }).eq('id', existing.id).then(() => {})
+    } else {
+      const { household } = get()
+      if (!household) return
+      const id = crypto.randomUUID()
+      const row = { id, name: name.trim(), brand, spiceId, status: 'ready', seenOnList: true }
+      set(s => ({ pendingInventory: [row, ...s.pendingInventory] }))
+      supabase.from('pending_inventory').insert([{
+        id, household_id: household.id, name: name.trim(), brand, spice_id: spiceId, status: 'ready', seen_on_list: true,
+      }]).then(() => {})
+    }
+  },
+
+  // Nachkauf-Eintrag entfernen (eingeräumt oder verworfen)
+  resolvePending(id) {
+    set(s => ({ pendingInventory: s.pendingInventory.filter(p => p.id !== id) }))
+    supabase.from('pending_inventory').delete().eq('id', id).then(() => {})
+  },
+
+  // Offenen Nachkauf zu einem Namen verwerfen (z.B. „nur entfernt, nicht gekauft")
+  cancelPendingByName(name) {
+    const n = name.trim().toLowerCase()
+    set(s => ({ pendingInventory: s.pendingInventory.filter(p => p.name.toLowerCase() !== n) }))
+    const { household } = get()
+    if (household) {
+      supabase.from('pending_inventory').delete()
+        .eq('household_id', household.id).ilike('name', name.trim())
+        .then(() => {})
+    }
+  },
+
   // ── Data ─────────────────────────────────────────────────────────────
 
   async loadData() {
@@ -507,11 +595,12 @@ const useStore = create((set, get) => ({
     const household = await get()._ensureHousehold()
     if (!household) { set({ dataLoading: false, _dataLoadingLock: false }); return }
 
-    const [{ data: spicesData }, { data: shopData }, { data: locData }, { data: catData }] = await Promise.all([
+    const [{ data: spicesData }, { data: shopData }, { data: locData }, { data: catData }, { data: pendData }] = await Promise.all([
       supabase.from('spices').select('*').eq('household_id', household.id).order('name'),
       supabase.from('shopping_items').select('*').eq('household_id', household.id).order('created_at'),
       supabase.from('storage_locations').select('*').eq('household_id', household.id).order('sort_order, name'),
       supabase.from('spice_categories').select('*').eq('household_id', household.id).order('sort_order, name'),
+      supabase.from('pending_inventory').select('*').eq('household_id', household.id).order('created_at', { ascending: false }),
     ])
 
     set({
@@ -520,6 +609,7 @@ const useStore = create((set, get) => ({
       shoppingItems: (shopData   ?? []).map(shopToJS),
       locations:     (locData    ?? []).map(locToJS),
       categories:    (catData    ?? []).map(catToJS),
+      pendingInventory: (pendData ?? []).map(get()._pendingToJS),
       dataLoading:   false,
       _dataLoadingLock: false,
     })
@@ -651,8 +741,9 @@ const useStore = create((set, get) => ({
 
   // ── Shopping ─────────────────────────────────────────────────────────
 
-  addShoppingItem(name, amount = '', isSpice = false) {
+  addShoppingItem(name, amount = '', isSpice = false, meta = {}) {
     const { bringSettings, user, household } = get()
+    if (isSpice) get()._addPending(name, meta.spiceId ?? null, meta.brand ?? null)
 
     // Bring!-Modus: direkt in Bring!-Liste schreiben, danach Liste neu laden
     if (bringSettings?.listUuid && bringSettings?.accessToken) {

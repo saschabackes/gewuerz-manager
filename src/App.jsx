@@ -11,6 +11,7 @@ import HelpView from './components/HelpView'
 import ActivityView from './components/ActivityView'
 import OnboardingView from './components/OnboardingView'
 import CookView from './components/CookView'
+import InventoryReviewView from './components/InventoryReviewView'
 import { getMhdStatus } from './utils/mhd'
 import { PACKAGING_TYPES } from './data/spices'
 
@@ -27,6 +28,10 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false)
   const [showActivity, setShowActivity] = useState(false)
   const [showCook, setShowCook] = useState(false)
+  const [showReview, setShowReview] = useState(false)
+  const [formPrefill, setFormPrefill] = useState(null)
+  const reviewCount = useStore(s => s.pendingInventory.filter(p => p.status === 'ready').length)
+  const resolvePending = useStore(s => s.resolvePending)
 
   useEffect(() => { init() }, [])
 
@@ -60,6 +65,15 @@ export default function App() {
   function handleFormClose() {
     setShowAddForm(false)
     setEditingSpice(null)
+    setFormPrefill(null)
+  }
+
+  function handleNewPackage(item) {
+    resolvePending(item.id)
+    setFormPrefill({ name: item.name, brand: item.brand })
+    setEditingSpice(null)
+    setShowReview(false)
+    setShowAddForm(true)
   }
 
   return (
@@ -73,6 +87,20 @@ export default function App() {
           <h1 className="text-lg font-bold tracking-tight">Gewürz Manager</h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowReview(true)}
+            className="relative p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
+            title="Einräumen"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4l-2 3H10l-2-3H4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {reviewCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-green-600">
+                {reviewCount}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => setShowCook(true)}
             className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
@@ -136,7 +164,11 @@ export default function App() {
       <Navigation current={view} onChange={setView} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />
 
       {showAddForm && (
-        <SpiceForm spice={editingSpice} onClose={handleFormClose} />
+        <SpiceForm spice={editingSpice} prefill={formPrefill} onClose={handleFormClose} />
+      )}
+
+      {showReview && (
+        <InventoryReviewView onClose={() => setShowReview(false)} onNewPackage={handleNewPackage} />
       )}
 
       {showSettings && (
