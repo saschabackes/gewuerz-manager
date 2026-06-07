@@ -80,6 +80,38 @@ function catToJS(row) {
   }
 }
 
+function recipeToJS(r) {
+  return {
+    id:           r.id,
+    title:        r.title,
+    sourceUrl:    r.source_url   ?? '',
+    sourceType:   r.source_type  ?? 'youtube',
+    videoId:      r.video_id     ?? null,
+    thumbnailUrl: r.thumbnail_url ?? null,
+    author:       r.author       ?? '',
+    tags:         r.tags         ?? [],
+    ingredients:  r.ingredients  ?? [],   // [{ name, amount }]
+    steps:        r.steps        ?? [],   // [ "..." ]
+    notes:        r.notes        ?? '',
+    createdAt:    r.created_at,
+  }
+}
+
+function recipeToDB(d) {
+  return {
+    title:         d.title,
+    source_url:    d.sourceUrl    ?? null,
+    source_type:   d.sourceType   ?? 'youtube',
+    video_id:      d.videoId      ?? null,
+    thumbnail_url: d.thumbnailUrl ?? null,
+    author:        d.author       ?? null,
+    tags:          d.tags         ?? [],
+    ingredients:   d.ingredients  ?? [],
+    steps:         d.steps        ?? [],
+    notes:         d.notes        ?? null,
+  }
+}
+
 // ── Theme (Dark Mode) ─────────────────────────────────────────────────────────
 
 function applyTheme(theme) {
@@ -155,6 +187,7 @@ const useStore = create((set, get) => ({
   categories:    [],
   activityLog:   [],
   pendingInventory: [],   // [{ id, name, brand, spiceId, status, seenOnList }]
+  recipes:       [],
   dataLoading:   false,
   dataError:     null,
 
@@ -212,7 +245,7 @@ const useStore = create((set, get) => ({
       const cookidooSettings = user?.user_metadata?.cookidoo ?? null
       set({ user, bringSettings, cookidooSettings })
       if (user) get().loadData()
-      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], pendingInventory: [], bringSettings: null, cookidooSettings: null })
+      else set({ household: null, spices: [], shoppingItems: [], locations: [], categories: [], pendingInventory: [], recipes: [], bringSettings: null, cookidooSettings: null })
     })
   },
 
@@ -242,7 +275,7 @@ const useStore = create((set, get) => ({
 
   async signOut() {
     await supabase.auth.signOut({ scope: 'local' })
-    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], pendingInventory: [], bringSettings: null, cookidooSettings: null, _initialized: false })
+    set({ user: null, household: null, spices: [], shoppingItems: [], locations: [], categories: [], pendingInventory: [], recipes: [], bringSettings: null, cookidooSettings: null, _initialized: false })
   },
 
   currentUser() {
@@ -595,12 +628,13 @@ const useStore = create((set, get) => ({
     const household = await get()._ensureHousehold()
     if (!household) { set({ dataLoading: false, _dataLoadingLock: false }); return }
 
-    const [{ data: spicesData }, { data: shopData }, { data: locData }, { data: catData }, { data: pendData }] = await Promise.all([
+    const [{ data: spicesData }, { data: shopData }, { data: locData }, { data: catData }, { data: pendData }, { data: recipeData }] = await Promise.all([
       supabase.from('spices').select('*').eq('household_id', household.id).order('name'),
       supabase.from('shopping_items').select('*').eq('household_id', household.id).order('created_at'),
       supabase.from('storage_locations').select('*').eq('household_id', household.id).order('sort_order, name'),
       supabase.from('spice_categories').select('*').eq('household_id', household.id).order('sort_order, name'),
       supabase.from('pending_inventory').select('*').eq('household_id', household.id).order('created_at', { ascending: false }),
+      supabase.from('recipes').select('*').eq('household_id', household.id).order('created_at', { ascending: false }),
     ])
 
     set({
@@ -610,9 +644,38 @@ const useStore = create((set, get) => ({
       locations:     (locData    ?? []).map(locToJS),
       categories:    (catData    ?? []).map(catToJS),
       pendingInventory: (pendData ?? []).map(get()._pendingToJS),
+      recipes:       (recipeData ?? []).map(recipeToJS),
       dataLoading:   false,
       _dataLoadingLock: false,
     })
+  },
+
+  // ── Rezepte ──────────────────────────────────────────────────────────
+
+  addRecipe(data) {
+    const { user, household } = get()
+    if (!household) return null
+    const id  = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const newRecipe = recipeToJS({ id, ...recipeToDB(data), created_at: now })
+    set(s => ({ recipes: [newRecipe, ...s.recipes] }))
+    supabase.from('recipes')
+      .insert([{ id, ...recipeToDB(data), household_id: household.id, created_by: user?.id }])
+      .then(({ error }) => { if (error) console.error('addRecipe:', error) })
+    return id
+  },
+
+  updateRecipe(id, data) {
+    set(s => ({ recipes: s.recipes.map(r => r.id === id ? { ...r, ...data } : r) }))
+    supabase.from('recipes').update(recipeToDB({ ...get().recipes.find(r => r.id === id), ...data }))
+      .eq('id', id)
+      .then(({ error }) => { if (error) console.error('updateRecipe:', error) })
+  },
+
+  deleteRecipe(id) {
+    set(s => ({ recipes: s.recipes.filter(r => r.id !== id) }))
+    supabase.from('recipes').delete().eq('id', id)
+      .then(({ error }) => { if (error) console.error('deleteRecipe:', error) })
   },
 
   // ── Spices ────────────────────────────────────────────────────────────

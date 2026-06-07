@@ -34,10 +34,10 @@ export default function Navigation({ current, onChange, onAdd }) {
           onClick={() => onChange('shopping')}
         />
         <NavItem
-          icon={<StatsIcon />}
-          label="Statistik"
-          active={current === 'stats'}
-          onClick={() => onChange('stats')}
+          icon={<RecipeIcon />}
+          label="Rezepte"
+          active={current === 'recipes'}
+          onClick={() => onChange('recipes')}
         />
       </div>
     </nav>
@@ -87,10 +87,10 @@ function ShoppingIcon() {
   )
 }
 
-function StatsIcon() {
+function RecipeIcon() {
   return (
     <svg fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-      <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 6.5C12 5 10.5 4 8.5 4S4 5 4 6.5v12C4 17 5.5 16 8.5 16s3.5 1 3.5 2.5m0-12C12 5 13.5 4 15.5 4S20 5 20 6.5v12C20 17 18.5 16 15.5 16S12 17 12 18.5m0-12v12" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
