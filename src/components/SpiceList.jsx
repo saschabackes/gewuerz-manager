@@ -253,6 +253,16 @@ export default function SpiceList({ onEdit, onAdd }) {
 
 function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomImage, needsReorder, onFillChange }) {
   const { deleteSpice, locations, categories } = useStore()
+  const [justAdded, setJustAdded] = useState(false)
+
+  function handleAddToShopping() {
+    if (justAdded) return
+    onAddToShopping()
+    setJustAdded(true)
+    if (navigator.vibrate) navigator.vibrate(60)
+    setTimeout(() => setJustAdded(false), 2500)
+  }
+
   const mhd = getMhdStatus(spice.expiryDate)
   const mhdStyle = MHD_STYLES[mhd.status]
   const pkgColor = PACKAGING_COLORS[spice.packagingType] ?? PACKAGING_COLORS.fertigstreuer
@@ -357,11 +367,30 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
             </svg>
             Bearbeiten
           </button>
-          <button onClick={onAddToShopping} className="btn-secondary py-2 px-3 text-xs">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Einkaufen
+          <button
+            onClick={handleAddToShopping}
+            disabled={justAdded}
+            className={`py-2 px-3 text-xs rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors ${
+              justAdded
+                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                : 'btn-secondary'
+            }`}
+          >
+            {justAdded ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Auf der Liste
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Einkaufen
+              </>
+            )}
           </button>
           <button
             onClick={() => { if (confirm(`"${spice.name}" wirklich löschen?`)) deleteSpice(spice.id) }}
