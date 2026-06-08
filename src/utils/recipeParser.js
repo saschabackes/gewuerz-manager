@@ -152,6 +152,16 @@ function classifyRecipe(name) {
   return { fresh, form }
 }
 
+// Große Mengen im Namen (z.B. "150 g Buchstabennudeln", "100 g Sahne",
+// "1 kg ...") → klar kein Gewürz, sondern Hauptzutat
+function isBulkByName(name) {
+  const a = normalize(name).replace(',', '.')
+  const g = a.match(/(\d+(?:\.\d+)?)\s*g\b/)
+  if (g && parseFloat(g[1]) > 25) return true
+  if (/\d+(?:\.\d+)?\s*(kg|ml|l)\b/.test(a)) return true
+  return false
+}
+
 // Form eines Bestands-Gewürzes: explizites Feld bevorzugt, sonst Heuristik
 function classifyInventory(sp) {
   if (sp.form === 'gemahlen') return 'ground'
@@ -190,8 +200,8 @@ export function buildCookPlan(ingredients, spices) {
 
   ingredients.forEach(ing => {
     const { fresh, form } = classifyRecipe(ing.name)
-    // Frische/ganze Ware (Knolle, Zehen, ganze Zwiebel…) ist kein Trockengewürz
-    if (fresh || !isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
+    // Frische Ware ODER große Bulk-Menge (im Namen) ODER nicht gewürz-typisch
+    if (fresh || isBulkByName(ing.name) || !isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
     const hits = matchSpices(ing.name, form, spices).filter(sp => !usedSpiceIds.has(sp.id))
     if (hits.length === 0) {
       unmatched.push(ing.name)
