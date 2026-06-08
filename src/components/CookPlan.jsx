@@ -40,6 +40,11 @@ export default function CookPlan({ ingredients }) {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {j === 0 && <span className="text-[10px] bg-green-600 text-white font-bold rounded-full px-1.5 py-0.5">zuerst</span>}
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{sp.name}</span>
+                      {sp.form && (
+                        <span className="text-[10px] font-medium rounded-full px-1.5 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
+                          {sp.form === 'ganz' ? 'ganz' : 'gemahlen'}
+                        </span>
+                      )}
                       {sp.brand && <span className="text-xs text-gray-400">· {sp.brand}</span>}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">

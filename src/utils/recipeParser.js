@@ -102,8 +102,13 @@ export function isSpiceLike(amount) {
   return false
 }
 
-// Prioritäts-Sortierung: ältestes MHD → niedrigster Füllstand → kleinste Menge
+// Prioritäts-Sortierung:
+//   nicht-abgelaufene zuerst → ältestes MHD → niedrigster Füllstand → kleinste Menge
 function byPriority(a, b) {
+  const now = Date.now()
+  const ea = a.expiryDate && Date.parse(a.expiryDate) < now ? 1 : 0
+  const eb = b.expiryDate && Date.parse(b.expiryDate) < now ? 1 : 0
+  if (ea !== eb) return ea - eb                 // abgelaufene ans Ende
   const da = a.expiryDate ? Date.parse(a.expiryDate) : Infinity
   const db = b.expiryDate ? Date.parse(b.expiryDate) : Infinity
   if (da !== db) return da - db
