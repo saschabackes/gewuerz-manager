@@ -16,10 +16,15 @@ function loadCert() {
   }
 }
 
+// Unter `netlify dev` proxyt Netlify per HTTP → dort HTTPS aus + fester Port.
+const underNetlify = !!process.env.NETLIFY_DEV
+
 export default defineConfig({
   server: {
     host: true,
-    https: loadCert(),
+    port: 5173,
+    strictPort: true,
+    https: underNetlify ? false : loadCert(),
   },
   plugins: [
     react(),
