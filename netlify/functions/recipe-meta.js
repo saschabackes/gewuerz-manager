@@ -83,6 +83,11 @@ function parseRecipe(desc) {
 function unescapeJson(s) {
   try { return JSON.parse('"' + s + '"') } catch (e) { return s }
 }
+function htmlDecode(s) {
+  return (s || '')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#34;/g, '"')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+}
 
 // 1. Watch-Seite scrapen (mit Consent-Cookie) – funktioniert auch von Servern
 async function fetchViaPage(vid) {
@@ -95,16 +100,27 @@ async function fetchViaPage(vid) {
   })
   if (!res.ok) return null
   const html = await res.text()
+
+  // Beschreibung: erst Player-JSON (vollständig), sonst og:description / meta
   const dm = html.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/)
+  const om = html.match(/<meta property="og:description" content="([^"]*)"/)
+  const mm = html.match(/<meta name="description" content="([^"]*)"/)
+  let description = ''
+  if (dm) description = unescapeJson(dm[1])
+  else if (om) description = htmlDecode(om[1])
+  else if (mm) description = htmlDecode(mm[1])
+
   const tm = html.match(/<meta property="og:title" content="([^"]*)"/) ||
              html.match(/"title":"((?:[^"\\]|\\.)*)","lengthSeconds"/)
   const am = html.match(/"author":"((?:[^"\\]|\\.)*)"/) ||
-             html.match(/"ownerChannelName":"((?:[^"\\]|\\.)*)"/)
-  if (!dm && !tm) return null
+             html.match(/"ownerChannelName":"((?:[^"\\]|\\.)*)"/) ||
+             html.match(/<link itemprop="name" content="([^"]*)"/)
+
+  if (!description && !tm) return null
   return {
-    title:       tm ? unescapeJson(tm[1]) : '',
-    author:      am ? unescapeJson(am[1]) : '',
-    description: dm ? unescapeJson(dm[1]) : '',
+    title:       tm ? (tm[1].includes('&') ? htmlDecode(tm[1]) : unescapeJson(tm[1])) : '',
+    author:      am ? htmlDecode(unescapeJson(am[1])) : '',
+    description,
   }
 }
 
