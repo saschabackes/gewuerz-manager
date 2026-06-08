@@ -1,17 +1,45 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import useStore from '../store/useStore'
 import { buildCookPlan } from '../utils/recipeParser'
 import { formatMhdDate, getMhdStatus, MHD_STYLES } from '../utils/mhd'
 import FillBar, { FILL_LABELS } from './FillBar'
 
-// Zeigt für eine Zutatenliste, welche Gewürze aus dem Bestand passen
-// und welches Glas zuerst zu nehmen ist (ältestes MHD → leerster → kleinste).
+// Menge/Einheit am Zeilenanfang entfernen → sauberer Einkaufs-Name
+function cleanName(s) {
+  return (s || '')
+    .replace(/^optional:\s*/i, '')
+    .replace(/^\s*[\d¼½¾⅓⅔/.,]+\s*/, '')
+    .replace(/^(g|kg|ml|l|tl|el|prise[n]?|stangen?|zehen?|knolle[n]?|stück|bund|dose[n]?|pck\.?)\s+/i, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim()
+}
+
+// Zeigt für eine Zutatenliste, welche Gewürze aus dem Bestand passen,
+// welches Glas zuerst (MHD/Füllstand), und was im Bestand fehlt (→ Einkauf).
 export default function CookPlan({ ingredients }) {
-  const { spices, locations } = useStore()
+  const { spices, locations, addShoppingItem } = useStore()
+  const [added, setAdded] = useState(new Set())
   const plan = useMemo(() => buildCookPlan(ingredients ?? [], spices), [ingredients, spices])
   const locName = id => locations.find(l => l.id === id)?.name ?? null
 
-  if (plan.matched.length === 0) {
+  // Fehlende Gewürze: sauberer Name, ohne Duplikate
+  const missing = useMemo(() => {
+    const seen = new Set()
+    const out = []
+    ;(plan.unmatched ?? []).forEach(raw => {
+      const name = cleanName(raw)
+      const key = name.toLowerCase()
+      if (name && !seen.has(key)) { seen.add(key); out.push(name) }
+    })
+    return out
+  }, [plan])
+
+  function addMissing(name) {
+    addShoppingItem(name, '', true)
+    setAdded(a => new Set(a).add(name.toLowerCase()))
+  }
+
+  if (plan.matched.length === 0 && missing.length === 0) {
     return (
       <p className="text-sm text-gray-400 py-2">
         Keine deiner Gewürze in diesem Rezept erkannt.
@@ -76,6 +104,36 @@ export default function CookPlan({ ingredients }) {
           )}
         </div>
       ))}
+
+      {/* Fehlt im Bestand → Einkauf */}
+      {missing.length > 0 && (
+        <div className="rounded-xl border border-dashed border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-900/15 p-3">
+          <p className="text-xs font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wide mb-2">
+            Fehlt im Bestand
+          </p>
+          <div className="space-y-1.5">
+            {missing.map(name => {
+              const done = added.has(name.toLowerCase())
+              return (
+                <div key={name} className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-gray-700 dark:text-gray-200">{name}</span>
+                  <button
+                    onClick={() => addMissing(name)}
+                    disabled={done}
+                    className={`text-xs font-semibold rounded-lg px-2.5 py-1.5 transition-colors flex-none ${
+                      done
+                        ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                        : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
+                  >
+                    {done ? '✓ Einkauf' : '+ Einkauf'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
