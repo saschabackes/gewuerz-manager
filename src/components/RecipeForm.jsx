@@ -21,11 +21,13 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
   const [notes, setNotes]           = useState(recipe?.notes ?? '')
   const [loadingMeta, setLoadingMeta] = useState(false)
   const [metaError, setMetaError]   = useState('')
+  const [autoFilled, setAutoFilled] = useState(false)
 
   async function loadMeta() {
     if (!sourceUrl.trim()) return
     setLoadingMeta(true)
     setMetaError('')
+    setAutoFilled(false)
     try {
       const m = await fetchRecipeMeta(sourceUrl.trim())
       if (m.title) setTitle(m.title)
@@ -33,6 +35,15 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
       setVideoId(m.videoId ?? null)
       setSourceType(m.sourceType ?? 'web')
       setThumb(m.thumbnailUrl ?? null)
+      // Zutaten/Schritte aus der Beschreibung übernehmen (nur wenn Felder leer)
+      let filled = false
+      if (m.ingredients?.length && !ingredients.trim()) {
+        setIngredients(m.ingredients.join('\n')); filled = true
+      }
+      if (m.steps?.length && !steps.trim()) {
+        setSteps(m.steps.join('\n')); filled = true
+      }
+      setAutoFilled(filled)
     } catch (e) {
       setMetaError(e.message)
     } finally {
@@ -94,6 +105,12 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
               </button>
             </div>
             {metaError && <p className="text-xs text-red-600 dark:text-red-300 mt-1">{metaError}</p>}
+            {autoFilled && (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1.5 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Zutaten &amp; Schritte aus der Videobeschreibung übernommen – bitte prüfen.
+              </p>
+            )}
           </div>
 
           {/* Vorschau */}
