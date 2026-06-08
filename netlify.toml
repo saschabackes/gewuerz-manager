@@ -4,3 +4,11 @@
 
 [functions]
   directory = "netlify/functions"
+
+# Lokale Entwicklung: `netlify dev` startet Vite + Functions zusammen,
+# inkl. der /.netlify/functions/* Routen – verhält sich wie die Live-Seite.
+[dev]
+  command = "npm run dev"
+  targetPort = 5173
+  port = 8888
+  framework = "vite"
