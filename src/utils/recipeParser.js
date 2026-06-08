@@ -115,13 +115,17 @@ function byPriority(a, b) {
   return ga - gb
 }
 
-// Findet zu einem Rezept-Namen passende Bestands-Gewürze
+// Findet zu einem Rezept-Namen passende Bestands-Gewürze.
+// Wortstamm-Vergleich, damit z.B. "Pfefferkörner"→"Pfeffer",
+// "Koriandersamen"→"Koriander", "Lorbeerblätter"→"Lorbeerblätter" matchen.
 function matchSpices(recipeName, spices) {
   const keys = keywords(recipeName)
   if (keys.length === 0) return []
   return spices.filter(sp => {
-    const inv = normalize(sp.name)
-    return keys.some(k => inv.includes(k) || k.includes(inv.split(' ')[0]))
+    const invWords = normalize(sp.name).split(' ').filter(w => w.length >= 3)
+    return keys.some(k => invWords.some(w =>
+      k === w || (k.length >= 4 && w.length >= 4 && (k.includes(w) || w.includes(k)))
+    ))
   })
 }
 

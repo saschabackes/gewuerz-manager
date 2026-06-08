@@ -21,3 +21,6 @@ npm-debug.log*
 
 # Editor
 .vscode/
+
+# Local Netlify folder
+.netlify

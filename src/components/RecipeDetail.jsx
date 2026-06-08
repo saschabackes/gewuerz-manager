@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import useStore from '../store/useStore'
+import CookPlan from './CookPlan'
 
 export default function RecipeDetail({ recipe, onBack, onEdit }) {
   const { deleteRecipe } = useStore()
+  const [showSpices, setShowSpices] = useState(false)
 
   function handleDelete() {
     if (confirm(`Rezept „${recipe.title}" wirklich löschen?`)) {
@@ -66,6 +69,28 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
             {recipe.tags.map(t => (
               <span key={t} className="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full px-2.5 py-0.5">{t}</span>
             ))}
+          </div>
+        )}
+
+        {/* Meine Gewürze dafür (Zuordnung zum Bestand) */}
+        {recipe.ingredients?.length > 0 && (
+          <div className="card p-3">
+            <button
+              onClick={() => setShowSpices(v => !v)}
+              className="w-full flex items-center gap-2 text-left"
+            >
+              <span className="text-lg">🍲</span>
+              <span className="flex-1 font-bold text-gray-800 dark:text-gray-100 text-sm">Meine Gewürze dafür</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${showSpices ? 'rotate-180' : ''}`}
+                fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showSpices && (
+              <div className="mt-3">
+                <CookPlan ingredients={recipe.ingredients} />
+              </div>
+            )}
           </div>
         )}
 
