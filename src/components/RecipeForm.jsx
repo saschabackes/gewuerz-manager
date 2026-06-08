@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
 import { fetchRecipeMeta } from '../lib/youtube'
+import { parseRecipeDescription } from '../utils/recipeDescription'
 
 export default function RecipeForm({ recipe, onClose, onSaved }) {
   const { addRecipe, updateRecipe } = useStore()
@@ -22,6 +23,16 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
   const [loadingMeta, setLoadingMeta] = useState(false)
   const [metaError, setMetaError]   = useState('')
   const [autoFilled, setAutoFilled] = useState(false)
+  const [showPaste, setShowPaste]   = useState(false)
+  const [descPaste, setDescPaste]   = useState('')
+  const [pasteResult, setPasteResult] = useState('')
+
+  function applyPastedDescription() {
+    const { ingredients: ing, steps: st } = parseRecipeDescription(descPaste)
+    if (ing.length) setIngredients(ing.join('\n'))
+    if (st.length)  setSteps(st.join('\n'))
+    setPasteResult(`${ing.length} Zutaten, ${st.length} Schritte erkannt`)
+  }
 
   async function loadMeta() {
     if (!sourceUrl.trim()) return
@@ -44,6 +55,8 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
         setSteps(m.steps.join('\n')); filled = true
       }
       setAutoFilled(filled)
+      // Wenn nichts automatisch kam → Einfügefeld anbieten
+      if (!filled) setShowPaste(true)
     } catch (e) {
       setMetaError(e.message)
     } finally {
@@ -148,6 +161,31 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
               onChange={e => setTagInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
             />
+          </div>
+
+          {/* Videobeschreibung einfügen → automatisch erkennen */}
+          <div className="bg-sky-50 dark:bg-sky-950/40 rounded-xl p-3">
+            {!showPaste ? (
+              <button onClick={() => setShowPaste(true)}
+                className="text-sm text-sky-700 dark:text-sky-300 font-semibold flex items-center gap-1.5">
+                <span>✨</span> Zutaten & Schritte aus Videobeschreibung erkennen
+              </button>
+            ) : (
+              <>
+                <p className="text-xs text-sky-800 dark:text-sky-200 mb-2 leading-relaxed">
+                  Füge die <b>Videobeschreibung</b> ein (in der YouTube-App: Beschreibung antippen → Text kopieren).
+                  Zutaten &amp; Schritte werden automatisch erkannt.
+                </p>
+                <textarea className="input text-sm resize-none" rows={4}
+                  placeholder="Videobeschreibung hier einfügen…"
+                  value={descPaste} onChange={e => setDescPaste(e.target.value)} />
+                <div className="flex items-center gap-3 mt-2">
+                  <button onClick={applyPastedDescription} disabled={!descPaste.trim()}
+                    className="btn-primary py-2 px-4 text-sm disabled:opacity-50">Erkennen</button>
+                  {pasteResult && <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ {pasteResult}</span>}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Zutaten */}
