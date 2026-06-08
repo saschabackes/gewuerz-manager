@@ -80,18 +80,69 @@ function parseRecipe(desc) {
   return { ingredients, steps }
 }
 
-async function fetchYouTube(vid) {
-  const res = await fetch('https://www.youtube.com/youtubei/v1/player?key=' + INNERTUBE_KEY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      context: { client: { clientName: 'WEB', clientVersion: '2.20240101.00.00', hl: 'de', gl: 'DE' } },
-      videoId: vid,
-    }),
+function unescapeJson(s) {
+  try { return JSON.parse('"' + s + '"') } catch (e) { return s }
+}
+
+// 1. Watch-Seite scrapen (mit Consent-Cookie) – funktioniert auch von Servern
+async function fetchViaPage(vid) {
+  const res = await fetch('https://www.youtube.com/watch?v=' + vid, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+      'Accept-Language': 'de-DE,de;q=0.9',
+      'Cookie': 'CONSENT=YES+1; SOCS=CAI',
+    },
   })
   if (!res.ok) return null
-  const data = await res.json().catch(() => null)
-  return data?.videoDetails ?? null
+  const html = await res.text()
+  const dm = html.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/)
+  const tm = html.match(/<meta property="og:title" content="([^"]*)"/) ||
+             html.match(/"title":"((?:[^"\\]|\\.)*)","lengthSeconds"/)
+  const am = html.match(/"author":"((?:[^"\\]|\\.)*)"/) ||
+             html.match(/"ownerChannelName":"((?:[^"\\]|\\.)*)"/)
+  if (!dm && !tm) return null
+  return {
+    title:       tm ? unescapeJson(tm[1]) : '',
+    author:      am ? unescapeJson(am[1]) : '',
+    description: dm ? unescapeJson(dm[1]) : '',
+  }
+}
+
+// 2. Fallback: innertube WEB-API (klappt von Residential-IPs)
+async function fetchViaApi(vid) {
+  try {
+    const res = await fetch('https://www.youtube.com/youtubei/v1/player?key=' + INNERTUBE_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: { client: { clientName: 'WEB', clientVersion: '2.20240101.00.00', hl: 'de', gl: 'DE' } },
+        videoId: vid,
+      }),
+    })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    const vd = data?.videoDetails
+    if (!vd) return null
+    return { title: vd.title || '', author: vd.author || '', description: vd.shortDescription || '' }
+  } catch (e) { return null }
+}
+
+// 3. Fallback: oEmbed (nur Titel/Autor)
+async function fetchViaOembed(vid) {
+  try {
+    const res = await fetch('https://www.youtube.com/oembed?format=json&url=' +
+      encodeURIComponent('https://www.youtube.com/watch?v=' + vid))
+    if (!res.ok) return null
+    const d = await res.json()
+    return { title: d.title || '', author: d.author_name || '', description: '' }
+  } catch (e) { return null }
+}
+
+async function fetchYouTube(vid) {
+  return (await fetchViaPage(vid)) ||
+         (await fetchViaApi(vid)) ||
+         (await fetchViaOembed(vid)) ||
+         { title: '', author: '', description: '' }
 }
 
 exports.handler = async function (event) {
@@ -109,15 +160,15 @@ exports.handler = async function (event) {
 
   if (vid) {
     try {
-      const vd = await fetchYouTube(vid)
-      const description = vd?.shortDescription ?? ''
+      const meta = await fetchYouTube(vid)
+      const description = meta.description ?? ''
       const { ingredients, steps } = parseRecipe(description)
       return ok({
         ok: true,
         sourceType: 'youtube',
         videoId: vid,
-        title: vd?.title ?? '',
-        author: vd?.author ?? '',
+        title: meta.title ?? '',
+        author: meta.author ?? '',
         thumbnailUrl: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
         description,
         ingredients,
