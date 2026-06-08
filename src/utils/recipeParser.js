@@ -115,17 +115,62 @@ function byPriority(a, b) {
   return ga - gb
 }
 
+// ── Form-Erkennung (ganz / gemahlen / frisch) ────────────────────────────────
+const GROUND_RE = /\b(gemahlen|gemahlene[rs]?|pulver|granulat|gerieben|mehl|fein gemahlen)\b/i
+const WHOLE_RE  = /(körner|samen|saat|\bganz|\bganze[rs]?\b|blätter|blatt|beeren|stange|schote|kapseln|\bnuss\b|getrocknet|gerebelt|sticks?)/i
+const DOSE_RE   = /\b(tl|el|prise|prisen|msp|messerspitze|teel|essl)\b/i
+const FRESH_UNIT_RE = /\b(zehen?|knolle[n]?|bund|stange[n]?|kopf|köpfe|stück|scheiben?)\b/i
+// Zutaten, die typischerweise frisch verwendet werden (≠ Trockengewürz)
+const FRESH_WORDS = ['zwiebel','zwiebeln','knoblauch','ingwer','karotte','karotten','möhre','möhren',
+  'sellerie','lauch','frühlingslauch','frühlingszwiebel','petersilie','schalotte','schalotten',
+  'tomate','tomaten','gurke','kartoffel','kartoffeln','paprika','zitrone','zitronen','apfel',
+  'chili frisch','suppengrün','suppenhuhn','huhn','hähnchen','forelle','forellen','fisch']
+
+// Bestimmt Form einer Rezept-Zeile + ob es frische Ware ist
+function classifyRecipe(name) {
+  const n = normalize(name)
+  const ground = GROUND_RE.test(n)
+  const whole  = WHOLE_RE.test(n)
+  const dose   = DOSE_RE.test(name)
+  const words  = n.split(' ')
+  const baseHit = words.some(w => FRESH_WORDS.includes(w)) ||
+                  FRESH_WORDS.some(fw => fw.includes(' ') && n.includes(fw))
+  let fresh
+  if (baseHit) {
+    // bekannte Frischware (Zwiebel, Sellerie…) → frisch, außer explizit gemahlen/dosiert
+    fresh = !ground && !dose
+  } else {
+    // sonst nur über frische Einheit (Zehen/Knolle/Bund) ohne Trocken-/Dosier-Hinweis
+    fresh = FRESH_UNIT_RE.test(n) && !ground && !whole && !dose
+  }
+  const form = ground ? 'ground' : whole ? 'whole' : 'any'
+  return { fresh, form }
+}
+
+// Form eines Bestands-Gewürzes (Name + Verpackungstyp)
+function classifyInventory(sp) {
+  const n = normalize(sp.name)
+  if (GROUND_RE.test(n)) return 'ground'
+  if (WHOLE_RE.test(n) || sp.packagingType === 'ganz') return 'whole'
+  return 'any'
+}
+
+function formsCompatible(a, b) {
+  return a === 'any' || b === 'any' || a === b
+}
+
 // Findet zu einem Rezept-Namen passende Bestands-Gewürze.
-// Wortstamm-Vergleich, damit z.B. "Pfefferkörner"→"Pfeffer",
-// "Koriandersamen"→"Koriander", "Lorbeerblätter"→"Lorbeerblätter" matchen.
-function matchSpices(recipeName, spices) {
+// Wortstamm-Vergleich + Form-Abgleich (ganz/gemahlen müssen zusammenpassen).
+function matchSpices(recipeName, recipeForm, spices) {
   const keys = keywords(recipeName)
   if (keys.length === 0) return []
   return spices.filter(sp => {
     const invWords = normalize(sp.name).split(' ').filter(w => w.length >= 3)
-    return keys.some(k => invWords.some(w =>
+    const nameHit = keys.some(k => invWords.some(w =>
       k === w || (k.length >= 4 && w.length >= 4 && (k.includes(w) || w.includes(k)))
     ))
+    if (!nameHit) return false
+    return formsCompatible(recipeForm, classifyInventory(sp))
   })
 }
 
@@ -137,8 +182,10 @@ export function buildCookPlan(ingredients, spices) {
   const usedSpiceIds = new Set()
 
   ingredients.forEach(ing => {
-    if (!isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
-    const hits = matchSpices(ing.name, spices).filter(sp => !usedSpiceIds.has(sp.id))
+    const { fresh, form } = classifyRecipe(ing.name)
+    // Frische/ganze Ware (Knolle, Zehen, ganze Zwiebel…) ist kein Trockengewürz
+    if (fresh || !isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
+    const hits = matchSpices(ing.name, form, spices).filter(sp => !usedSpiceIds.has(sp.id))
     if (hits.length === 0) {
       unmatched.push(ing.name)
       return
