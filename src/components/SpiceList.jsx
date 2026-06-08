@@ -294,6 +294,11 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
               <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${pkgColor.bg} ${pkgColor.text}`}>
                 {pkgLabel}
               </span>
+              {spice.form && (
+                <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
+                  {spice.form === 'ganz' ? 'ganz' : 'gemahlen'}
+                </span>
+              )}
               {spice.category && (() => {
                 const cat = categories.find(c => c.id === spice.category)
                 const col = cat ? (CATEGORY_COLORS[cat.color] ?? CATEGORY_COLORS.gray) : null

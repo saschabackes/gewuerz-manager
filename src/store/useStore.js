@@ -28,6 +28,7 @@ function toJS(row) {
     locationId:    row.location_id    ?? null,
     category:      row.category       ?? null,
     fillLevel:     row.fill_level     ?? 4,
+    form:          row.form           ?? '',
     createdAt:     row.created_at,
     updatedAt:     row.updated_at,
   }
@@ -47,6 +48,7 @@ function toDB(data) {
     location_id:    data.locationId     ?? null,
     category:       data.category       ?? null,
     fill_level:     data.fillLevel      ?? 4,
+    form:           data.form           || null,
   }
 }
 

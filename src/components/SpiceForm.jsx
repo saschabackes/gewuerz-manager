@@ -18,6 +18,7 @@ const DEFAULT_FORM = {
   locationId: '',
   category: '',
   fillLevel: 4,
+  form: '',
 }
 
 export default function SpiceForm({ spice, prefill, onClose }) {
@@ -37,6 +38,7 @@ export default function SpiceForm({ spice, prefill, onClose }) {
     locationId: spice.locationId ?? '',
     category: spice.category ?? '',
     fillLevel: spice.fillLevel ?? 4,
+    form: spice.form ?? '',
   } : { ...DEFAULT_FORM, name: prefill?.name ?? '', brand: prefill?.brand ?? '' })
 
   const [suggestions, setSuggestions]       = useState([])
@@ -136,6 +138,7 @@ export default function SpiceForm({ spice, prefill, onClose }) {
       locationId: form.locationId || null,
       category: form.category || null,
       fillLevel: form.fillLevel ?? 4,
+      form: form.form || null,
     }
 
     if (isEdit) updateSpice(spice.id, data)
@@ -342,6 +345,31 @@ export default function SpiceForm({ spice, prefill, onClose }) {
                 )
               })}
             </div>
+          </div>
+
+          {/* ── Form (ganz / gemahlen) ──────────────────────────── */}
+          <div>
+            <label className="label">Form (optional)</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: '', label: '—', hint: 'egal' },
+                { id: 'ganz', label: 'Ganz', hint: 'Körner, Samen, Blätter' },
+                { id: 'gemahlen', label: 'Gemahlen', hint: 'Pulver' },
+              ].map(o => (
+                <button key={o.id} type="button" onClick={() => set('form', o.id)}
+                  className={`rounded-xl py-2.5 px-2 text-center border-2 transition-all ${
+                    form.form === o.id
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                      : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+                  }`}>
+                  <div className="font-semibold text-sm text-gray-800 dark:text-gray-100">{o.label}</div>
+                  <div className="text-[10px] text-gray-400 leading-tight mt-0.5">{o.hint}</div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              Hilft bei der Rezept-Zuordnung – z.B. „Pfefferkörner" (ganz) ≠ „Pfeffer gemahlen".
+            </p>
           </div>
 
           {/* ── Mengen ──────────────────────────────────────────── */}

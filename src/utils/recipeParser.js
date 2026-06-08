@@ -147,8 +147,10 @@ function classifyRecipe(name) {
   return { fresh, form }
 }
 
-// Form eines Bestands-Gewürzes (Name + Verpackungstyp)
+// Form eines Bestands-Gewürzes: explizites Feld bevorzugt, sonst Heuristik
 function classifyInventory(sp) {
+  if (sp.form === 'gemahlen') return 'ground'
+  if (sp.form === 'ganz')     return 'whole'
   const n = normalize(sp.name)
   if (GROUND_RE.test(n)) return 'ground'
   if (WHOLE_RE.test(n) || sp.packagingType === 'ganz') return 'whole'
