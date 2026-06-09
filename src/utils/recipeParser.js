@@ -131,6 +131,39 @@ const FRESH_WORDS = ['zwiebel','zwiebeln','knoblauch','ingwer','karotte','karott
   'tomate','tomaten','gurke','kartoffel','kartoffeln','paprika','zitrone','zitronen','apfel',
   'chili frisch','suppengrün','suppenhuhn','huhn','hähnchen','forelle','forellen','fisch']
 
+// Vorrats-/Backzutaten: keine Gewürze, müssen aus dem Cook-Plan ausgeschlossen werden
+// (selbst wenn keine Mengenangabe im Namen steht).
+const PANTRY_WORDS = [
+  // Mehl & Getreide
+  'mehl','weizenmehl','roggenmehl','dinkelmehl','vollkornmehl','grieß','stärke','speisestärke','maisstärke',
+  'haferflocken','flocken','müsli','cornflakes','reis','nudeln','pasta','spaghetti','penne','couscous','bulgur','quinoa','linsen','kichererbsen','bohnen','erbsen',
+  // Eier & Milchprodukte
+  'ei','eier','eigelb','eiweiß','eiklar',
+  'milch','sahne','schlagsahne','crème','creme','crème fraîche','schmand','joghurt','jogurt','quark','frischkäse','käse','parmesan','mozzarella','feta','butter','margarine','frischkäse',
+  // Süß & Back
+  'zucker','rohrzucker','puderzucker','vanillezucker','honig','sirup','ahornsirup','agavendicksaft',
+  'kakao','schokolade','schokoraspeln','marzipan','nutella',
+  'hefe','trockenhefe','backpulver','natron','backsoda','vanillinzucker',
+  // Brot/Brösel
+  'brot','brötchen','toast','baguette','semmelbrösel','paniermehl','brösel',
+  // Nüsse/Kerne (im Rezept-Kontext meist Hauptzutat, nicht Gewürz)
+  'mandeln','mandel','walnüsse','walnuss','haselnüsse','haselnuss','cashew','cashewkerne','pistazien','erdnüsse','erdnuss','sonnenblumenkerne','kürbiskerne','sesam','leinsamen','chiasamen','kokosraspel','kokosflocken',
+  // Flüssig
+  'wasser','brühe','gemüsebrühe','hühnerbrühe','rinderbrühe','fond','wein','weißwein','rotwein','bier','essig','balsamico','sojasauce','sojasoße','sojasoss','tomatenmark','passata','tomatensauce','ketchup','senf','mayonnaise','majo',
+  // Öle/Fette
+  'öl','olivenöl','rapsöl','sonnenblumenöl','sesamöl','kokosöl','schmalz',
+  // Obst/Süßes
+  'banane','bananen','beeren','erdbeeren','himbeeren','heidelbeeren','rosinen',
+]
+
+// Vorratszutat (Mehl, Eiweiß, Haferflocken, …) erkannt? Diese sind nie Gewürze.
+function isPantry(name) {
+  const n = normalize(name)
+  const words = n.split(' ')
+  if (words.some(w => PANTRY_WORDS.includes(w))) return true
+  return PANTRY_WORDS.some(pw => pw.includes(' ') && n.includes(pw))
+}
+
 // Bestimmt Form einer Rezept-Zeile + ob es frische Ware ist
 function classifyRecipe(name) {
   const n = normalize(name)
@@ -201,7 +234,7 @@ export function buildCookPlan(ingredients, spices) {
   ingredients.forEach(ing => {
     const { fresh, form } = classifyRecipe(ing.name)
     // Frische Ware ODER große Bulk-Menge (im Namen) ODER nicht gewürz-typisch
-    if (fresh || isBulkByName(ing.name) || !isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
+    if (fresh || isPantry(ing.name) || isBulkByName(ing.name) || !isSpiceLike(ing.amount)) { ignored.push(ing.name); return }
     const hits = matchSpices(ing.name, form, spices).filter(sp => !usedSpiceIds.has(sp.id))
     if (hits.length === 0) {
       unmatched.push(ing.name)
