@@ -12,6 +12,11 @@ import ActivityView from './components/ActivityView'
 import OnboardingView from './components/OnboardingView'
 import InventoryReviewView from './components/InventoryReviewView'
 import RecipesView from './components/RecipesView'
+import ModuleSwitcher from './modules/ModuleSwitcher'
+import FreezerView from './modules/freezer/FreezerView'
+import CellarView from './modules/cellar/CellarView'
+
+const MODULES_ENABLED = import.meta.env.VITE_ENABLE_MODULES === '1' || import.meta.env.DEV
 
 export default function App() {
   const { user, authLoading, init } = useStore()
@@ -19,6 +24,7 @@ export default function App() {
   const finishOnboarding = useStore(s => s.finishOnboarding)
   const dataError = useStore(s => s.dataError)
   const currentUser = useStore(s => s.currentUser())
+  const [module, setModule] = useState('spices')
   const [view, setView] = useState('spices')
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingSpice, setEditingSpice] = useState(null)
@@ -144,14 +150,26 @@ export default function App() {
         </div>
       )}
 
+      {MODULES_ENABLED && (
+        <ModuleSwitcher current={module} onChange={setModule} />
+      )}
+
       <main className="flex-1 overflow-hidden flex flex-col pb-20">
-        {view === 'spices'   && <SpiceList onEdit={handleEditSpice} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />}
-        {view === 'mhd'      && <ExpiryView onEdit={handleEditSpice} />}
-        {view === 'shopping' && <ShoppingList />}
-        {view === 'recipes'  && <RecipesView />}
+        {module === 'spices' && (
+          <>
+            {view === 'spices'   && <SpiceList onEdit={handleEditSpice} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />}
+            {view === 'mhd'      && <ExpiryView onEdit={handleEditSpice} />}
+            {view === 'shopping' && <ShoppingList />}
+            {view === 'recipes'  && <RecipesView />}
+          </>
+        )}
+        {module === 'freezer' && <FreezerView />}
+        {module === 'cellar'  && <CellarView />}
       </main>
 
-      <Navigation current={view} onChange={setView} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />
+      {module === 'spices' && (
+        <Navigation current={view} onChange={setView} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />
+      )}
 
       {showAddForm && (
         <SpiceForm spice={editingSpice} prefill={formPrefill} onClose={handleFormClose} />
