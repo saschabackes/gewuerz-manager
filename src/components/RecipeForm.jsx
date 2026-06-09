@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
-import { fetchRecipeMeta } from '../lib/youtube'
+import { importRecipe } from '../lib/recipeImport'
 import { parseRecipeDescription } from '../utils/recipeDescription'
 
 export default function RecipeForm({ recipe, onClose, onSaved }) {
-  const { addRecipe, updateRecipe } = useStore()
+  const { addRecipe, updateRecipe, cookidooSettings } = useStore()
   const isEdit = !!recipe
 
   const [sourceUrl, setSourceUrl]   = useState(recipe?.sourceUrl ?? '')
@@ -40,13 +40,13 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
     setMetaError('')
     setAutoFilled(false)
     try {
-      const m = await fetchRecipeMeta(sourceUrl.trim())
+      const m = await importRecipe(sourceUrl.trim(), cookidooSettings)
       if (m.title) setTitle(m.title)
       if (m.author) setAuthor(m.author)
       setVideoId(m.videoId ?? null)
       setSourceType(m.sourceType ?? 'web')
-      setThumb(m.thumbnailUrl ?? null)
-      // Zutaten/Schritte aus der Beschreibung übernehmen (nur wenn Felder leer)
+      if (m.thumbnailUrl) setThumb(m.thumbnailUrl)
+      // Zutaten/Schritte übernehmen (nur wenn Felder leer)
       let filled = false
       if (m.ingredients?.length && !ingredients.trim()) {
         setIngredients(m.ingredients.join('\n')); filled = true
@@ -55,8 +55,8 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
         setSteps(m.steps.join('\n')); filled = true
       }
       setAutoFilled(filled)
-      // Wenn nichts automatisch kam → Einfügefeld anbieten
-      if (!filled) setShowPaste(true)
+      // Nur bei YouTube ohne Treffer das Beschreibungs-Einfügefeld anbieten
+      if (!filled && m.sourceType === 'youtube') setShowPaste(true)
     } catch (e) {
       setMetaError(e.message)
     } finally {

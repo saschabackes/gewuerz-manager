@@ -200,14 +200,33 @@ exports.handler = async function (event) {
     }
   }
 
-  // Andere Quelle → og:-Tags
+  // Andere Quelle → schema.org/Recipe (JSON-LD), Fallback og:-Tags
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Accept-Language': 'de-DE,de;q=0.9',
+      },
+    })
     const html = await res.text()
+    const recipe = extractJsonLdRecipe(html)
     const og = (prop) => {
       const m = html.match(new RegExp(`<meta[^>]+property=["']og:${prop}["'][^>]+content=["']([^"']+)["']`, 'i'))
-      return m ? m[1] : ''
+      return m ? htmlDecode(m[1]) : ''
     }
+
+    if (recipe) {
+      return ok({
+        ok: true, sourceType: 'web', videoId: null,
+        title: recipe.title || og('title') || '',
+        author: recipe.author || '',
+        thumbnailUrl: recipe.image || og('image') || '',
+        description: '',
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+      })
+    }
+    // kein JSON-LD → wenigstens Titel/Bild
     return ok({
       ok: true, sourceType: 'web', videoId: null,
       title: og('title') || '', author: '', thumbnailUrl: og('image') || '',
@@ -216,4 +235,64 @@ exports.handler = async function (event) {
   } catch (e) {
     return ok({ ok: true, sourceType: 'web', videoId: null, title: '', author: '', thumbnailUrl: '', description: '', ingredients: [], steps: [] })
   }
+}
+
+// ── schema.org/Recipe aus JSON-LD extrahieren ────────────────────────────────
+function extractJsonLdRecipe(html) {
+  const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1])
+  for (const raw of blocks) {
+    let data
+    try { data = JSON.parse(raw.trim()) } catch (e) { continue }
+    const candidates = Array.isArray(data) ? data : (data['@graph'] ? data['@graph'] : [data])
+    for (const obj of candidates) {
+      if (!obj || typeof obj !== 'object') continue
+      const type = obj['@type']
+      const isRecipe = Array.isArray(type) ? type.some(t => /Recipe/i.test(t)) : /Recipe/i.test(String(type || ''))
+      if (!isRecipe) continue
+
+      const ingredients = (obj.recipeIngredient || obj.ingredients || [])
+        .map(s => htmlDecode(String(s).trim())).filter(Boolean)
+
+      const steps = flattenInstructions(obj.recipeInstructions).map(htmlDecode)
+
+      let image = obj.image
+      if (Array.isArray(image)) image = image[0]
+      if (image && typeof image === 'object') image = image.url || image.contentUrl || ''
+
+      let author = obj.author
+      if (Array.isArray(author)) author = author[0]
+      if (author && typeof author === 'object') author = author.name || ''
+
+      return {
+        title: htmlDecode(String(obj.name || '').trim()),
+        author: htmlDecode(String(author || '').trim()),
+        image: typeof image === 'string' ? image : '',
+        ingredients,
+        steps,
+      }
+    }
+  }
+  return null
+}
+
+// recipeInstructions kann String, String[], HowToStep[] oder HowToSection[] sein
+function flattenInstructions(instr) {
+  if (!instr) return []
+  if (typeof instr === 'string') {
+    return instr.split(/\n|\.\s+(?=[A-ZÄÖÜ])/).map(s => s.trim()).filter(s => s.length > 3)
+  }
+  const out = []
+  const arr = Array.isArray(instr) ? instr : [instr]
+  arr.forEach(item => {
+    if (typeof item === 'string') { if (item.trim()) out.push(item.trim()); return }
+    if (!item || typeof item !== 'object') return
+    const t = item['@type'] || ''
+    if (/HowToSection/i.test(t) && item.itemListElement) {
+      flattenInstructions(item.itemListElement).forEach(s => out.push(s))
+    } else {
+      const text = item.text || item.name || ''
+      if (text && String(text).trim()) out.push(String(text).trim())
+    }
+  })
+  return out
 }

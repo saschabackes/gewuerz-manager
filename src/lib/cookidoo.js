@@ -16,8 +16,13 @@ export async function cookidooVerify(email, password) {
   return call({ email, password })
 }
 
-// Rezept-Zutaten abrufen → [{ name, amount, optional }]
+// Rezept abrufen → { title, ingredients:[{name,amount}], steps:[str], thumbnailUrl }
 export async function cookidooFetchRecipe(email, password, url) {
   const data = await call({ email, password, url })
-  return { title: data.title ?? '', ingredients: data.ingredients ?? [] }
+  return {
+    title: data.title ?? '',
+    ingredients: data.ingredients ?? [],
+    steps: data.steps ?? [],
+    thumbnailUrl: data.thumbnailUrl ?? '',
+  }
 }

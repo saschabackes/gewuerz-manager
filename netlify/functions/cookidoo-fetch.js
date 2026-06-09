@@ -90,6 +90,37 @@ function extractIngredients(data) {
   return out
 }
 
+function extractSteps(data) {
+  const out = []
+  const push = (st) => {
+    const text = (st && (st.formattedText || st.text || st.title || st.notation)) || (typeof st === 'string' ? st : '')
+    const clean = String(text).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    if (clean) out.push(clean)
+  }
+  const groups = data.recipeStepGroups || data.stepGroups || data.preparationGroups
+  if (Array.isArray(groups) && groups.length) {
+    groups.forEach(g => {
+      const steps = g.recipeSteps || g.steps || (g.formattedText || g.text ? [g] : [])
+      steps.forEach(push)
+    })
+  } else if (Array.isArray(data.preparationSteps)) {
+    data.preparationSteps.forEach(push)
+  } else if (Array.isArray(data.steps)) {
+    data.steps.forEach(push)
+  }
+  return out
+}
+
+function extractImage(data) {
+  let img = data.imageUrl || data.image
+  if (Array.isArray(img)) img = img[0]
+  if (img && typeof img === 'object') img = img.url || img.contentUrl || ''
+  if (typeof img === 'string' && img.includes('{transformation}')) {
+    img = img.replace('{transformation}', 'w_640')
+  }
+  return typeof img === 'string' ? img : ''
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
@@ -127,8 +158,10 @@ exports.handler = async function (event) {
 
     const ingredients = extractIngredients(data)
     const title = data.title || data.name || data.recipeTitle || ''
-    if (ingredients.length === 0) return err('Keine Zutaten im Rezept gefunden')
-    return ok({ ok: true, title, ingredients })
+    const steps = extractSteps(data)
+    const thumbnailUrl = extractImage(data)
+    if (ingredients.length === 0 && steps.length === 0) return err('Keine Zutaten/Schritte im Rezept gefunden')
+    return ok({ ok: true, title, ingredients, steps, thumbnailUrl })
   } catch (e) {
     return err('Cookidoo-Fehler: ' + e.message)
   }
