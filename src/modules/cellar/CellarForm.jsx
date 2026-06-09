@@ -1,15 +1,18 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useCellar } from './store'
 
 const COLORS = [
   { id: 'rot',    label: '🍷 Rot' },
   { id: 'weiß',   label: '🥂 Weiß' },
   { id: 'rosé',   label: '🌸 Rosé' },
-  { id: 'schaum', label: '🍾 Schaumwein' },
+  { id: 'schaum', label: '🍾 Schaum' },
 ]
 
-export default function CellarForm({ onClose }) {
-  const addBottle = useCellar(s => s.addBottle)
+export default function CellarForm({ prefilled, onClose }) {
+  const { racks, addBottle, lastUsedRack } = useCellar()
+  const startRackId = prefilled?.rackId || lastUsedRack?.rackId || racks[0]?.id
+  const startSlot   = prefilled?.slot   || lastUsedRack?.slot   || racks.find(r => r.id === startRackId)?.slots[0] || ''
+
   const [name, setName] = useState('')
   const [winery, setWinery] = useState('')
   const [vintage, setVintage] = useState(new Date().getFullYear() - 2)
@@ -18,14 +21,38 @@ export default function CellarForm({ onClose }) {
   const [color, setColor] = useState('rot')
   const [drinkFrom, setDrinkFrom] = useState(new Date().getFullYear())
   const [drinkUntil, setDrinkUntil] = useState(new Date().getFullYear() + 5)
-  const [slot, setSlot] = useState('')
+  const [rackId, setRackId] = useState(startRackId)
+  const [slot, setSlot] = useState(startSlot)
   const [count, setCount] = useState(1)
   const [note, setNote] = useState('')
+  const [photoData, setPhotoData] = useState(null)
+  const [bulkMode, setBulkMode] = useState(false)
+  const [hint, setHint] = useState('')
+  const photoRef = useRef(null)
+
+  const rack = racks.find(r => r.id === rackId)
+
+  async function handlePhoto(e) {
+    const file = e.target.files?.[0]; if (!file) return
+    const img = new Image(); const url = URL.createObjectURL(file)
+    await new Promise(res => { img.onload = res; img.src = url })
+    const canvas = document.createElement('canvas')
+    const max = 800
+    const scale = Math.min(1, max / Math.max(img.width, img.height))
+    canvas.width = img.width * scale; canvas.height = img.height * scale
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+    setPhotoData(canvas.toDataURL('image/jpeg', 0.7))
+    URL.revokeObjectURL(url)
+  }
 
   function save() {
     if (!name.trim()) return
-    addBottle({ name, winery, vintage, region, grape, color, drinkFrom, drinkUntil, slot, count, note })
-    onClose()
+    addBottle({ name, winery, vintage, region, grape, color, drinkFrom, drinkUntil, rackId, slot, count, note, photoData })
+    if (bulkMode) {
+      setHint(`✓ „${name}" gespeichert – nächste?`)
+      setName(''); setWinery(''); setNote(''); setPhotoData(null); setCount(1)
+      setTimeout(() => setHint(''), 2200)
+    } else onClose()
   }
 
   return (
@@ -72,12 +99,10 @@ export default function CellarForm({ onClose }) {
             <label className="label">Farbe</label>
             <div className="flex gap-1.5">
               {COLORS.map(c => (
-                <button key={c.id}
-                  onClick={() => setColor(c.id)}
+                <button key={c.id} type="button" onClick={() => setColor(c.id)}
                   className={`flex-1 py-2 rounded-xl text-xs font-semibold ${
                     color === c.id ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                  }`}
-                >{c.label}</button>
+                  }`}>{c.label}</button>
               ))}
             </div>
           </div>
@@ -95,16 +120,53 @@ export default function CellarForm({ onClose }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Regalplatz</label>
-              <input className="input py-2.5 text-sm" placeholder="z.B. A/3"
-                value={slot} onChange={e => setSlot(e.target.value)} />
+          <div>
+            <label className="label">Wohin? (Regal)</label>
+            <div className="flex flex-wrap gap-1.5">
+              {racks.map(r => (
+                <button key={r.id} type="button"
+                  onClick={() => { setRackId(r.id); setSlot(r.slots[0] || '') }}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold ${
+                    rackId === r.id ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                >{r.emoji} {r.label}</button>
+              ))}
             </div>
-            <div>
-              <label className="label">Anzahl Flaschen</label>
-              <input type="number" min="1" className="input py-2.5 text-sm" value={count}
-                onChange={e => setCount(e.target.value)} />
+            {rack && rack.slots.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {rack.slots.map(s => (
+                  <button key={s} type="button" onClick={() => setSlot(s)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      slot === s ? 'bg-rose-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}>{s}</button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="label">Anzahl Flaschen</label>
+            <input type="number" min="1" className="input py-2.5 text-sm" value={count}
+              onChange={e => setCount(e.target.value)} />
+          </div>
+
+          {/* Foto */}
+          <div>
+            <label className="label">Etikett-Foto (optional)</label>
+            <div className="flex items-center gap-3">
+              <input ref={photoRef} type="file" accept="image/*" capture="environment"
+                onChange={handlePhoto} className="hidden" />
+              <button onClick={() => photoRef.current?.click()}
+                className="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg font-semibold">
+                📷 Etikett fotografieren
+              </button>
+              {photoData && (
+                <div className="relative">
+                  <img src={photoData} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                  <button onClick={() => setPhotoData(null)}
+                    className="absolute -top-1 -right-1 bg-gray-800 text-white rounded-full w-5 h-5 text-xs">✕</button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -113,11 +175,18 @@ export default function CellarForm({ onClose }) {
             <input className="input py-2 text-sm" value={note} onChange={e => setNote(e.target.value)} />
           </div>
 
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-rose-50 dark:bg-rose-900/30 px-3 py-2 rounded-xl">
+            <input type="checkbox" checked={bulkMode} onChange={e => setBulkMode(e.target.checked)} />
+            <span><b>Einlager-Modus</b> – Form bleibt offen für die nächste Flasche</span>
+          </label>
+
+          {hint && <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">{hint}</p>}
+
           <div className="flex gap-3 pt-2 pb-4">
-            <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
+            <button onClick={onClose} className="btn-secondary flex-1">Schließen</button>
             <button onClick={save} disabled={!name.trim()}
               className="btn-primary flex-1 disabled:opacity-50" style={{ backgroundColor: '#e11d48' }}>
-              Speichern
+              {bulkMode ? 'Speichern + nächstes' : 'Speichern'}
             </button>
           </div>
         </div>

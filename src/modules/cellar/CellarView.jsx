@@ -1,13 +1,20 @@
 import { useState, useMemo } from 'react'
 import { useCellar, drinkStatus } from './store'
 import CellarForm from './CellarForm'
+import RackSettings from './RackSettings'
 
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
 export default function CellarView() {
-  const { bottles, drinkOne, removeBottle, seedDemoData, clear } = useCellar()
-  const [tab, setTab] = useState('all') // all | drink-now | by-color
+  const { racks, bottles, drinkOne, removeBottle, seedDemoData, clear, resetSetup, recentNames, quickAddByName, lastUsedRack } = useCellar()
+  const [tab, setTab] = useState('all') // all | drink-now | rack
+  const [activeRackId, setActiveRackId] = useState(racks[0]?.id)
   const [showForm, setShowForm] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [prefilled, setPrefilled] = useState(null)
+  const [hint, setHint] = useState('')
+
+  const activeRack = racks.find(r => r.id === activeRackId) || racks[0]
 
   const filtered = useMemo(() => {
     if (tab === 'drink-now') {
@@ -15,79 +22,130 @@ export default function CellarView() {
       return bottles.filter(b => y >= b.drinkFrom && y <= b.drinkUntil)
                     .sort((a,b) => a.drinkUntil - b.drinkUntil)
     }
+    if (tab === 'rack' && activeRack) {
+      return bottles.filter(b => b.rackId === activeRack.id)
+                    .sort((a,b) => a.slot.localeCompare(b.slot))
+    }
     return [...bottles].sort((a,b) => a.drinkUntil - b.drinkUntil)
-  }, [bottles, tab])
+  }, [bottles, tab, activeRack])
 
   const totalBottles = bottles.reduce((s, b) => s + b.count, 0)
+  const lastRack = racks.find(r => r.id === lastUsedRack?.rackId)
+
+  function quickAdd(name) {
+    quickAddByName(name)
+    setHint(`✓ +1 ${name} → ${lastRack?.emoji || ''} ${lastRack?.label || 'Default'}`)
+    setTimeout(() => setHint(''), 2200)
+  }
 
   return (
     <div className="flex-1 overflow-y-auto pb-24 bg-rose-50/40 dark:bg-gray-900">
       <div className="bg-gradient-to-br from-rose-600 to-rose-800 text-white px-5 py-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">🍷 Weinkeller</h2>
-        <p className="text-rose-100 text-sm">
-          {bottles.length} Position{bottles.length === 1 ? '' : 'en'}, {totalBottles} Flaschen
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">🍷 Weinkeller</h2>
+            <p className="text-rose-100 text-sm">
+              {bottles.length} Position{bottles.length===1?'':'en'} · {totalBottles} Flaschen · {racks.length} Lager
+            </p>
+          </div>
+          <button onClick={() => setShowSettings(true)}
+            className="bg-white/20 hover:bg-white/30 rounded-full p-2 text-lg" title="Regale verwalten">⚙️</button>
+        </div>
       </div>
+
+      {/* Quick-Add */}
+      {recentNames.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-3 py-2.5 space-y-1">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="flex-none text-[10px] text-gray-400 font-bold self-center pr-1">+1 IN {lastRack?.label?.toUpperCase() || 'DEFAULT'}:</span>
+            {recentNames.slice(0,10).map(n => (
+              <button key={n} onClick={() => quickAdd(n)}
+                className="flex-none text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-semibold px-2.5 py-1 rounded-full active:scale-95">
+                + {n}
+              </button>
+            ))}
+          </div>
+          {hint && <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{hint}</p>}
+        </div>
+      )}
 
       <div className="flex gap-2 px-4 py-3">
         {[
           { id: 'all',       label: '🍷 Alle' },
-          { id: 'drink-now', label: '⭐ Jetzt trinken' },
+          { id: 'drink-now', label: '⭐ Jetzt' },
+          { id: 'rack',      label: '🗄️ Regal' },
         ].map(t => (
-          <button key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex-1 py-2 rounded-xl text-sm font-semibold ${
               tab === t.id ? 'bg-rose-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300'
-            }`}
-          >{t.label}</button>
+            }`}>{t.label}</button>
         ))}
       </div>
 
+      {tab === 'rack' && (
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 pb-3">
+          {racks.map(r => {
+            const count = bottles.filter(b => b.rackId === r.id).reduce((s,b)=>s+b.count,0)
+            const active = activeRack?.id === r.id
+            return (
+              <button key={r.id} onClick={() => setActiveRackId(r.id)}
+                className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                  active ? 'bg-rose-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                }`}>
+                <span>{r.emoji}</span><span>{r.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/30' : 'bg-gray-100 dark:bg-gray-700'}`}>{count}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {bottles.length === 0 && (
         <div className="m-4 p-5 rounded-2xl bg-white dark:bg-gray-800 text-center">
-          <p className="text-gray-700 dark:text-gray-200 font-medium">Noch keine Flaschen im Keller.</p>
-          <p className="text-xs text-gray-400 mt-1 mb-3">Lade ein paar Beispielflaschen oder leg eine eigene an.</p>
+          <p className="text-gray-700 dark:text-gray-200 font-medium">Noch keine Flaschen.</p>
+          <p className="text-xs text-gray-400 mt-1 mb-3">Demoflaschen laden oder eigene anlegen.</p>
           <button onClick={seedDemoData}
-            className="bg-rose-600 text-white text-sm font-semibold px-4 py-2 rounded-xl">
-            🎲 Demoflaschen laden
-          </button>
+            className="bg-rose-600 text-white text-sm font-semibold px-4 py-2 rounded-xl">🎲 Demoflaschen laden</button>
         </div>
       )}
 
       <div className="px-4 space-y-2.5">
         {filtered.map(b => {
           const status = drinkStatus(b)
+          const r = racks.find(r => r.id === b.rackId)
           return (
             <div key={b.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="text-3xl flex-none">{COLOR_EMOJI[b.color] || '🍷'}</div>
+                {b.photoData
+                  ? <img src={b.photoData} alt="" className="w-12 h-16 rounded object-cover flex-none" />
+                  : <div className="text-3xl flex-none w-12 text-center">{COLOR_EMOJI[b.color] || '🍷'}</div>}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-gray-800 dark:text-gray-100 truncate">{b.name}</span>
                     <span className="text-xs text-gray-400">{b.vintage}</span>
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {b.winery && <span>{b.winery} · </span>}
-                    {b.region && <span>{b.region}</span>}
-                    {b.grape && <span> · {b.grape}</span>}
+                    {b.winery && <span>{b.winery} · </span>}{b.region}{b.grape && <span> · {b.grape}</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">📦 {b.slot || '—'}</span>
-                    <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{b.count}× im Bestand</span>
+                    <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
+                      {r?.emoji} {r?.label || '—'} · {b.slot || '—'}
+                    </span>
+                    <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{b.count}× Bestand</span>
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${status.cls}`}>{status.label}</span>
                   </div>
                 </div>
               </div>
               <div className="flex gap-2 mt-2.5">
                 <button onClick={() => {
-                  const r = prompt('Wie war\'s? Bewertung 1–5 (oder leer lassen)')
+                  const r = prompt('Bewertung 1–5 (oder leer)')
                   const rating = r ? Math.max(1, Math.min(5, Number(r))) : undefined
                   drinkOne(b.id, rating)
                 }}
                   className="flex-1 text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-semibold py-1.5 rounded-lg">
                   🥂 Getrunken
                 </button>
-                <button onClick={() => { if (confirm('Flasche/Position entfernen?')) removeBottle(b.id) }}
+                <button onClick={() => { if (confirm('Position entfernen?')) removeBottle(b.id) }}
                   className="text-xs text-gray-400 hover:text-red-500 px-2">✕</button>
               </div>
             </div>
@@ -95,20 +153,21 @@ export default function CellarView() {
         })}
       </div>
 
-      <button onClick={() => setShowForm(true)}
+      <button onClick={() => { setPrefilled(null); setShowForm(true) }}
         className="fixed bottom-24 right-5 z-30 w-14 h-14 rounded-full bg-rose-600 text-white text-3xl shadow-xl active:bg-rose-700"
         aria-label="Flasche hinzufügen">+</button>
 
       {bottles.length > 0 && (
-        <div className="px-4 pt-4 text-center">
-          <button onClick={() => { if (confirm('Alle Keller-Einträge im Prototyp löschen?')) clear() }}
-            className="text-xs text-gray-400 hover:text-red-500">
-            🗑️ Prototyp-Daten zurücksetzen
-          </button>
+        <div className="px-4 pt-4 text-center space-x-3">
+          <button onClick={() => { if (confirm('Alle Flaschen löschen?')) clear() }}
+            className="text-xs text-gray-400 hover:text-red-500">🗑️ Items zurücksetzen</button>
+          <button onClick={() => { if (confirm('Regale + Inhalte komplett zurücksetzen?')) resetSetup() }}
+            className="text-xs text-gray-400 hover:text-red-500">↺ Komplett-Reset</button>
         </div>
       )}
 
-      {showForm && <CellarForm onClose={() => setShowForm(false)} />}
+      {showForm && <CellarForm prefilled={prefilled} onClose={() => setShowForm(false)} />}
+      {showSettings && <RackSettings onClose={() => setShowSettings(false)} />}
     </div>
   )
 }
