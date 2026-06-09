@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
 import { importRecipe } from '../lib/recipeImport'
 import { parseRecipeDescription } from '../utils/recipeDescription'
+import CookPlan from './CookPlan'
 
 export default function RecipeForm({ recipe, onClose, onSaved }) {
   const { addRecipe, updateRecipe, cookidooSettings } = useStore()
@@ -33,6 +34,12 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
     if (st.length)  setSteps(st.join('\n'))
     setPasteResult(`${ing.length} Zutaten, ${st.length} Schritte erkannt`)
   }
+
+  // Zutaten-Textarea → Objekte für die Gewürz-Zuordnung (live)
+  const ingredientList = useMemo(
+    () => ingredients.split('\n').map(l => l.trim()).filter(Boolean).map(name => ({ name, amount: '' })),
+    [ingredients]
+  )
 
   async function loadMeta() {
     if (!sourceUrl.trim()) return
@@ -97,7 +104,7 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
           <div className="w-10 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600" />
         </div>
         <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{isEdit ? 'Rezept bearbeiten' : 'Rezept speichern'}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{isEdit ? 'Rezept bearbeiten' : 'Rezept kochen / speichern'}</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
@@ -108,7 +115,7 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 pb-safe">
           {/* Link */}
           <div>
-            <label className="label">Link (YouTube, Website…)</label>
+            <label className="label">Link (Cookidoo, YouTube, Chefkoch, Website…)</label>
             <div className="flex gap-2">
               <input type="url" className="input py-2.5 text-sm flex-1" placeholder="https://youtube.com/shorts/…"
                 value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} />
@@ -163,21 +170,21 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
             />
           </div>
 
-          {/* Videobeschreibung einfügen → automatisch erkennen */}
+          {/* Rezepttext einfügen → automatisch erkennen */}
           <div className="bg-sky-50 dark:bg-sky-950/40 rounded-xl p-3">
             {!showPaste ? (
               <button onClick={() => setShowPaste(true)}
                 className="text-sm text-sky-700 dark:text-sky-300 font-semibold flex items-center gap-1.5">
-                <span>✨</span> Zutaten & Schritte aus Videobeschreibung erkennen
+                <span>✨</span> Rezepttext einfügen &amp; erkennen
               </button>
             ) : (
               <>
                 <p className="text-xs text-sky-800 dark:text-sky-200 mb-2 leading-relaxed">
-                  Füge die <b>Videobeschreibung</b> ein (in der YouTube-App: Beschreibung antippen → Text kopieren).
+                  Füge einen beliebigen <b>Rezepttext</b> ein (z.B. YouTube-Beschreibung, aus einem Buch oder einer Nachricht).
                   Zutaten &amp; Schritte werden automatisch erkannt.
                 </p>
                 <textarea className="input text-sm resize-none" rows={4}
-                  placeholder="Videobeschreibung hier einfügen…"
+                  placeholder="Rezepttext hier einfügen…"
                   value={descPaste} onChange={e => setDescPaste(e.target.value)} />
                 <div className="flex items-center gap-3 mt-2">
                   <button onClick={applyPastedDescription} disabled={!descPaste.trim()}
@@ -204,6 +211,17 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
               value={steps} onChange={e => setSteps(e.target.value)} />
           </div>
 
+          {/* Meine Gewürze dafür (live, auch ohne Speichern nutzbar) */}
+          {ingredientList.length > 0 && (
+            <div className="card p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">🍲</span>
+                <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">Meine Gewürze dafür</span>
+              </div>
+              <CookPlan ingredients={ingredientList} />
+            </div>
+          )}
+
           {/* Notizen */}
           <div>
             <label className="label">Notizen (optional)</label>
@@ -211,9 +229,14 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
           </div>
 
           <div className="flex gap-3 pt-1 pb-4">
-            <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
-            <button onClick={handleSave} className="btn-primary flex-1">{isEdit ? 'Speichern' : 'Hinzufügen'}</button>
+            <button onClick={onClose} className="btn-secondary flex-1">Schließen</button>
+            <button onClick={handleSave} className="btn-primary flex-1">{isEdit ? 'Speichern' : 'Speichern'}</button>
           </div>
+          {!isEdit && (
+            <p className="text-xs text-gray-400 text-center -mt-2 pb-4">
+              Nur kochen? Einfach „Schließen" – ohne Speichern.
+            </p>
+          )}
         </div>
       </div>
     </>

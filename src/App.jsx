@@ -10,7 +10,6 @@ import SettingsView from './components/SettingsView'
 import HelpView from './components/HelpView'
 import ActivityView from './components/ActivityView'
 import OnboardingView from './components/OnboardingView'
-import CookView from './components/CookView'
 import InventoryReviewView from './components/InventoryReviewView'
 import RecipesView from './components/RecipesView'
 
@@ -26,7 +25,6 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showActivity, setShowActivity] = useState(false)
-  const [showCook, setShowCook] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [formPrefill, setFormPrefill] = useState(null)
   const reviewCount = useStore(s => s.pendingInventory.filter(p => p.status === 'ready').length)
@@ -101,13 +99,6 @@ export default function App() {
             )}
           </button>
           <button
-            onClick={() => setShowCook(true)}
-            className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
-            title="Kochen"
-          >
-            <span className="block text-base leading-none w-4 h-4 flex items-center justify-center">🍲</span>
-          </button>
-          <button
             onClick={() => setShowActivity(true)}
             className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
             title="Aktivitätsverlauf"
@@ -180,10 +171,6 @@ export default function App() {
 
       {showActivity && (
         <ActivityView onClose={() => setShowActivity(false)} />
-      )}
-
-      {showCook && (
-        <CookView onClose={() => setShowCook(false)} />
       )}
     </div>
   )
