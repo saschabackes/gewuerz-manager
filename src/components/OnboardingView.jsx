@@ -4,27 +4,42 @@ const SLIDES = [
   {
     emoji: '🌿',
     title: 'Willkommen!',
-    text: 'Der Gewürz-Manager hilft dir und deinem Haushalt, den Überblick über alle Gewürze zu behalten – was da ist, wo es liegt und was nachgekauft werden muss.',
+    text: 'Der Gewürz-Manager hilft dir und deinem Haushalt, den Überblick über alle Gewürze zu behalten – was da ist, wo es liegt, was abläuft und was nachgekauft werden muss.',
   },
   {
     emoji: '➕',
     title: 'Gewürze erfassen',
-    text: 'Tippe auf den grünen Plus-Button unten in der Mitte. Name und Verpackungstyp genügen. Ein passendes Produktfoto kannst du automatisch suchen lassen.',
+    text: 'Tippe auf den grünen Plus-Button unten in der Mitte. Name + Verpackungstyp reichen. Bei Pfeffer & Co. unterscheidest du zwischen „ganz" und „gemahlen". Ein passendes Produktfoto wird automatisch gesucht.',
   },
   {
     emoji: '📊',
     title: 'Füllstand im Blick',
-    text: 'Die kleinen Balken auf jeder Karte zeigen, wie voll ein Gewürz ist. Antippen schaltet eine Stufe runter. Geht etwas zur Neige, schlägt die App automatisch Nachkaufen vor.',
+    text: 'Die Balken auf jeder Karte zeigen, wie voll ein Gewürz ist. Antippen schaltet eine Stufe runter. Geht etwas zur Neige, schlägt die App automatisch Nachkaufen vor.',
+  },
+  {
+    emoji: '📅',
+    title: 'Ablauf & Einräumen',
+    text: 'Hinterlege Mindesthaltbarkeitsdaten – die App warnt rechtzeitig. Neue Päckchen vom Einkauf landen oben im „Einräumen"-Symbol und werden mit einem Tipp dem Bestand hinzugefügt.',
   },
   {
     emoji: '🛒',
-    title: 'Ablauf & Einkauf',
-    text: 'Hinterlege Mindesthaltbarkeitsdaten und behalte Abgelaufenes im Blick. Fehlendes landet per Tipp auf der Einkaufsliste – optional direkt in deiner Bring!-Liste.',
+    title: 'Einkaufsliste & Bring!',
+    text: 'Fehlendes landet per Tipp auf der Einkaufsliste. Mit deinem Bring!-Account synchronisiert sich alles direkt mit der Familien-Einkaufsliste – in beide Richtungen.',
+  },
+  {
+    emoji: '📖',
+    title: 'Rezepte & Kochen',
+    text: 'Speichere Rezepte per Link (Cookidoo, YouTube, Chefkoch oder beliebige Webseite) – Titel, Zutaten und Schritte werden automatisch erkannt. Beim Kochen siehst du sofort, welche Gewürze du hast und welches Glas du am besten zuerst nimmst (älteste MHD zuerst).',
   },
   {
     emoji: '🏠',
-    title: 'Gemeinsam & Hilfe',
-    text: 'Lade Familie ein, um die Sammlung zu teilen. Oben im Header findest du jederzeit den Verlauf (Uhr) und die ausführliche Hilfe (?).',
+    title: 'Gemeinsam nutzen',
+    text: 'Lade Familie oder Mitbewohner ein: alle sehen denselben Bestand, dieselbe Einkaufsliste und dieselben Rezepte. Änderungen synchronisieren sich automatisch.',
+  },
+  {
+    emoji: '💡',
+    title: 'Tipps & Hilfe',
+    text: 'Oben im Header findest du jederzeit Aktivitätsverlauf (Uhr), Hilfe (?) und Einstellungen (Zahnrad). In den Einstellungen verbindest du Bring! und Cookidoo, lädst Haushaltsmitglieder ein und kannst die Tour jederzeit neu starten.',
   },
 ]
 
