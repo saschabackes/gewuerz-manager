@@ -19,9 +19,44 @@ export const useCellar = create(
       lastUsedRack: null, // {rackId, slot}
       formOpen: false,
       formPrefill: null,
+      pending: [], // [{id, name, fromBottleId?, ...}]
 
       openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
       closeForm()              { set({ formOpen: false, formPrefill: null }) },
+
+      // Wein als gekauft markieren → Einräumen-Queue
+      markBought(bottleId) {
+        const b = get().bottles.find(x => x.id === bottleId)
+        if (!b) return
+        const pid = uid('p')
+        set(s => ({
+          pending: [...s.pending, {
+            id: pid, name: b.name, fromBottleId: bottleId,
+            winery: b.winery, vintage: b.vintage, region: b.region, country: b.country,
+            grape: b.grape, color: b.color, alcoholFree: b.alcoholFree,
+            drinkFrom: b.drinkFrom, drinkUntil: b.drinkUntil,
+            rackId: b.rackId, slot: b.slot, photoData: b.photoData,
+          }],
+          bottles: s.bottles.map(x => x.id === bottleId ? { ...x, restock: false } : x),
+        }))
+        return pid
+      },
+      addPendingByName(name) {
+        const pid = uid('p')
+        set(s => ({ pending: [...s.pending, { id: pid, name }] }))
+        return pid
+      },
+      removePending(pid) {
+        set(s => ({ pending: s.pending.filter(p => p.id !== pid) }))
+      },
+      // Bestand bereits vorhandener Flasche um count erhöhen
+      restockBottle(bottleId, count = 1) {
+        set(s => ({
+          bottles: s.bottles.map(b => b.id === bottleId
+            ? { ...b, count: (b.count || 0) + Number(count), restock: false }
+            : b),
+        }))
+      },
 
       // ── Racks ──────────────────────────────────────────────────────────────
       addRack(label, emoji='🍷') {
@@ -200,7 +235,7 @@ export const useCellar = create(
       clear() { set({ bottles: [], recentNames: [], lastUsedRack: null }) },
       resetSetup() { set({ racks: DEFAULT_RACKS, bottles: [], recentNames: [], lastUsedRack: null }) },
     }),
-    { name: 'haushalt-cellar-v4' }
+    { name: 'haushalt-cellar-v5' }
   )
 )
 

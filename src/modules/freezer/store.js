@@ -124,9 +124,35 @@ export const useFreezer = create(
       recentNames: [], // Häufigkeitsverlauf
       formOpen: false,
       formPrefill: null,
+      pending: [], // [{id, name, fromItemId?, photoData?, category?, portionSize?, storageId?, compartmentId?}]
 
       openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
       closeForm()              { set({ formOpen: false, formPrefill: null }) },
+
+      // „gekauft" → in die Einräumen-Queue legen
+      markBought(itemId) {
+        const it = get().items.find(i => i.id === itemId)
+        if (!it) return
+        const pid = uid('p')
+        set(s => ({
+          pending: [...s.pending, {
+            id: pid, name: it.name, fromItemId: itemId,
+            photoData: it.photoData, category: it.category,
+            portionSize: it.portionSize,
+            storageId: it.storageId, compartmentId: it.compartmentId,
+          }],
+          items: s.items.map(x => x.id === itemId ? { ...x, needsRestock: false } : x),
+        }))
+        return pid
+      },
+      addPendingByName(name) {
+        const pid = uid('p')
+        set(s => ({ pending: [...s.pending, { id: pid, name }] }))
+        return pid
+      },
+      removePending(pid) {
+        set(s => ({ pending: s.pending.filter(p => p.id !== pid) }))
+      },
 
       // ── Storage-Verwaltung ──────────────────────────────────────────────────
       addStorage(label, emoji='📦') {
@@ -239,6 +265,6 @@ export const useFreezer = create(
       clear() { set({ items: [], recentNames: [], lastUsedCompartment: null }) },
       resetSetup() { set({ storages: DEFAULT_STORAGES, items: [], recentNames: [], lastUsedCompartment: null }) },
     }),
-    { name: 'haushalt-freezer-v2' }
+    { name: 'haushalt-freezer-v3' }
   )
 )

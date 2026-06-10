@@ -2,24 +2,25 @@ import { useState, useRef } from 'react'
 import { useFreezer, CATEGORIES, FREEZER_SHELF_LIFE, autoCategory } from './store'
 
 export default function FreezerForm({ prefilled, onClose }) {
-  const { storages, addItem, lastUsedCompartment } = useFreezer()
+  const { storages, addItem, removePending, lastUsedCompartment } = useFreezer()
   const startStorageId = prefilled?.storageId
     || lastUsedCompartment?.storageId
     || storages[0]?.id
   const startCompartmentId = prefilled?.compartmentId
     || lastUsedCompartment?.compartmentId
     || storages.find(s => s.id === startStorageId)?.compartments[0]?.id
+  const pendingId = prefilled?.pendingId || null
 
-  const [name, setName] = useState('')
-  const [category, setCategory] = useState('sonstiges')
+  const [name, setName] = useState(prefilled?.name || '')
+  const [category, setCategory] = useState(prefilled?.category || autoCategory(prefilled?.name || '') || 'sonstiges')
   const [autoCat, setAutoCat] = useState(true)
   const [storageId, setStorageId] = useState(startStorageId)
   const [compartmentId, setCompartmentId] = useState(startCompartmentId)
   const [portions, setPortions] = useState(1)
-  const [portionSize, setPortionSize] = useState('')
+  const [portionSize, setPortionSize] = useState(prefilled?.portionSize || '')
   const [frozenAt, setFrozenAt] = useState(new Date().toISOString().slice(0, 10))
   const [note, setNote] = useState('')
-  const [photoData, setPhotoData] = useState(null)
+  const [photoData, setPhotoData] = useState(prefilled?.photoData || null)
   const [bulkMode, setBulkMode] = useState(false)
   const [hint, setHint] = useState('')
   const photoRef = useRef(null)
@@ -53,6 +54,7 @@ export default function FreezerForm({ prefilled, onClose }) {
   function save() {
     if (!name.trim()) return
     addItem({ name, category, storageId, compartmentId, portions, portionSize, frozenAt, note, photoData })
+    if (pendingId) removePending(pendingId)
     if (bulkMode) {
       setHint(`✓ „${name}" gespeichert – nächster Eintrag?`)
       setName(''); setPortions(1); setPortionSize(''); setNote(''); setPhotoData(null)
@@ -70,7 +72,9 @@ export default function FreezerForm({ prefilled, onClose }) {
           <div className="w-10 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600" />
         </div>
         <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">❄️ Im Tiefkühl ablegen</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {pendingId ? '📦 Einräumen ins Tiefkühl' : '❄️ Im Tiefkühl ablegen'}
+          </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">✕</button>
         </div>
 

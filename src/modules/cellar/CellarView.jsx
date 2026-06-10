@@ -4,6 +4,7 @@ import CellarForm from './CellarForm'
 import RackSettings from './RackSettings'
 import WineDetail from './WineDetail'
 import PairingFinder from './PairingFinder'
+import ExcelImport from './ExcelImport'
 
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
@@ -13,6 +14,7 @@ export default function CellarView() {
   const [tab, setTab] = useState('all') // all | drink-now | rack | pairing
   const [activeRackId, setActiveRackId] = useState(racks[0]?.id)
   const [showSettings, setShowSettings] = useState(false)
+  const [showImport, setShowImport]   = useState(false)
   const [hint, setHint] = useState('')
   const [detailId, setDetailId] = useState(null)
   const detailBottle = bottles.find(b => b.id === detailId)
@@ -55,8 +57,12 @@ export default function CellarView() {
               {bottles.length} Position{bottles.length===1?'':'en'} · {totalBottles} Flaschen · {racks.length} Lager
             </p>
           </div>
-          <button onClick={() => setShowSettings(true)}
-            className="bg-white/20 hover:bg-white/30 rounded-full p-2 text-lg" title="Regale verwalten">⚙️</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowImport(true)}
+              className="bg-white/20 hover:bg-white/30 rounded-full p-2 text-lg" title="Excel-Import">📥</button>
+            <button onClick={() => setShowSettings(true)}
+              className="bg-white/20 hover:bg-white/30 rounded-full p-2 text-lg" title="Regale verwalten">⚙️</button>
+          </div>
         </div>
       </div>
 
@@ -185,6 +191,7 @@ export default function CellarView() {
 
       {formOpen && <CellarForm prefilled={formPrefill} onClose={closeForm} />}
       {showSettings && <RackSettings onClose={() => setShowSettings(false)} />}
+      {showImport   && <ExcelImport  onClose={() => setShowImport(false)} />}
       {detailBottle && (
         <WineDetail
           bottle={detailBottle}

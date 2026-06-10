@@ -1,9 +1,4 @@
-// Zentrale Einkaufsliste – aggregiert aus allen Modulen.
-// Gewürze:  Supabase-Store (shoppingItems) – Quelle der Wahrheit aus produktiver App
-// Tiefkühl: LocalStorage  (items mit needsRestock)
-// Wein:     LocalStorage  (bottles mit restock)
-
-import { useState } from 'react'
+// Zentrale Einkaufsliste – inkl. Einräumen-Queue
 import useStore from '../../store/useStore'
 import { useFreezer } from '../freezer/store'
 import { useCellar } from '../cellar/store'
@@ -12,38 +7,90 @@ export default function UnifiedShoppingList() {
   const spicesShop  = useStore(s => s.shoppingItems || [])
   const removeSpiceShopping = useStore(s => s.deleteShoppingItem)
 
-  const freezerItems = useFreezer(s => s.items)
-  const toggleFreezerRestock = useFreezer(s => s.toggleRestock)
+  const freezerItems   = useFreezer(s => s.items)
+  const freezerPending = useFreezer(s => s.pending)
+  const markBoughtTK   = useFreezer(s => s.markBought)
+  const openTKForm     = useFreezer(s => s.openForm)
+  const removeTKPend   = useFreezer(s => s.removePending)
 
-  const cellarBottles = useCellar(s => s.bottles)
-  const toggleCellarRestock = useCellar(s => s.toggleRestock)
-
-  const [tab, setTab] = useState('open') // open | done
+  const cellarBottles  = useCellar(s => s.bottles)
+  const cellarPending  = useCellar(s => s.pending)
+  const markBoughtWine = useCellar(s => s.markBought)
+  const openCellarForm = useCellar(s => s.openForm)
+  const removeWnPend   = useCellar(s => s.removePending)
 
   const tkRestock = freezerItems.filter(i => i.needsRestock)
   const wnRestock = cellarBottles.filter(b => b.restock)
-  const totalItems = spicesShop.length + tkRestock.length + wnRestock.length
+  const openToShop = spicesShop.length + tkRestock.length + wnRestock.length
+  const openToStore = freezerPending.length + cellarPending.length
 
   return (
     <div className="flex-1 overflow-y-auto pb-24 bg-emerald-50/30 dark:bg-gray-900">
       <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white px-5 py-4">
         <h2 className="text-2xl font-bold flex items-center gap-2">🛒 Einkaufsliste</h2>
         <p className="text-emerald-100 text-sm">
-          {totalItems} Position{totalItems===1?'':'en'} – Gewürze, Tiefkühl & Wein
+          {openToShop} einzukaufen · {openToStore} einzuräumen
         </p>
       </div>
 
-      {totalItems === 0 && (
+      {openToShop + openToStore === 0 && (
         <div className="m-4 p-6 rounded-2xl bg-white dark:bg-gray-800 text-center">
           <p className="text-4xl mb-2">🎉</p>
           <p className="text-gray-700 dark:text-gray-200 font-medium">Alles im Bestand!</p>
-          <p className="text-xs text-gray-400 mt-1">Markiere in TK oder Weinkeller etwas zum Nachkaufen, dann landet es hier.</p>
         </div>
       )}
 
-      {/* Gewürze (Supabase) */}
+      {/* ── Einräumen-Queue (priorisiert oben) ─────────────────────────── */}
+      {openToStore > 0 && (
+        <Section title="📦 Einräumen" count={openToStore} hint="Frisch eingekauft – nur noch ablegen" accent>
+          <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+            {freezerPending.map(p => (
+              <li key={p.id} className="py-2.5 flex items-center gap-2">
+                {p.photoData
+                  ? <img src={p.photoData} alt="" className="w-9 h-9 rounded object-cover" />
+                  : <span className="text-lg">❄️</span>}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{p.name}</p>
+                  <p className="text-[10px] text-gray-400">Tiefkühl{p.portionSize ? ` · ${p.portionSize}` : ''}</p>
+                </div>
+                <button onClick={() => openTKForm({ pendingId: p.id, name: p.name, category: p.category, portionSize: p.portionSize, storageId: p.storageId, compartmentId: p.compartmentId, photoData: p.photoData })}
+                  className="text-xs bg-sky-600 text-white font-semibold px-3 py-1.5 rounded-full">
+                  📦 Einräumen
+                </button>
+                <button onClick={() => removeTKPend(p.id)}
+                  className="text-gray-300 hover:text-red-500 px-1">✕</button>
+              </li>
+            ))}
+            {cellarPending.map(p => (
+              <li key={p.id} className="py-2.5 flex items-center gap-2">
+                {p.photoData
+                  ? <img src={p.photoData} alt="" className="w-8 h-10 rounded object-cover" />
+                  : <span className="text-lg">{p.color === 'weiß' ? '🥂' : p.color === 'schaum' ? '🍾' : p.color === 'rosé' ? '🌸' : '🍷'}</span>}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-800 dark:text-gray-100 truncate">
+                    {p.name} {p.vintage && <span className="text-xs text-gray-400">{p.vintage}</span>}
+                  </p>
+                  <p className="text-[10px] text-gray-400">Wein{p.winery ? ` · ${p.winery}` : ''}</p>
+                </div>
+                <button onClick={() => openCellarForm({ pendingId: p.id, fromBottleId: p.fromBottleId,
+                  name: p.name, winery: p.winery, vintage: p.vintage, region: p.region, country: p.country,
+                  grape: p.grape, color: p.color, alcoholFree: p.alcoholFree,
+                  drinkFrom: p.drinkFrom, drinkUntil: p.drinkUntil,
+                  rackId: p.rackId, slot: p.slot, photoData: p.photoData })}
+                  className="text-xs bg-rose-600 text-white font-semibold px-3 py-1.5 rounded-full">
+                  📦 Einräumen
+                </button>
+                <button onClick={() => removeWnPend(p.id)}
+                  className="text-gray-300 hover:text-red-500 px-1">✕</button>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {/* ── Gewürze (Supabase) ─────────────────────────────────────────── */}
       {spicesShop.length > 0 && (
-        <Section title="🌿 Gewürze" count={spicesShop.length} hint="Synchron mit dem Haushalt (Supabase)">
+        <Section title="🌿 Gewürze einkaufen" count={spicesShop.length} hint="Sync mit Haushalt (Supabase)">
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
             {spicesShop.map(it => (
               <li key={it.id} className="py-2.5 flex items-center gap-2">
@@ -62,9 +109,9 @@ export default function UnifiedShoppingList() {
         </Section>
       )}
 
-      {/* Tiefkühl */}
+      {/* ── TK ─────────────────────────────────────────────────────────── */}
       {tkRestock.length > 0 && (
-        <Section title="❄️ Tiefkühl" count={tkRestock.length} hint="Im Prototyp lokal gespeichert">
+        <Section title="❄️ Tiefkühl nachkaufen" count={tkRestock.length}>
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
             {tkRestock.map(it => (
               <li key={it.id} className="py-2.5 flex items-center gap-2">
@@ -74,11 +121,10 @@ export default function UnifiedShoppingList() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{it.name}</p>
                   <p className="text-xs text-gray-400">
-                    {it.portions ? `${it.portions}× ${it.portionSize || 'Portion'}` : ''}
-                    {it.note && ` · ${it.note}`}
+                    {it.portionSize ? `~${it.portionSize}` : ''}
                   </p>
                 </div>
-                <button onClick={() => toggleFreezerRestock(it.id)}
+                <button onClick={() => markBoughtTK(it.id)}
                   className="text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold px-2.5 py-1 rounded-full">
                   ✓ gekauft
                 </button>
@@ -88,9 +134,9 @@ export default function UnifiedShoppingList() {
         </Section>
       )}
 
-      {/* Wein */}
+      {/* ── Wein ───────────────────────────────────────────────────────── */}
       {wnRestock.length > 0 && (
-        <Section title="🍷 Wein" count={wnRestock.length} hint="Im Prototyp lokal gespeichert">
+        <Section title="🍷 Wein nachkaufen" count={wnRestock.length}>
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
             {wnRestock.map(b => (
               <li key={b.id} className="py-2.5 flex items-center gap-2">
@@ -107,7 +153,7 @@ export default function UnifiedShoppingList() {
                     {b.priceEur != null && ` · ${b.priceEur.toFixed(2)} €`}
                   </p>
                 </div>
-                <button onClick={() => toggleCellarRestock(b.id)}
+                <button onClick={() => markBoughtWine(b.id)}
                   className="text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold px-2.5 py-1 rounded-full">
                   ✓ gekauft
                 </button>
@@ -117,17 +163,19 @@ export default function UnifiedShoppingList() {
         </Section>
       )}
 
-      <div className="px-4 pt-4 text-center text-xs text-gray-400">
-        Du kannst Positionen im jeweiligen Modul hinzufügen: ❄️ TK → 🛒-Icon · 🍷 Wein → „+ nachkaufen" in der Detailansicht
-      </div>
+      {(openToShop > 0 || openToStore > 0) && (
+        <div className="px-4 pt-4 text-center text-xs text-gray-400">
+          ✓ gekauft = wandert in „Einräumen" – dort öffnet sich das vorausgefüllte Formular für den richtigen Lagerplatz.
+        </div>
+      )}
     </div>
   )
 }
 
-function Section({ title, count, hint, children }) {
+function Section({ title, count, hint, accent, children }) {
   return (
-    <div className="m-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+    <div className={`m-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden ${accent ? 'ring-2 ring-emerald-500/40' : ''}`}>
+      <div className={`px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between ${accent ? 'bg-emerald-50 dark:bg-emerald-900/30' : ''}`}>
         <div>
           <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{title}</p>
           {hint && <p className="text-[10px] text-gray-400">{hint}</p>}

@@ -9,18 +9,20 @@ const COLORS = [
 ]
 
 export default function CellarForm({ prefilled, onClose }) {
-  const { racks, addBottle, lastUsedRack } = useCellar()
+  const { racks, addBottle, restockBottle, removePending, lastUsedRack } = useCellar()
   const startRackId = prefilled?.rackId || lastUsedRack?.rackId || racks[0]?.id
   const startSlot   = prefilled?.slot   || lastUsedRack?.slot   || racks.find(r => r.id === startRackId)?.slots[0] || ''
+  const pendingId = prefilled?.pendingId || null
+  const fromBottleId = prefilled?.fromBottleId || null
 
-  const [name, setName] = useState('')
-  const [winery, setWinery] = useState('')
-  const [vintage, setVintage] = useState(new Date().getFullYear() - 2)
-  const [region, setRegion] = useState('')
-  const [grape, setGrape] = useState('')
-  const [color, setColor] = useState('rot')
-  const [drinkFrom, setDrinkFrom] = useState(new Date().getFullYear())
-  const [drinkUntil, setDrinkUntil] = useState(new Date().getFullYear() + 5)
+  const [name, setName] = useState(prefilled?.name || '')
+  const [winery, setWinery] = useState(prefilled?.winery || '')
+  const [vintage, setVintage] = useState(prefilled?.vintage || new Date().getFullYear() - 2)
+  const [region, setRegion] = useState(prefilled?.region || '')
+  const [grape, setGrape] = useState(prefilled?.grape || '')
+  const [color, setColor] = useState(prefilled?.color || 'rot')
+  const [drinkFrom, setDrinkFrom] = useState(prefilled?.drinkFrom || new Date().getFullYear())
+  const [drinkUntil, setDrinkUntil] = useState(prefilled?.drinkUntil || new Date().getFullYear() + 5)
   const [rackId, setRackId] = useState(startRackId)
   const [slot, setSlot] = useState(startSlot)
   const [count, setCount] = useState(1)
@@ -47,7 +49,13 @@ export default function CellarForm({ prefilled, onClose }) {
 
   function save() {
     if (!name.trim()) return
-    addBottle({ name, winery, vintage, region, grape, color, drinkFrom, drinkUntil, rackId, slot, count, note, photoData })
+    if (fromBottleId) {
+      // Bekannten Wein nachstocken (gleiche Position) – ohne Duplikat
+      restockBottle(fromBottleId, count)
+    } else {
+      addBottle({ name, winery, vintage, region, grape, color, drinkFrom, drinkUntil, rackId, slot, count, note, photoData })
+    }
+    if (pendingId) removePending(pendingId)
     if (bulkMode) {
       setHint(`✓ „${name}" gespeichert – nächste?`)
       setName(''); setWinery(''); setNote(''); setPhotoData(null); setCount(1)
@@ -63,7 +71,9 @@ export default function CellarForm({ prefilled, onClose }) {
           <div className="w-10 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600" />
         </div>
         <div className="flex items-center justify-between px-5 py-3 flex-none border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">🍷 Neue Flasche</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {pendingId ? (fromBottleId ? '📦 Wein einräumen' : '📦 Neue Flasche einräumen') : '🍷 Neue Flasche'}
+          </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">✕</button>
         </div>
 
