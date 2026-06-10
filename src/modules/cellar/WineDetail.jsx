@@ -67,6 +67,25 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
         {status.label}
       </div>
 
+      {/* Ausverkauft → Wiederkauf-CTA */}
+      {bottle.count <= 0 && (
+        <div className="mx-3 mt-3 rounded-xl p-3 bg-rose-50 dark:bg-rose-900/30 flex items-center gap-3">
+          <span className="text-2xl">🍷</span>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-rose-900 dark:text-rose-200">Ausgetrunken</p>
+            <p className="text-[11px] text-rose-700 dark:text-rose-300">
+              War {bottle.rating > 0 ? `mit ${bottle.rating} Sternen ` : ''}in deiner Sammlung. Wieder kaufen?
+            </p>
+          </div>
+          <button onClick={() => toggleRestock(bottle.id)}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+              bottle.restock ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+            }`}>
+            {bottle.restock ? '✓ auf Einkaufsliste' : '🔄 Wieder kaufen'}
+          </button>
+        </div>
+      )}
+
       {/* Geschmacksprofil */}
       <Section title="🎨 Geschmacksprofil">
         {TASTE_AXES
