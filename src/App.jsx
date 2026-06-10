@@ -15,6 +15,7 @@ import RecipesView from './components/RecipesView'
 import ModuleSwitcher from './modules/ModuleSwitcher'
 import FreezerView from './modules/freezer/FreezerView'
 import CellarView from './modules/cellar/CellarView'
+import UnifiedShoppingList from './modules/shopping/UnifiedShoppingList'
 
 const MODULES_ENABLED = import.meta.env.VITE_ENABLE_MODULES === '1' || import.meta.env.DEV
 
@@ -163,8 +164,9 @@ export default function App() {
             {view === 'recipes'  && <RecipesView />}
           </>
         )}
-        {module === 'freezer' && <FreezerView />}
-        {module === 'cellar'  && <CellarView />}
+        {module === 'freezer'  && <FreezerView />}
+        {module === 'cellar'   && <CellarView />}
+        {module === 'shopping' && <UnifiedShoppingList />}
       </main>
 
       {module === 'spices' && (

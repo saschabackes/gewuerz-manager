@@ -22,7 +22,7 @@ function catLabel(id) {
 }
 
 export default function FreezerView() {
-  const { storages, items, consumePortion, removeItem, seedDemoData, clear, resetSetup } = useFreezer()
+  const { storages, items, consumePortion, removeItem, toggleRestock, seedDemoData, clear, resetSetup } = useFreezer()
   const [tab, setTab] = useState('drawers') // drawers | expiry
   const [activeStorageId, setActiveStorageId] = useState(storages[0]?.id)
   const [showForm, setShowForm] = useState(false)
@@ -123,7 +123,7 @@ export default function FreezerView() {
                     <p className="text-xs text-gray-400 italic">Leer</p>
                   ) : (
                     <ul className="space-y-1.5">
-                      {byCompartment[c.id].map(it => <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem} />)}
+                      {byCompartment[c.id].map(it => <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem} onRestock={toggleRestock} />)}
                     </ul>
                   )}
                 </div>
@@ -141,7 +141,7 @@ export default function FreezerView() {
               {byExpiry.map(it => {
                 const st = storages.find(s => s.id === it.storageId)
                 const c = st?.compartments.find(c => c.id === it.compartmentId)
-                return <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem}
+                return <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem} onRestock={toggleRestock}
                   location={`${st?.emoji || ''} ${c?.label || ''}`} />
               })}
             </ul>
@@ -174,7 +174,7 @@ export default function FreezerView() {
   )
 }
 
-function ItemRow({ item, onConsume, onRemove, location }) {
+function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
   const badge = expiryBadge(item)
   const [touchX, setTouchX] = useState(null)
   const [dx, setDx] = useState(0)
@@ -204,8 +204,14 @@ function ItemRow({ item, onConsume, onRemove, location }) {
             <span>eingefr. {item.frozenAt}</span>
             {location && <span>📦 {location}</span>}
             {badge && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${badge.cls}`}>{badge.text}</span>}
+            {item.needsRestock && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">🛒 nachkaufen</span>}
           </div>
         </div>
+        <button onClick={() => onRestock?.(item.id)}
+          className={`flex-none text-xs font-semibold px-2 py-1 rounded-full ${
+            item.needsRestock ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+          }`}
+          title="In Einkaufsliste">🛒</button>
         <button onClick={() => onConsume(item.id)}
           className="flex-none text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-semibold px-2.5 py-1 rounded-full"
           title="Eine Portion verbraucht">−1</button>

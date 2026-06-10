@@ -64,6 +64,7 @@ export const useCellar = create(
           grape: data.grape || '',
           color: data.color || 'rot',
           alcohol: data.alcohol || '',
+          alcoholFree: !!data.alcoholFree,
           drinkFrom: Number(data.drinkFrom) || (Number(data.vintage) || new Date().getFullYear()) + 1,
           drinkUntil: Number(data.drinkUntil) || (Number(data.vintage) || new Date().getFullYear()) + 5,
           rackId: data.rackId,
@@ -170,6 +171,20 @@ export const useCellar = create(
             aromas: ['🥖 Brioche','🍐 Birne','🍋 Zitrone','🥥 Kokos'],
             pairings: ['aperitif','meeresfrüchte','sushi','käse_weich','dessert_fruit'],
             tastingNotes: 'Klassisch, langer Abgang, Festtagswein.' },
+
+          { name: 'Sekt alkoholfrei',  winery: 'Kolonne Null', vintage: 2023, region: 'Pfalz', country: 'Deutschland', grape: 'Riesling', color: 'schaum', alcohol: '0.0 %', alcoholFree: true,
+            drinkFrom: 2023, drinkUntil: 2025, rackId: 'r_kueche', slot: 'unten', count: 3, priceEur: 16, rating: 4,
+            tasteProfile: { sweetness: 'halbtrocken', body: 'leicht', acidity: 'frisch' },
+            aromas: ['🍐 Birne','🍋 Zitrone','🍏 Grüner Apfel'],
+            pairings: ['aperitif','salat','sushi','dessert_fruit'],
+            tastingNotes: 'Für die Schwangerschaft / Autofahrer-Variante – überraschend lebendig.' },
+
+          { name: 'Rotwein alkoholfrei', winery: 'Eins Zwei Zero', vintage: 2024, region: 'Rheinhessen', country: 'Deutschland', grape: 'Cuvée', color: 'rot', alcohol: '0.5 %', alcoholFree: true,
+            drinkFrom: 2024, drinkUntil: 2026, rackId: 'r_kueche', slot: 'unten', count: 2, priceEur: 12, rating: 3,
+            tasteProfile: { sweetness: 'halbtrocken', body: 'leicht', acidity: 'mittel', tannin: 'weich' },
+            aromas: ['🍒 Kirsche','🫐 Heidelbeere'],
+            pairings: ['pizza','pasta_tomate','käse_hart'],
+            tastingNotes: 'Solider Speisebegleiter ohne Promille.' },
         ]
         set({
           bottles: samples.map(s => ({ id: uid('b'), note: '', photoData: null, restock: false, history: [], ...s })),
@@ -180,7 +195,7 @@ export const useCellar = create(
       clear() { set({ bottles: [], recentNames: [], lastUsedRack: null }) },
       resetSetup() { set({ racks: DEFAULT_RACKS, bottles: [], recentNames: [], lastUsedRack: null }) },
     }),
-    { name: 'haushalt-cellar-v3' }
+    { name: 'haushalt-cellar-v4' }
   )
 )
 

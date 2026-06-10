@@ -48,6 +48,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
           {bottle.winery && <p className="text-white/90 text-sm mt-0.5">{bottle.winery}</p>}
           <p className="text-white/80 text-xs mt-1">
             {bottle.vintage} · {bottle.color} · {bottle.alcohol || '—'}
+            {bottle.alcoholFree && <span className="ml-2 bg-emerald-500/90 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">🚫 ALKOHOLFREI</span>}
           </p>
           <StarRow value={bottle.rating} onChange={r => updateBottle(bottle.id, { rating: r })} large />
         </div>
@@ -288,6 +289,7 @@ function EditSheet({ bottle, onClose, onSave }) {
   const [alcohol, setAlcohol] = useState(bottle.alcohol || '')
   const [aromas, setAromas]   = useState(bottle.aromas || [])
   const [pairings, setPairings] = useState(bottle.pairings || [])
+  const [alcoholFree, setAlcoholFree] = useState(!!bottle.alcoholFree)
 
   function toggle(arr, set, v) { set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]) }
 
@@ -309,6 +311,11 @@ function EditSheet({ bottle, onClose, onSave }) {
             <div><label className="label">Rebsorte</label><input className="input text-sm" value={grape} onChange={e => setGrape(e.target.value)} /></div>
             <div><label className="label">Alkohol</label><input className="input text-sm" value={alcohol} onChange={e => setAlcohol(e.target.value)} placeholder="13.5 %" /></div>
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 rounded-xl">
+            <input type="checkbox" checked={alcoholFree} onChange={e => setAlcoholFree(e.target.checked)} />
+            <span>🚫 <b>Alkoholfrei</b> – kein Promille, taugt für Schwangerschaft, Autofahrer, abends auf der Couch</span>
+          </label>
 
           <div>
             <label className="label">👃 Aromen</label>
@@ -337,7 +344,7 @@ function EditSheet({ bottle, onClose, onSave }) {
           <div className="flex gap-2 pt-2 pb-4">
             <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
             <button
-              onClick={() => onSave({ name, winery, region, country, grape, alcohol, aromas, pairings })}
+              onClick={() => onSave({ name, winery, region, country, grape, alcohol, alcoholFree, aromas, pairings })}
               className="btn-primary flex-1" style={{ backgroundColor: '#e11d48' }}>Speichern</button>
           </div>
         </div>

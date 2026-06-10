@@ -17,21 +17,25 @@ export default function CellarView() {
   const [hint, setHint] = useState('')
   const [detailId, setDetailId] = useState(null)
   const detailBottle = bottles.find(b => b.id === detailId)
+  const [alcoholFilter, setAlcoholFilter] = useState('all') // all | alc | free
 
   const activeRack = racks.find(r => r.id === activeRackId) || racks[0]
 
   const filtered = useMemo(() => {
+    let arr = bottles
+    if (alcoholFilter === 'alc')  arr = arr.filter(b => !b.alcoholFree)
+    if (alcoholFilter === 'free') arr = arr.filter(b => b.alcoholFree)
     if (tab === 'drink-now') {
       const y = new Date().getFullYear()
-      return bottles.filter(b => y >= b.drinkFrom && y <= b.drinkUntil)
-                    .sort((a,b) => a.drinkUntil - b.drinkUntil)
+      return arr.filter(b => y >= b.drinkFrom && y <= b.drinkUntil)
+                .sort((a,b) => a.drinkUntil - b.drinkUntil)
     }
     if (tab === 'rack' && activeRack) {
-      return bottles.filter(b => b.rackId === activeRack.id)
-                    .sort((a,b) => a.slot.localeCompare(b.slot))
+      return arr.filter(b => b.rackId === activeRack.id)
+                .sort((a,b) => a.slot.localeCompare(b.slot))
     }
-    return [...bottles].sort((a,b) => a.drinkUntil - b.drinkUntil)
-  }, [bottles, tab, activeRack])
+    return [...arr].sort((a,b) => a.drinkUntil - b.drinkUntil)
+  }, [bottles, tab, activeRack, alcoholFilter])
 
   const totalBottles = bottles.reduce((s, b) => s + b.count, 0)
   const lastRack = racks.find(r => r.id === lastUsedRack?.rackId)
@@ -87,6 +91,21 @@ export default function CellarView() {
         ))}
       </div>
 
+      {tab !== 'pairing' && (
+        <div className="flex gap-1.5 px-4 pb-2">
+          {[
+            { id: 'all',  label: 'Alle' },
+            { id: 'alc',  label: '🍷 Mit Alkohol' },
+            { id: 'free', label: '🚫 Alkoholfrei' },
+          ].map(f => (
+            <button key={f.id} onClick={() => setAlcoholFilter(f.id)}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                alcoholFilter === f.id ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+              }`}>{f.label}</button>
+          ))}
+        </div>
+      )}
+
       {tab === 'rack' && (
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 pb-3">
           {racks.map(r => {
@@ -131,6 +150,7 @@ export default function CellarView() {
                       <span className="font-bold text-gray-800 dark:text-gray-100 truncate">{b.name}</span>
                       <span className="text-xs text-gray-400">{b.vintage}</span>
                       {b.rating > 0 && <span className="text-xs">{'⭐'.repeat(b.rating)}</span>}
+                      {b.alcoholFree && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">🚫 0%</span>}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       {b.winery && <span>{b.winery} · </span>}{b.region}{b.grape && <span> · {b.grape}</span>}

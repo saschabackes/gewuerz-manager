@@ -11,6 +11,7 @@ export default function PairingFinder({ onOpenWine }) {
   const [selected, setSelected]   = useState(null) // dish id
   const [query, setQuery]         = useState('')
   const [onlyDrink, setOnlyDrink] = useState(true)
+  const [alcoholFilter, setAlcoholFilter] = useState('all') // all | alc | free
 
   // Quick-Filter: häufige Dishes oben
   const QUICK = ['rind_lamm','geflügel','fisch_zart','pasta_tomate','pizza','käse_hart','aperitif','dessert_fruit']
@@ -18,18 +19,24 @@ export default function PairingFinder({ onOpenWine }) {
   const detected = useMemo(() => detectDishes(query), [query])
   const activeDishes = selected ? [selected] : detected
 
+  const filteredStock = useMemo(() => {
+    if (alcoholFilter === 'alc')  return inStock.filter(b => !b.alcoholFree)
+    if (alcoholFilter === 'free') return inStock.filter(b => b.alcoholFree)
+    return inStock
+  }, [inStock, alcoholFilter])
+
   const results = useMemo(() => {
     if (activeDishes.length === 0) return null
     // Pro Wein das Maximum über alle erkannten Dishes
     const map = new Map()
     activeDishes.forEach(did => {
-      rankWinesForDish(inStock, did, { onlyInDrinkWindow: onlyDrink }).forEach(r => {
+      rankWinesForDish(filteredStock, did, { onlyInDrinkWindow: onlyDrink }).forEach(r => {
         const cur = map.get(r.wine.id)
         if (!cur || cur.score < r.score) map.set(r.wine.id, { ...r, dishId: did })
       })
     })
     return [...map.values()].sort((a,b) => b.score - a.score)
-  }, [activeDishes, inStock, onlyDrink])
+  }, [activeDishes, filteredStock, onlyDrink])
 
   return (
     <div className="px-4 py-3 space-y-3">
@@ -75,6 +82,19 @@ export default function PairingFinder({ onOpenWine }) {
           <input type="checkbox" checked={onlyDrink} onChange={e => setOnlyDrink(e.target.checked)} />
           Nur Weine im aktuellen Trinkfenster
         </label>
+
+        <div className="flex gap-1.5 mt-2">
+          {[
+            { id: 'all',  label: 'Egal' },
+            { id: 'alc',  label: '🍷 Mit Alkohol' },
+            { id: 'free', label: '🚫 Alkoholfrei' },
+          ].map(f => (
+            <button key={f.id} onClick={() => setAlcoholFilter(f.id)}
+              className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                alcoholFilter === f.id ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              }`}>{f.label}</button>
+          ))}
+        </div>
       </div>
 
       {/* Ergebnisse */}

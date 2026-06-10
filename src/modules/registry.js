@@ -25,6 +25,13 @@ export const MODULES = [
     color: 'rose',
     description: 'Flaschen, Trinkfenster, Bewertung',
   },
+  {
+    id: 'shopping',
+    label: 'Einkauf',
+    emoji: '🛒',
+    color: 'emerald',
+    description: 'Zentrale Einkaufsliste (alle Module)',
+  },
 ]
 
 export function moduleById(id) {

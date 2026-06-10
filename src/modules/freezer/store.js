@@ -203,6 +203,10 @@ export const useFreezer = create(
       },
       removeItem(id) { set(s => ({ items: s.items.filter(it => it.id !== id) })) },
 
+      toggleRestock(id) {
+        set(s => ({ items: s.items.map(it => it.id === id ? { ...it, needsRestock: !it.needsRestock } : it) }))
+      },
+
       // ── Demo + Reset ────────────────────────────────────────────────────────
       seedDemoData() {
         const oldDate = (days) => { const d = new Date(); d.setDate(d.getDate() - days); return d.toISOString().slice(0,10) }
