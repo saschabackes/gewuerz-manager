@@ -8,12 +8,11 @@ import PairingFinder from './PairingFinder'
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
 export default function CellarView() {
-  const { racks, bottles, drinkOne, removeBottle, seedDemoData, clear, resetSetup, recentNames, quickAddByName, lastUsedRack } = useCellar()
+  const { racks, bottles, drinkOne, removeBottle, seedDemoData, clear, resetSetup, recentNames, quickAddByName, lastUsedRack,
+          formOpen, formPrefill, openForm, closeForm } = useCellar()
   const [tab, setTab] = useState('all') // all | drink-now | rack | pairing
   const [activeRackId, setActiveRackId] = useState(racks[0]?.id)
-  const [showForm, setShowForm] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [prefilled, setPrefilled] = useState(null)
   const [hint, setHint] = useState('')
   const [detailId, setDetailId] = useState(null)
   const detailBottle = bottles.find(b => b.id === detailId)
@@ -175,10 +174,6 @@ export default function CellarView() {
         <PairingFinder onOpenWine={(id) => setDetailId(id)} />
       )}
 
-      <button onClick={() => { setPrefilled(null); setShowForm(true) }}
-        className="fixed bottom-24 right-5 z-30 w-14 h-14 rounded-full bg-rose-600 text-white text-3xl shadow-xl active:bg-rose-700"
-        aria-label="Flasche hinzufügen">+</button>
-
       {bottles.length > 0 && (
         <div className="px-4 pt-4 text-center space-x-3">
           <button onClick={() => { if (confirm('Alle Flaschen löschen?')) clear() }}
@@ -188,7 +183,7 @@ export default function CellarView() {
         </div>
       )}
 
-      {showForm && <CellarForm prefilled={prefilled} onClose={() => setShowForm(false)} />}
+      {formOpen && <CellarForm prefilled={formPrefill} onClose={closeForm} />}
       {showSettings && <RackSettings onClose={() => setShowSettings(false)} />}
       {detailBottle && (
         <WineDetail

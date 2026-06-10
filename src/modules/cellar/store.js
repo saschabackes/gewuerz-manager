@@ -17,6 +17,11 @@ export const useCellar = create(
       bottles: [],
       recentNames: [],
       lastUsedRack: null, // {rackId, slot}
+      formOpen: false,
+      formPrefill: null,
+
+      openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
+      closeForm()              { set({ formOpen: false, formPrefill: null }) },
 
       // ── Racks ──────────────────────────────────────────────────────────────
       addRack(label, emoji='🍷') {

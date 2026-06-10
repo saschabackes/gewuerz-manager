@@ -22,12 +22,11 @@ function catLabel(id) {
 }
 
 export default function FreezerView() {
-  const { storages, items, consumePortion, removeItem, toggleRestock, seedDemoData, clear, resetSetup } = useFreezer()
+  const { storages, items, consumePortion, removeItem, toggleRestock, seedDemoData, clear, resetSetup,
+          formOpen, formPrefill, openForm, closeForm } = useFreezer()
   const [tab, setTab] = useState('drawers') // drawers | expiry
   const [activeStorageId, setActiveStorageId] = useState(storages[0]?.id)
-  const [showForm, setShowForm] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [prefilledLoc, setPrefilledLoc] = useState(null)
 
   const activeStorage = storages.find(s => s.id === activeStorageId) || storages[0]
   const drawersOfActive = activeStorage?.compartments || []
@@ -115,7 +114,7 @@ export default function FreezerView() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-bold text-gray-800 dark:text-gray-100">{c.label}</div>
                     <button
-                      onClick={() => { setPrefilledLoc({ storageId: activeStorage.id, compartmentId: c.id }); setShowForm(true) }}
+                      onClick={() => openForm({ storageId: activeStorage.id, compartmentId: c.id })}
                       className="text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-semibold px-2.5 py-1 rounded-full"
                     >+ Eintrag</button>
                   </div>
@@ -149,12 +148,6 @@ export default function FreezerView() {
         </div>
       )}
 
-      {/* Float-Button */}
-      <button
-        onClick={() => { setPrefilledLoc(null); setShowForm(true) }}
-        className="fixed bottom-24 right-5 z-30 w-14 h-14 rounded-full bg-sky-600 text-white text-3xl shadow-xl active:bg-sky-700"
-        aria-label="Eintrag hinzufügen">+</button>
-
       {items.length > 0 && (
         <div className="px-4 pt-4 text-center space-x-3">
           <button onClick={() => { if (confirm('Alle TK-Einträge löschen?')) clear() }}
@@ -164,8 +157,8 @@ export default function FreezerView() {
         </div>
       )}
 
-      {showForm && (
-        <FreezerForm prefilled={prefilledLoc} onClose={() => setShowForm(false)} />
+      {formOpen && (
+        <FreezerForm prefilled={formPrefill} onClose={closeForm} />
       )}
       {showSettings && (
         <StorageSettings onClose={() => setShowSettings(false)} />

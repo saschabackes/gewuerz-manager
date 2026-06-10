@@ -122,6 +122,11 @@ export const useFreezer = create(
       items: [], // {id, name, category, storageId, compartmentId, portions, portionSize, frozenAt, expiryDate, note, photoData}
       lastUsedCompartment: null, // {storageId, compartmentId}
       recentNames: [], // Häufigkeitsverlauf
+      formOpen: false,
+      formPrefill: null,
+
+      openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
+      closeForm()              { set({ formOpen: false, formPrefill: null }) },
 
       // ── Storage-Verwaltung ──────────────────────────────────────────────────
       addStorage(label, emoji='📦') {

@@ -5,17 +5,17 @@ import Navigation from './components/Navigation'
 import SpiceList from './components/SpiceList'
 import SpiceForm from './components/SpiceForm'
 import ExpiryView from './components/ExpiryView'
-import ShoppingList from './components/ShoppingList'
 import SettingsView from './components/SettingsView'
 import HelpView from './components/HelpView'
 import ActivityView from './components/ActivityView'
 import OnboardingView from './components/OnboardingView'
 import InventoryReviewView from './components/InventoryReviewView'
 import RecipesView from './components/RecipesView'
-import ModuleSwitcher from './modules/ModuleSwitcher'
 import FreezerView from './modules/freezer/FreezerView'
 import CellarView from './modules/cellar/CellarView'
 import UnifiedShoppingList from './modules/shopping/UnifiedShoppingList'
+import { useFreezer } from './modules/freezer/store'
+import { useCellar } from './modules/cellar/store'
 
 const MODULES_ENABLED = import.meta.env.VITE_ENABLE_MODULES === '1' || import.meta.env.DEV
 
@@ -26,7 +26,14 @@ export default function App() {
   const dataError = useStore(s => s.dataError)
   const currentUser = useStore(s => s.currentUser())
   const [module, setModule] = useState('spices')
-  const [view, setView] = useState('spices')
+  const [view, setView] = useState('spices') // sub-tab innerhalb des Spices-Moduls
+
+  function handleModuleAdd(modId) {
+    if (modId === 'spices')  { setEditingSpice(null); setShowAddForm(true) }
+    if (modId === 'freezer') { useFreezer.getState().openForm() }
+    if (modId === 'cellar')  { useCellar.getState().openForm() }
+  }
+  function handleSpiceAddInline() { setEditingSpice(null); setShowAddForm(true) }
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingSpice, setEditingSpice] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
@@ -151,17 +158,13 @@ export default function App() {
         </div>
       )}
 
-      {MODULES_ENABLED && (
-        <ModuleSwitcher current={module} onChange={setModule} />
-      )}
-
       <main className="flex-1 overflow-hidden flex flex-col pb-20">
         {module === 'spices' && (
           <>
-            {view === 'spices'   && <SpiceList onEdit={handleEditSpice} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />}
-            {view === 'mhd'      && <ExpiryView onEdit={handleEditSpice} />}
-            {view === 'shopping' && <ShoppingList />}
-            {view === 'recipes'  && <RecipesView />}
+            <SpicesSubNav view={view} onChange={setView} />
+            {view === 'spices'  && <SpiceList onEdit={handleEditSpice} onAdd={handleSpiceAddInline} />}
+            {view === 'mhd'     && <ExpiryView onEdit={handleEditSpice} />}
+            {view === 'recipes' && <RecipesView />}
           </>
         )}
         {module === 'freezer'  && <FreezerView />}
@@ -169,8 +172,8 @@ export default function App() {
         {module === 'shopping' && <UnifiedShoppingList />}
       </main>
 
-      {module === 'spices' && (
-        <Navigation current={view} onChange={setView} onAdd={() => { setEditingSpice(null); setShowAddForm(true) }} />
+      {MODULES_ENABLED && (
+        <Navigation currentModule={module} onModuleChange={setModule} onAdd={handleModuleAdd} />
       )}
 
       {showAddForm && (
@@ -192,6 +195,31 @@ export default function App() {
       {showActivity && (
         <ActivityView onClose={() => setShowActivity(false)} />
       )}
+    </div>
+  )
+}
+
+// ── Sub-Nav für Spices-Modul ──────────────────────────────────────────────────
+
+function SpicesSubNav({ view, onChange }) {
+  const tabs = [
+    { id: 'spices',  label: '🌿 Vorräte' },
+    { id: 'mhd',     label: '📅 MHD' },
+    { id: 'recipes', label: '📖 Rezepte' },
+  ]
+  return (
+    <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 px-3 py-2 sticky top-0 z-20">
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+        {tabs.map(t => (
+          <button key={t.id}
+            onClick={() => onChange(t.id)}
+            className={`flex-none px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
+              view === t.id ? 'bg-green-600 text-white shadow-sm'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
+            }`}
+          >{t.label}</button>
+        ))}
+      </div>
     </div>
   )
 }
