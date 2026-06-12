@@ -8,14 +8,19 @@ const SLIDES_DEPOT = [
     text: 'Depot hilft dir und deinem Haushalt, den Überblick über Gewürze, Tiefkühl-Vorräte und Weine zu behalten – was da ist, wo es liegt, was abläuft und was nachgekauft werden muss.',
   },
   {
+    emoji: '🧭',
+    title: 'Fünf Bereiche',
+    text: 'Unten wechselst du zwischen Gewürzen, Tiefkühl, Wein, Kochen und der Einkaufsliste. Jeder Bereich hat seine eigene Ansicht – alles greift ineinander.',
+  },
+  {
     emoji: '➕',
     title: 'Produkte erfassen',
-    text: 'Tippe auf den Plus-Button unten in der Mitte. Je nach aktivem Modul (Gewürze, TK, Wein) öffnet sich das passende Formular. Name reicht zum Start – der Rest kann später ergänzt werden.',
+    text: 'Tippe auf den runden Plus-Button unten rechts. Je nach Bereich (Gewürze, TK, Wein, Rezept) öffnet sich das passende Formular. Name reicht zum Start – der Rest kann später ergänzt werden.',
   },
   {
     emoji: '❄️',
     title: 'Tiefkühl & Wein',
-    text: 'Neben Gewürzen verwaltest du auch Tiefkühl-Vorräte (Portionen, Einfrierdatum, mehrere Schränke) und Weine (Trinkfenster, Lagerbedingungen, Bewertungen). Wechsle unten zwischen den Modulen.',
+    text: 'Tiefkühl-Vorräte mit Portionen, Einfrierdatum und mehreren Schränken. Weine mit Trinkfenster, Lagerbedingungen und Bewertungen – inklusive Empfehlungen zum Teilen per Link.',
   },
   {
     emoji: '📅',
@@ -29,8 +34,8 @@ const SLIDES_DEPOT = [
   },
   {
     emoji: '📖',
-    title: 'Kochen & Pairing',
-    text: 'Speichere Rezepte per Link – die App erkennt Zutaten automatisch und zeigt, was du im Bestand hast. Beim Wein findest du passende Flaschen zu jedem Gericht. Der Kochen-Tab ist in allen Modulen verfügbar.',
+    title: 'Kochen & Rezepte',
+    text: 'Speichere Rezepte per Link (Cookidoo, YouTube, Webseiten) – Zutaten werden automatisch erkannt. Der Bestandscheck zeigt, was du schon hast, und fehlende Zutaten wandern mit einem Tipp auf die Einkaufsliste.',
   },
   {
     emoji: '🏠',

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
-import { APP_NAME } from '../branding'
+import { APP_NAME, MODULES_ENABLED } from '../branding'
 
 // Hilfe-Inhalte, gruppiert nach Themenbereich
 const HELP_GROUPS = [
@@ -11,7 +11,7 @@ const HELP_GROUPS = [
         emoji: '🌿',
         title: 'Gewürz hinzufügen',
         body: [
-          'Tippe auf den großen grünen Plus-Button in der Mitte der unteren Navigationsleiste.',
+          'Tippe auf den runden Plus-Button unten rechts.',
           'Pflichtangaben sind nur Name und Verpackungstyp. Je nach Typ kommen Gramm und/oder Stückzahl dazu.',
           'Beim Tippen des Namens erscheinen Vorschläge gängiger Gewürze – einfach antippen zum Übernehmen.',
           'Alle weiteren Felder (Marke, Foto, MHD, Lagerort, Kategorie, Notizen) sind optional und können auch später ergänzt werden.',
@@ -71,7 +71,7 @@ const HELP_GROUPS = [
         body: [
           'Trage optional das MHD eines Gewürzes ein.',
           'Läuft es in weniger als einem Monat ab, erscheint ein oranges Datum-Badge; ist es abgelaufen, ein rotes mit ⚠.',
-          'Der MHD-Tab (Kalender-Symbol unten) listet alle Gewürze nach Datum sortiert – ideal um regelmäßig auszumisten.',
+          'Der Ablauf-Tab oben listet alle Gewürze nach Datum sortiert – ideal um regelmäßig auszumisten.',
           'In der Vorratsliste kannst du oben rechts zwischen Sortierung A–Z und nach MHD umschalten.',
         ],
       },
@@ -96,6 +96,42 @@ const HELP_GROUPS = [
       },
     ],
   },
+  ...(MODULES_ENABLED ? [{
+    group: 'Tiefkühl, Wein & Kochen',
+    items: [
+      {
+        emoji: '❄️',
+        title: 'Tiefkühl-Vorräte',
+        body: [
+          'Im TK-Bereich verwaltest du mehrere Gefrierschränke mit ihren Schubladen.',
+          'Jeder Eintrag hat Portionen, Kategorie und Einfrierdatum – die empfohlene Haltbarkeit wird automatisch berechnet.',
+          'Eine Portion entnommen? Auf „−1" tippen oder die Zeile nach links wischen.',
+          'Die Quick-Add-Zeile oben versteht z.B. „3 Lasagne Keller Korb 2" und legt den Eintrag direkt richtig ab.',
+          'Per Excel-Import (📥 oben) holst du bestehende Listen in die App.',
+        ],
+      },
+      {
+        emoji: '🍷',
+        title: 'Weinkeller',
+        body: [
+          'Flaschen mit Lagerplatz (Regal/Fach), Trinkfenster, Rebsorte und Bewertung erfassen.',
+          'Die Lagerbedingungen deiner Regale (Temperatur, Licht, Feuchte) fließen in eine Qualitätseinschätzung ein.',
+          'Der Ablauf-Tab zeigt, welche Weine bald getrunken werden sollten.',
+          'Über das 🔗-Symbol teilst du Empfehlungen als Link – Empfänger brauchen keine App.',
+        ],
+      },
+      {
+        emoji: '📖',
+        title: 'Rezepte & Bestandscheck',
+        body: [
+          'Im Kochen-Bereich speicherst du Rezepte per Link (Cookidoo, YouTube, Chefkoch & Co.) – Zutaten und Schritte werden automatisch übernommen, wo möglich.',
+          'Der Bestandscheck im Rezept gleicht jede Zutat mit Gewürzen, TK und Weinkeller ab und zeigt, was du schon hast.',
+          'Fehlende Zutaten wandern einzeln oder alle auf einmal auf die Einkaufsliste.',
+          'In der Rezeptliste zeigen ✓- und ✗-Badges auf einen Blick, wie gut dein Bestand zum Rezept passt.',
+        ],
+      },
+    ],
+  }] : []),
   {
     group: 'Einkaufen',
     items: [
