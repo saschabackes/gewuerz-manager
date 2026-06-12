@@ -13,7 +13,7 @@ import RecipesView from '../../components/RecipesView'
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
 export default function CellarView() {
-  const { racks, bottles, drinkOne, removeBottle, seedDemoData, clear, resetSetup,
+  const { racks, bottles, drinkOne, removeBottle,
           setupDone, completeSetup, recentNames, quickAddByName, lastUsedRack,
           formOpen, formPrefill, openForm, closeForm } = useCellar()
   const [tab, setTab] = useState('bestand')
@@ -188,10 +188,9 @@ export default function CellarView() {
 
       {bottles.length === 0 && (
         <div className="m-4 p-5 rounded-2xl bg-white dark:bg-gray-800 text-center">
+          <p className="text-3xl mb-2">🍷</p>
           <p className="text-gray-700 dark:text-gray-200 font-medium">Noch keine Flaschen.</p>
-          <p className="text-xs text-gray-400 mt-1 mb-3">Demoflaschen laden oder eigene anlegen.</p>
-          <button onClick={seedDemoData}
-            className="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl">🎲 Demoflaschen laden</button>
+          <p className="text-xs text-gray-400 mt-1">Tippe auf + um die erste Flasche anzulegen.</p>
         </div>
       )}
 
@@ -256,14 +255,6 @@ export default function CellarView() {
         </>
       )}
 
-      {bottles.length > 0 && tab !== 'kochen' && (
-        <div className="px-4 pt-4 text-center space-x-3">
-          <button onClick={() => { if (confirm('Alle Flaschen löschen?')) clear() }}
-            className="text-xs text-gray-400 hover:text-red-500">🗑️ Items zurücksetzen</button>
-          <button onClick={() => { if (confirm('Regale + Inhalte komplett zurücksetzen?')) resetSetup() }}
-            className="text-xs text-gray-400 hover:text-red-500">↺ Komplett-Reset</button>
-        </div>
-      )}
 
       {formOpen && <CellarForm prefilled={formPrefill} onClose={closeForm} />}
       {showSettings && <RackSettings onClose={() => setShowSettings(false)} />}

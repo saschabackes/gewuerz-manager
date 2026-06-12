@@ -26,7 +26,7 @@ function catLabel(id) {
 }
 
 export default function FreezerView() {
-  const { storages, items, consumePortion, removeItem, toggleRestock, seedDemoData, clear, resetSetup,
+  const { storages, items, consumePortion, removeItem, toggleRestock,
           setupDone, completeSetup, formOpen, formPrefill, openForm, closeForm } = useFreezer()
   const [tab, setTab] = useState('bestand')
   const [activeStorageId, setActiveStorageId] = useState(storages[0]?.id)
@@ -88,10 +88,9 @@ export default function FreezerView() {
 
       {items.length === 0 && (
         <div className="m-4 p-5 rounded-2xl bg-white dark:bg-gray-800 text-center">
+          <p className="text-3xl mb-2">❄️</p>
           <p className="text-gray-700 dark:text-gray-200 font-medium">Noch nichts im TK.</p>
-          <p className="text-xs text-gray-400 mt-1 mb-3">Lade Demodaten oder leg den ersten Eintrag an.</p>
-          <button onClick={seedDemoData}
-            className="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl">🎲 Demodaten laden</button>
+          <p className="text-xs text-gray-400 mt-1">Tippe auf + um den ersten Eintrag anzulegen.</p>
         </div>
       )}
 
@@ -161,14 +160,6 @@ export default function FreezerView() {
 
       {tab === 'kochen' && <RecipesView />}
 
-      {items.length > 0 && tab !== 'kochen' && (
-        <div className="px-4 pt-4 text-center space-x-3">
-          <button onClick={() => { if (confirm('Alle TK-Einträge löschen?')) clear() }}
-            className="text-xs text-gray-400 hover:text-red-500">🗑️ Items zurücksetzen</button>
-          <button onClick={() => { if (confirm('Schränke + Inhalte komplett zurücksetzen?')) resetSetup() }}
-            className="text-xs text-gray-400 hover:text-red-500">↺ Komplett-Reset</button>
-        </div>
-      )}
 
       {formOpen && (
         <FreezerForm prefilled={formPrefill} onClose={closeForm} />
