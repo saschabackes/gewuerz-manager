@@ -1,7 +1,28 @@
 import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
+import { useFreezer } from '../modules/freezer/store'
+import { useCellar } from '../modules/cellar/store'
+import { buildCookPlan } from '../utils/recipeParser'
 import RecipeForm from './RecipeForm'
 import RecipeDetail from './RecipeDetail'
+
+function useRecipeStock(recipes) {
+  const spices = useStore(s => s.spices)
+  const freezerItems = useFreezer(s => s.items)
+  const bottles = useCellar(s => s.bottles)
+
+  return useMemo(() => {
+    const map = {}
+    recipes.forEach(r => {
+      if (!r.ingredients?.length) { map[r.id] = null; return }
+      const plan = buildCookPlan(r.ingredients, spices)
+      const spiceFound = plan.matched.length
+      const spiceMissing = plan.unmatched.length
+      map[r.id] = { found: spiceFound, missing: spiceMissing }
+    })
+    return map
+  }, [recipes, spices, freezerItems, bottles])
+}
 
 export default function RecipesView() {
   const { recipes } = useStore()
@@ -11,6 +32,7 @@ export default function RecipesView() {
   const [search, setSearch]   = useState('')
   const [tagFilter, setTagFilter] = useState(null)
 
+  const stockMap = useRecipeStock(recipes)
   const selected = recipes.find(r => r.id === selectedId)
 
   const allTags = useMemo(() => {
@@ -65,12 +87,12 @@ export default function RecipesView() {
       {allTags.length > 0 && (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
           <button onClick={() => setTagFilter(null)}
-            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === null ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === null ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
             Alle
           </button>
           {allTags.map(t => (
             <button key={t} onClick={() => setTagFilter(f => f === t ? null : t)}
-              className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+              className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === t ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
               {t}
             </button>
           ))}
@@ -110,13 +132,21 @@ export default function RecipesView() {
                 <div className="flex-1 min-w-0 py-0.5">
                   <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">{r.title}</p>
                   {r.author && <p className="text-xs text-gray-400 mt-0.5">{r.author}</p>}
-                  {r.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {r.tags.slice(0, 3).map(t => (
-                        <span key={t} className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full px-2 py-0.5">{t}</span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {r.tags?.slice(0, 3).map(t => (
+                      <span key={t} className="text-[10px] bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full px-2 py-0.5">{t}</span>
+                    ))}
+                    {stockMap[r.id] && (
+                      <>
+                        {stockMap[r.id].found > 0 && (
+                          <span className="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full px-2 py-0.5">✓{stockMap[r.id].found}</span>
+                        )}
+                        {stockMap[r.id].missing > 0 && (
+                          <span className="text-[10px] bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 rounded-full px-2 py-0.5">✗{stockMap[r.id].missing}</span>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </button>
             ))}
@@ -128,7 +158,7 @@ export default function RecipesView() {
       {/* + Button */}
       <button
         onClick={() => { setEditing(null); setMode('form') }}
-        className="absolute bottom-24 right-5 bg-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:bg-indigo-700 transition-colors z-20"
+        className="fixed bottom-24 right-5 bg-primary-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:opacity-80 transition-colors z-20"
         aria-label="Rezept hinzufügen"
       >
         <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/></svg>

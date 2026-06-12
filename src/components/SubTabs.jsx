@@ -6,7 +6,7 @@ export default function SubTabs({ tabs, active, onChange, trailing }) {
           <button key={t.id}
             onClick={() => onChange(t.id)}
             className={`flex-none px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              active === t.id ? 'bg-indigo-600 text-white shadow-sm'
+              active === t.id ? 'bg-primary-600 text-white shadow-sm'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
             }`}
           >{t.label}</button>

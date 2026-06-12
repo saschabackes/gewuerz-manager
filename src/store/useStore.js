@@ -266,8 +266,9 @@ const useStore = create((set, get) => ({
       options: { data: { name } },
     })
     if (error) throw error
-    // Gibt true zurück wenn E-Mail-Bestätigung erforderlich ist
-    // (Supabase setzt session=null wenn Confirmation aktiv)
+    if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+      throw new Error('already registered')
+    }
     return { needsConfirmation: !data.session }
   },
 

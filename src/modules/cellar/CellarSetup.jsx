@@ -66,7 +66,7 @@ function RackStep() {
 
             {/* Conditions */}
             <button onClick={() => setExpandedRack(expanded ? null : r.id)}
-              className="text-[10px] text-indigo-600 font-semibold mb-1">
+              className="text-[10px] text-primary-600 font-semibold mb-1">
               {expanded ? '▼' : '▶'} Lagerbedingungen
             </button>
             {expanded && (
@@ -95,7 +95,7 @@ function RackStep() {
                 </div>
               ))}
               <button onClick={() => addSlot(r.id, `${r.slots.length + 1}`)}
-                className="text-xs text-indigo-600 font-semibold px-2 py-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg">
+                className="text-xs text-primary-600 font-semibold px-2 py-1 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg">
                 +
               </button>
             </div>
@@ -115,7 +115,7 @@ function RackStep() {
             onChange={e => setNewLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') add() }} />
           <button onClick={add} disabled={!newLabel.trim()}
-            className="btn-primary text-sm px-4 disabled:opacity-40" style={{ backgroundColor: '#0D7377' }}>
+            className="btn-primary text-sm px-4 disabled:opacity-40">
             +
           </button>
         </div>

@@ -12,7 +12,7 @@ export default function SetupWizard({ module, steps, onComplete, onSkip }) {
         <div className="flex-1 flex gap-1">
           {steps.map((_, i) => (
             <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
-              i <= stepIdx ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'
+              i <= stepIdx ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
             }`} />
           ))}
         </div>
@@ -42,7 +42,7 @@ export default function SetupWizard({ module, steps, onComplete, onSkip }) {
         )}
         <button
           onClick={() => isLast ? onComplete() : setStepIdx(s => s + 1)}
-          className="btn-primary flex-1" style={{ backgroundColor: '#0D7377' }}>
+          className="btn-primary flex-1">
           {isLast ? '✓ Fertig' : 'Weiter'}
         </button>
       </div>

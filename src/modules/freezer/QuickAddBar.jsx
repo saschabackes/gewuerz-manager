@@ -79,10 +79,10 @@ export default function QuickAddBar() {
           onKeyDown={e => { if (e.key === 'Enter') quickByText() }}
         />
         <button onClick={startVoice}
-          className={`flex-none w-10 h-10 rounded-full text-white text-lg transition-colors ${listening ? 'bg-red-500 animate-pulse' : 'bg-indigo-600'}`}
+          className={`flex-none w-10 h-10 rounded-full text-white text-lg transition-colors ${listening ? 'bg-red-500 animate-pulse' : 'bg-primary-600'}`}
           title="Sprache">🎙️</button>
         <button onClick={quickByText} disabled={!text.trim()}
-          className="flex-none px-3 h-10 rounded-full bg-indigo-600 text-white text-sm font-semibold disabled:opacity-40">
+          className="flex-none px-3 h-10 rounded-full bg-primary-600 text-white text-sm font-semibold disabled:opacity-40">
           ＋
         </button>
       </div>
@@ -93,7 +93,7 @@ export default function QuickAddBar() {
           {chips.map(name => (
             <button key={name}
               onClick={() => { quickAddByName(name); setHint(`✓ +1 ${name} → ${lastLabel}`); setTimeout(()=>setHint(''),2000) }}
-              className="flex-none text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2.5 py-1 rounded-full active:scale-95"
+              className="flex-none text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold px-2.5 py-1 rounded-full active:scale-95"
             >+ {name}</button>
           ))}
         </div>

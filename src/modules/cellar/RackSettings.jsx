@@ -59,7 +59,7 @@ export default function RackSettings({ onClose }) {
                   <button onClick={() => {
                     const l = prompt('Bezeichnung des Fachs', String(r.slots.length + 1))
                     if (l) addSlot(r.id, l)
-                  }} className="text-xs text-indigo-600 font-semibold px-2 py-0.5">+ Fach</button>
+                  }} className="text-xs text-primary-600 font-semibold px-2 py-0.5">+ Fach</button>
                 </div>
 
                 <div className="flex items-center justify-between mt-3 mb-1">
@@ -80,7 +80,7 @@ export default function RackSettings({ onClose }) {
                               onClick={() => setRackConditions(r.id, { [key]: opt.id })}
                               className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                                 current === opt.id
-                                  ? 'bg-indigo-600 text-white'
+                                  ? 'bg-primary-600 text-white'
                                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                               }`}
                             >{opt.label}</button>
@@ -110,14 +110,14 @@ export default function RackSettings({ onClose }) {
                 onKeyDown={e => { if (e.key === 'Enter' && newLabel.trim()) { addRack(newLabel, newEmoji); setNewLabel('') } }} />
               <button onClick={() => { if (newLabel.trim()) { addRack(newLabel, newEmoji); setNewLabel('') } }}
                 disabled={!newLabel.trim()}
-                className="btn-primary text-sm px-4 disabled:opacity-40" style={{ backgroundColor: '#0D7377' }}>
+                className="btn-primary text-sm px-4 disabled:opacity-40">
                 Anlegen
               </button>
             </div>
           </div>
 
           <div className="pt-4 pb-4">
-            <button onClick={onClose} className="btn-primary w-full" style={{ backgroundColor: '#0D7377' }}>Fertig</button>
+            <button onClick={onClose} className="btn-primary w-full">Fertig</button>
           </div>
         </div>
       </div>

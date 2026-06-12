@@ -67,7 +67,7 @@ function LocationStep() {
           onChange={e => setNewName(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') add() }} />
         <button onClick={add} disabled={!newName.trim()}
-          className="btn-primary text-sm px-4 disabled:opacity-40" style={{ backgroundColor: '#0D7377' }}>
+          className="btn-primary text-sm px-4 disabled:opacity-40">
           +
         </button>
       </div>
@@ -78,7 +78,7 @@ function LocationStep() {
         ).map(suggestion => (
           <button key={suggestion}
             onClick={() => addLocation({ name: suggestion })}
-            className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/30">
+            className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full hover:bg-primary-100 dark:hover:bg-primary-900/30">
             + {suggestion}
           </button>
         ))}

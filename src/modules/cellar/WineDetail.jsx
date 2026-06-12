@@ -103,7 +103,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
           </div>
           <button onClick={() => toggleRestock(bottle.id)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-              bottle.restock ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'
+              bottle.restock ? 'bg-emerald-600 text-white' : 'bg-primary-600 text-white'
             }`}>
             {bottle.restock ? '✓ auf Einkaufsliste' : '🔄 Wieder kaufen'}
           </button>
@@ -124,7 +124,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
         {bottle.aromas?.length > 0
           ? <div className="flex flex-wrap gap-1.5">
               {bottle.aromas.map(a => (
-                <span key={a} className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2.5 py-1 rounded-full">
+                <span key={a} className="bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-semibold px-2.5 py-1 rounded-full">
                   {a}
                 </span>
               ))}
@@ -135,7 +135,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
       {/* Pairings */}
       <Section title="🍽️ Passt zu" action={
         <button onClick={onOpenPairing}
-          className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-1 rounded-full">
+          className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold px-2 py-1 rounded-full">
           🔄 Wein zu Gericht finden
         </button>
       }>
@@ -193,7 +193,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
           </div>
           {bottle.link && (
             <a href={bottle.link} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-indigo-600 dark:text-indigo-400 underline truncate block">🔗 {bottle.link}</a>
+              className="text-xs text-primary-600 dark:text-primary-400 underline truncate block">🔗 {bottle.link}</a>
           )}
           <button
             onClick={() => toggleRestock(bottle.id)}
@@ -210,7 +210,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
       {/* Aktionen */}
       <div className="px-3 py-4 flex gap-2">
         <button onClick={() => setShowDrink(true)}
-          className="flex-1 bg-indigo-600 text-white font-semibold py-3 rounded-2xl"
+          className="flex-1 bg-primary-600 text-white font-semibold py-3 rounded-2xl"
           disabled={bottle.count <= 0}>
           🥂 Getrunken
         </button>
@@ -281,7 +281,7 @@ function AxisRow({ axis, value, onChange }) {
         {axis.steps.map((s, i) => (
           <button key={s} onClick={() => onChange(s === value ? null : s)}
             className={`flex-1 h-2 rounded-full transition-colors ${
-              i <= idx && idx >= 0 ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-700'
+              i <= idx && idx >= 0 ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'
             }`}
             title={s}
           />
@@ -327,7 +327,7 @@ function DrinkSheet({ bottle, onClose, onSave }) {
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button onClick={() => onSave({ rating: rating || undefined, occasion, note, date })}
-            className="btn-primary flex-1" style={{ backgroundColor: '#0D7377' }}>Eintragen</button>
+            className="btn-primary flex-1">Eintragen</button>
         </div>
       </div>
     </>
@@ -426,7 +426,7 @@ function EditSheet({ bottle, onClose, onSave }) {
               {AROMAS.map(a => (
                 <button key={a} onClick={() => toggle(aromas, setAromas, a)}
                   className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    aromas.includes(a) ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
+                    aromas.includes(a) ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
                   }`}>{a}</button>
               ))}
             </div>
@@ -448,7 +448,7 @@ function EditSheet({ bottle, onClose, onSave }) {
             <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
             <button
               onClick={() => onSave({ name, winery, region, country, grape, alcohol, alcoholFree, sweetness, classification, wineType, retailer, priceEur: priceEur ? Number(priceEur) : null, purchaseDate, link, aromas, pairings })}
-              className="btn-primary flex-1" style={{ backgroundColor: '#0D7377' }}>Speichern</button>
+              className="btn-primary flex-1">Speichern</button>
           </div>
         </div>
       </div>

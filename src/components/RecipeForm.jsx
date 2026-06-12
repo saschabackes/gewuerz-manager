@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
 import { importRecipe } from '../lib/recipeImport'
 import { parseRecipeDescription } from '../utils/recipeDescription'
-import CookPlan from './CookPlan'
+import InventoryCheck from './InventoryCheck'
 
 export default function RecipeForm({ recipe, onClose, onSaved }) {
   const { addRecipe, updateRecipe, cookidooSettings } = useStore()
@@ -211,14 +211,14 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
               value={steps} onChange={e => setSteps(e.target.value)} />
           </div>
 
-          {/* Meine Gewürze dafür (live, auch ohne Speichern nutzbar) */}
+          {/* Bestandscheck (live, auch ohne Speichern nutzbar) */}
           {ingredientList.length > 0 && (
             <div className="card p-3">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🍲</span>
-                <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">Meine Gewürze dafür</span>
+                <span className="text-lg">📋</span>
+                <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">Bestandscheck</span>
               </div>
-              <CookPlan ingredients={ingredientList} />
+              <InventoryCheck ingredients={ingredientList} />
             </div>
           )}
 

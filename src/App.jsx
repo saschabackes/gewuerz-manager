@@ -20,6 +20,7 @@ import SpiceSetup from './components/SpiceSetup'
 import { useFreezer } from './modules/freezer/store'
 import { useCellar } from './modules/cellar/store'
 import { MODULES_ENABLED, APP_NAME } from './branding'
+import { hasUnseenChangelog } from './changelog'
 
 export default function App() {
   const { user, authLoading, init } = useStore()
@@ -95,7 +96,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800">
       <header
-        className="bg-indigo-600 text-white px-4 pb-3 flex items-center justify-between sticky top-0 z-30"
+        className="bg-primary-600 text-white px-4 pb-3 flex items-center justify-between sticky top-0 z-30"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
       >
         <div className="flex items-center gap-2">
@@ -108,21 +109,21 @@ export default function App() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowReview(true)}
-            className="relative p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
+            className="relative p-1.5 rounded-full bg-primary-700 hover:bg-primary-800 transition-colors"
             title="Einräumen"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4l-2 3H10l-2-3H4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {reviewCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-indigo-600">
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-primary-600">
                 {reviewCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setShowActivity(true)}
-            className="p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
+            className="p-1.5 rounded-full bg-primary-700 hover:bg-primary-800 transition-colors"
             title="Verlauf"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -132,7 +133,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setShowHelp(true)}
-            className="p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
+            className="p-1.5 rounded-full bg-primary-700 hover:bg-primary-800 transition-colors"
             title="Hilfe"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -143,9 +144,13 @@ export default function App() {
           </button>
           <button
             onClick={() => setShowSettings(true)}
-            className="p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
+            className="relative p-1.5 rounded-full bg-primary-700 hover:bg-primary-800 transition-colors"
             title="Einstellungen"
           >
+            {/* Hinweispunkt: neue Version, Changelog noch nicht gesehen */}
+            {!showSettings && hasUnseenChangelog() && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full border border-primary-600" />
+            )}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round"/>
               <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -176,7 +181,6 @@ export default function App() {
               tabs={[
                 { id: 'bestand', label: '📦 Bestand' },
                 { id: 'ablauf',  label: '⏰ Ablauf' },
-                { id: 'kochen',  label: '📖 Kochen' },
               ]}
               active={view}
               onChange={setView}
@@ -187,16 +191,27 @@ export default function App() {
             />
             {view === 'bestand' && <SpiceList onEdit={handleEditSpice} onAdd={handleSpiceAddInline} />}
             {view === 'ablauf'  && <ExpiryView onEdit={handleEditSpice} />}
-            {view === 'kochen'  && <RecipesView />}
           </>
         )}
         {module === 'freezer'  && <FreezerView />}
         {module === 'cellar'   && <CellarView />}
+        {module === 'recipes'  && <RecipesView />}
         {module === 'shopping' && <UnifiedShoppingList />}
       </main>
 
+      {/* Floating-+ für Module ohne eigenen Add-Button (Rezepte hat einen eigenen) */}
+      {['spices', 'freezer', 'cellar'].includes(module) && (module !== 'spices' || spiceSetupDone) && (
+        <button
+          onClick={() => handleModuleAdd(module)}
+          className="fixed bottom-24 right-5 bg-primary-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:opacity-80 transition-colors z-20"
+          aria-label="Hinzufügen"
+        >
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      )}
+
       {MODULES_ENABLED && (
-        <Navigation currentModule={module} onModuleChange={setModule} onAdd={handleModuleAdd} />
+        <Navigation currentModule={module} onModuleChange={setModule} />
       )}
 
       {showAddForm && (
@@ -232,7 +247,7 @@ export default function App() {
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center">
       <div className="text-center text-white">
         <div className="text-5xl mb-5">🏠</div>
         <svg className="w-8 h-8 animate-spin mx-auto" fill="none" viewBox="0 0 24 24">
@@ -255,7 +270,7 @@ function UserMenu() {
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 bg-indigo-700 rounded-full px-3 py-1.5 text-sm font-medium active:bg-indigo-800 transition-colors"
+        className="flex items-center gap-1.5 bg-primary-700 rounded-full px-3 py-1.5 text-sm font-medium active:bg-primary-800 transition-colors"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>

@@ -41,7 +41,7 @@ export default function Login() {
       if (msg.includes('Invalid login credentials'))
         setError('E-Mail oder Passwort falsch.')
       else if (msg.includes('already registered') || msg.includes('already been registered'))
-        setError('Diese E-Mail ist bereits registriert.')
+        setError('Diese E-Mail ist bereits registriert. Melde dich an oder setze dein Passwort zurück.')
       else if (msg.includes('Email not confirmed'))
         setError('E-Mail noch nicht bestätigt. Bitte prüfe dein Postfach.')
       else
@@ -57,10 +57,9 @@ export default function Login() {
     setMessage('')
   }
 
-  const primaryColor = MODULES_ENABLED ? '#0D7377' : undefined
   const bgGradient = MODULES_ENABLED
-    ? 'from-[#0a5c5f] to-[#0D7377]'
-    : 'from-indigo-600 to-indigo-800'
+    ? 'from-primary-600 to-primary-500'
+    : 'from-primary-600 to-primary-800'
 
   return (
     <div className={`min-h-screen bg-gradient-to-br ${bgGradient} flex flex-col items-center justify-center p-6 pt-safe`}>
@@ -88,7 +87,6 @@ export default function Login() {
             <button
               onClick={() => switchMode('login')}
               className="btn-primary w-full"
-              style={primaryColor ? { backgroundColor: primaryColor } : undefined}
             >
               Zur Anmeldung
             </button>
@@ -107,7 +105,7 @@ export default function Login() {
                     setResending(false)
                   }
                 }}
-                className="text-indigo-600 dark:text-indigo-400 underline"
+                className="text-primary-600 dark:text-primary-400 underline"
               >
                 {resending ? 'Wird gesendet…' : 'Mail erneut senden'}
               </button>
@@ -162,7 +160,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => switchMode('reset')}
-                    className="text-xs text-gray-400 hover:text-indigo-600 dark:text-indigo-400 transition-colors"
+                    className="text-xs text-gray-400 hover:text-primary-600 dark:text-primary-400 transition-colors"
                   >
                     Vergessen?
                   </button>
@@ -180,7 +178,7 @@ export default function Login() {
           )}
 
           {message && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
               </svg>
@@ -197,8 +195,7 @@ export default function Login() {
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full" disabled={loading}
-            style={primaryColor ? { backgroundColor: primaryColor } : undefined}>
+          <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? (
               <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -212,7 +209,7 @@ export default function Login() {
           {mode === 'login' && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Noch kein Konto?{' '}
-              <button onClick={() => switchMode('register')} className="text-indigo-600 dark:text-indigo-400 font-semibold">
+              <button onClick={() => switchMode('register')} className="text-primary-600 dark:text-primary-400 font-semibold">
                 Registrieren
               </button>
             </p>
@@ -220,14 +217,14 @@ export default function Login() {
           {mode === 'register' && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Bereits registriert?{' '}
-              <button onClick={() => switchMode('login')} className="text-indigo-600 dark:text-indigo-400 font-semibold">
+              <button onClick={() => switchMode('login')} className="text-primary-600 dark:text-primary-400 font-semibold">
                 Anmelden
               </button>
             </p>
           )}
           {mode === 'reset' && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              <button onClick={() => switchMode('login')} className="text-indigo-600 dark:text-indigo-400 font-semibold">
+              <button onClick={() => switchMode('login')} className="text-primary-600 dark:text-primary-400 font-semibold">
                 ← Zurück zur Anmeldung
               </button>
             </p>

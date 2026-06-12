@@ -85,11 +85,11 @@ export default function OnboardingView({ onFinish }) {
   const slide = SLIDES[i]
 
   return (
-    <div className="fixed inset-0 z-[60] bg-gradient-to-br from-indigo-600 to-green-800 flex flex-col pt-safe pb-safe fade-enter">
+    <div className="fixed inset-0 z-[60] bg-gradient-to-br from-primary-600 to-green-800 flex flex-col pt-safe pb-safe fade-enter">
       {/* Überspringen */}
       <div className="flex justify-end px-5 py-3 flex-none">
         {!last && (
-          <button onClick={onFinish} className="text-indigo-100 text-sm font-medium hover:text-white transition-colors">
+          <button onClick={onFinish} className="text-primary-100 text-sm font-medium hover:text-white transition-colors">
             Überspringen
           </button>
         )}
@@ -99,7 +99,7 @@ export default function OnboardingView({ onFinish }) {
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         <div className="text-7xl mb-8">{slide.emoji}</div>
         <h2 className="text-2xl font-bold text-white mb-4">{slide.title}</h2>
-        <p className="text-indigo-50 leading-relaxed max-w-sm">{slide.text}</p>
+        <p className="text-primary-50 leading-relaxed max-w-sm">{slide.text}</p>
       </div>
 
       {/* Punkte */}
@@ -124,7 +124,7 @@ export default function OnboardingView({ onFinish }) {
         )}
         <button
           onClick={() => last ? onFinish() : setI(i + 1)}
-          className="flex-1 bg-white text-indigo-700 rounded-2xl py-3.5 font-bold text-sm hover:bg-indigo-50 transition-colors"
+          className="flex-1 bg-white text-primary-700 rounded-2xl py-3.5 font-bold text-sm hover:bg-primary-50 transition-colors"
         >
           {last ? 'Los geht’s 🎉' : 'Weiter'}
         </button>

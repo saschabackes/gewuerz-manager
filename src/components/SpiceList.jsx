@@ -134,7 +134,7 @@ export default function SpiceList({ onEdit, onAdd }) {
             onClick={() => setFilter(f.id)}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
               filter === f.id
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
@@ -159,7 +159,7 @@ export default function SpiceList({ onEdit, onAdd }) {
           <button
             onClick={() => setCategoryFilter('all')}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+              categoryFilter === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             Alle
@@ -271,7 +271,14 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
 
   return (
     <div className={`card overflow-hidden transition-all ${expanded ? 'ring-2 ring-green-500' : ''}`}>
-      <button className="w-full text-left p-4" onClick={onToggle}>
+      {/* div statt button: enthält verschachtelte Buttons (Zoom, Füllstand) — button-in-button ist invalides HTML */}
+      <div
+        role="button"
+        tabIndex={0}
+        className="w-full text-left p-4 cursor-pointer"
+        onClick={onToggle}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+      >
         <div className="flex items-start justify-between gap-3">
           {/* Thumbnail – klickbar zum Vergrößern */}
           {spice.imageUrl && (
@@ -362,7 +369,7 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
         {spice.notes && (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{spice.notes}</p>
         )}
-      </button>
+      </div>
 
       {expanded && (
         <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 flex gap-2 flex-wrap bg-gray-50 dark:bg-gray-800">
@@ -377,7 +384,7 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
             disabled={justAdded}
             className={`py-2 px-3 text-xs rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors ${
               justAdded
-                ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
                 : 'btn-secondary'
             }`}
           >

@@ -4,11 +4,9 @@ import CellarForm from './CellarForm'
 import CellarSetup from './CellarSetup'
 import RackSettings from './RackSettings'
 import WineDetail from './WineDetail'
-import PairingFinder from './PairingFinder'
 import ExcelImport from './ExcelImport'
 import SharePicker from './SharePicker'
 import SubTabs from '../../components/SubTabs'
-import RecipesView from '../../components/RecipesView'
 
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
@@ -114,7 +112,7 @@ export default function CellarView() {
             <span className="flex-none text-[10px] text-gray-400 font-bold self-center pr-1">+1 IN {lastRack?.label?.toUpperCase() || 'DEFAULT'}:</span>
             {recentNames.slice(0,10).map(n => (
               <button key={n} onClick={() => quickAdd(n)}
-                className="flex-none text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2.5 py-1 rounded-full active:scale-95">
+                className="flex-none text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold px-2.5 py-1 rounded-full active:scale-95">
                 + {n}
               </button>
             ))}
@@ -129,13 +127,12 @@ export default function CellarView() {
           { id: 'ablauf',   label: '⏰ Ablauf' },
           { id: 'lager',    label: '🗄️ Lager' },
           { id: 'probiert', label: '💎 Probiert' },
-          { id: 'kochen',   label: '📖 Kochen' },
         ]}
         active={tab}
         onChange={setTab}
       />
 
-      {tab !== 'kochen' && tab !== 'probiert' && (
+      {tab !== 'probiert' && (
         <div className="flex gap-1.5 px-4 pb-2">
           {[
             { id: 'all',  label: 'Alle' },
@@ -144,7 +141,7 @@ export default function CellarView() {
           ].map(f => (
             <button key={f.id} onClick={() => setAlcoholFilter(f.id)}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                alcoholFilter === f.id ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                alcoholFilter === f.id ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
               }`}>{f.label}</button>
           ))}
         </div>
@@ -160,7 +157,7 @@ export default function CellarView() {
           ].map(f => (
             <button key={f.id} onClick={() => setMemoryFilter(f.id)}
               className={`flex-none text-xs font-semibold px-2.5 py-1 rounded-full ${
-                memoryFilter === f.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                memoryFilter === f.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
               }`}>
               {f.label} <span className="opacity-70">·{f.count}</span>
             </button>
@@ -176,7 +173,7 @@ export default function CellarView() {
             return (
               <button key={r.id} onClick={() => setActiveRackId(r.id)}
                 className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
-                  active ? 'bg-indigo-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                  active ? 'bg-primary-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                 }`}>
                 <span>{r.emoji}</span><span>{r.label}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/30' : 'bg-gray-100 dark:bg-gray-700'}`}>{count}</span>
@@ -208,7 +205,7 @@ export default function CellarView() {
         </div>
       )}
 
-      {tab !== 'kochen' && tab !== 'probiert' && (
+      {tab !== 'probiert' && (
         <div className="px-4 space-y-2.5">
           {filtered.map(b => {
             const r = racks.find(r => r.id === b.rackId)
@@ -246,14 +243,6 @@ export default function CellarView() {
         </div>
       )}
 
-      {tab === 'kochen' && (
-        <>
-          <PairingFinder onOpenWine={(id) => setDetailId(id)} />
-          <div className="border-t border-gray-200 dark:border-gray-700 mt-4">
-            <RecipesView />
-          </div>
-        </>
-      )}
 
 
       {formOpen && <CellarForm prefilled={formPrefill} onClose={closeForm} />}
@@ -265,7 +254,7 @@ export default function CellarView() {
         <WineDetail
           bottle={detailBottle}
           onClose={() => setDetailId(null)}
-          onOpenPairing={() => { setDetailId(null); setTab('kochen') }}
+          onOpenPairing={() => { setDetailId(null) }}
           onShare={(id) => { setDetailId(null); setSharePreselect(id); setShowShare(true) }}
         />
       )}
@@ -326,8 +315,8 @@ function MemoryCard({ b, racks, onOpen, onRestock }) {
             b.restock
               ? 'bg-emerald-600 text-white'
               : empty
-                ? 'bg-indigo-600 text-white'
-                : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                ? 'bg-primary-600 text-white'
+                : 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
           }`}>
           {b.restock ? '✓ auf Einkaufsliste' : empty ? '🔄 Wieder kaufen' : '+ Einkaufsliste'}
         </button>

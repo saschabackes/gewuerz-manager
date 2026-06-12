@@ -67,7 +67,7 @@ const SYNONYMS = {
   paprikapulver: 'paprika',
 }
 
-function normalize(s) {
+export function normalize(s) {
   return (s || '')
     .toLowerCase()
     .replace(/[.,()]/g, ' ')
@@ -75,8 +75,18 @@ function normalize(s) {
     .trim()
 }
 
+// Menge/Einheit am Zeilenanfang entfernen → sauberer Anzeige-/Einkaufs-Name
+export function cleanIngredientName(s) {
+  return (s || '')
+    .replace(/^optional:\s*/i, '')
+    .replace(/^\s*[\d¼½¾⅓⅔/.,]+\s*/, '')
+    .replace(/^(g|kg|ml|l|tl|el|prise[n]?|stangen?|zehen?|knolle[n]?|stück|bund|dose[n]?|pck\.?)\s+/i, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim()
+}
+
 // Bedeutungstragende Wörter aus dem Rezeptnamen (ohne Notizteile)
-function keywords(name) {
+export function keywords(name) {
   const n = normalize(name)
   // Notiz nach erstem Komma o.ä. abschneiden ist schon via normalize entfernt
   const words = n.split(' ').filter(w => w.length >= 3)

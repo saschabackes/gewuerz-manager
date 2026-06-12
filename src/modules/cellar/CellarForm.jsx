@@ -243,9 +243,9 @@ export default function CellarForm({ prefilled, onClose }) {
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
           {/* ── 1. Erfassung: Foto & Barcode ───────────────────────────── */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-4 space-y-3">
-            <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">📸 Etikett erfassen</p>
-            <p className="text-xs text-indigo-700 dark:text-indigo-300">Fotografiere das Etikett – wir extrahieren so viel wie möglich automatisch.</p>
+          <div className="bg-gradient-to-br from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-2xl p-4 space-y-3">
+            <p className="text-sm font-bold text-primary-900 dark:text-primary-200">📸 Etikett erfassen</p>
+            <p className="text-xs text-primary-700 dark:text-primary-300">Fotografiere das Etikett – wir extrahieren so viel wie möglich automatisch.</p>
 
             <div className="flex gap-2">
               <input ref={photoRef} type="file" accept="image/*" capture="environment"
@@ -253,7 +253,7 @@ export default function CellarForm({ prefilled, onClose }) {
               <input ref={barcodeRef} type="file" accept="image/*" capture="environment"
                 onChange={handleBarcodePhoto} className="hidden" />
               <button onClick={() => photoRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-4 py-3 rounded-xl active:bg-indigo-700">
+                className="flex-1 flex items-center justify-center gap-2 bg-primary-600 text-white text-sm font-semibold px-4 py-3 rounded-xl active:bg-primary-700">
                 📷 Etikett fotografieren
               </button>
               <button onClick={handleBarcodeScan}
@@ -272,15 +272,15 @@ export default function CellarForm({ prefilled, onClose }) {
 
             {analyzing && (
               <div className="flex items-center gap-2 bg-white dark:bg-gray-700 px-3 py-2.5 rounded-xl">
-                <svg className="w-4 h-4 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 animate-spin text-primary-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Etikett wird analysiert…</span>
+                <span className="text-xs font-medium text-primary-700 dark:text-primary-300">Etikett wird analysiert…</span>
               </div>
             )}
             {analyzeMsg && !analyzing && (
-              <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-white dark:bg-gray-700 px-3 py-2 rounded-xl">{analyzeMsg}</p>
+              <p className="text-xs font-medium text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-700 px-3 py-2 rounded-xl">{analyzeMsg}</p>
             )}
 
             {barcode && (
@@ -288,7 +288,7 @@ export default function CellarForm({ prefilled, onClose }) {
                 <span className="text-xs font-mono text-gray-600 dark:text-gray-300">EAN: {barcode}</span>
               </div>
             )}
-            {barMsg && <p className="text-xs text-indigo-600 dark:text-indigo-400">{barMsg}</p>}
+            {barMsg && <p className="text-xs text-primary-600 dark:text-primary-400">{barMsg}</p>}
           </div>
 
           {/* ── 2. Grunddaten ──────────────────────────────────────────── */}
@@ -330,7 +330,7 @@ export default function CellarForm({ prefilled, onClose }) {
                 {COLORS.map(c => (
                   <button key={c.id} type="button" onClick={() => setColor(c.id)}
                     className={`flex-1 py-2 rounded-xl text-xs font-semibold ${
-                      color === c.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      color === c.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                     }`}>{c.label}</button>
                 ))}
               </div>
@@ -342,7 +342,7 @@ export default function CellarForm({ prefilled, onClose }) {
                 {WINE_TYPES.map(t => (
                   <button key={t.id} type="button" onClick={() => setWineType(t.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${
-                      wineType === t.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      wineType === t.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                     }`}>{t.label}</button>
                 ))}
               </div>
@@ -355,7 +355,7 @@ export default function CellarForm({ prefilled, onClose }) {
                   <button key={s.id} type="button"
                     onClick={() => setSweetness(prev => prev === s.id ? '' : s.id)}
                     className={`flex-1 min-w-[60px] py-2 rounded-xl text-xs font-semibold ${
-                      sweetness === s.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      sweetness === s.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                     }`}>{s.label}</button>
                 ))}
               </div>
@@ -387,7 +387,7 @@ export default function CellarForm({ prefilled, onClose }) {
                       <button key={r.id} type="button"
                         onClick={() => updateLocation(idx, 'rackId', r.id)}
                         className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold ${
-                          loc.rackId === r.id ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                          loc.rackId === r.id ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-300'
                         }`}
                       >{r.emoji} {r.label}</button>
                     ))}
@@ -397,7 +397,7 @@ export default function CellarForm({ prefilled, onClose }) {
                       {rack.slots.map(s => (
                         <button key={s} type="button" onClick={() => updateLocation(idx, 'slot', s)}
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            loc.slot === s ? 'bg-indigo-500 text-white' : 'bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                            loc.slot === s ? 'bg-primary-500 text-white' : 'bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-300'
                           }`}>{s}</button>
                       ))}
                     </div>
@@ -456,17 +456,17 @@ export default function CellarForm({ prefilled, onClose }) {
           </Section>
 
           {/* ── Einlager-Modus & Speichern ─────────────────────────────── */}
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-2 rounded-xl">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-primary-50 dark:bg-primary-900/30 px-3 py-2 rounded-xl">
             <input type="checkbox" checked={bulkMode} onChange={e => setBulkMode(e.target.checked)} />
             <span><b>Einlager-Modus</b> – Form bleibt offen für die nächste Flasche</span>
           </label>
 
-          {hint && <p className="text-indigo-600 dark:text-indigo-400 text-sm font-medium">{hint}</p>}
+          {hint && <p className="text-primary-600 dark:text-primary-400 text-sm font-medium">{hint}</p>}
 
           <div className="flex gap-3 pt-2 pb-4">
             <button onClick={onClose} className="btn-secondary flex-1">Schließen</button>
             <button onClick={save} disabled={!name.trim()}
-              className="btn-primary flex-1 disabled:opacity-50" style={{ backgroundColor: '#0D7377' }}>
+              className="btn-primary flex-1 disabled:opacity-50">
               {bulkMode ? 'Speichern + nächstes' : 'Speichern'}
             </button>
           </div>

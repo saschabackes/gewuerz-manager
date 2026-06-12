@@ -65,13 +65,13 @@ export default function ShareView({ encoded }) {
             <p className="text-xs text-gray-400 mb-2">Erstellt mit</p>
             <a href="https://depotapp.online" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                 <rect x="14" y="3" width="7" height="7" rx="1"/>
                 <rect x="3" y="14" width="7" height="7" rx="1"/>
                 <rect x="14" y="14" width="7" height="7" rx="1"/>
               </svg>
-              <span className="text-sm font-semibold" style={{ color: '#0D7377' }}>Depot</span>
+              <span className="text-sm font-semibold text-primary-500">Depot</span>
               <span className="text-xs text-gray-400">Dein Haushalt, organisiert</span>
             </a>
           </div>

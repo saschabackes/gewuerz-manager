@@ -6,7 +6,6 @@ import QuickAddBar from './QuickAddBar'
 import StorageSettings from './StorageSettings'
 import ExcelImport from './ExcelImport'
 import SubTabs from '../../components/SubTabs'
-import RecipesView from '../../components/RecipesView'
 
 function daysUntil(dateStr) {
   if (!dateStr) return null
@@ -78,13 +77,12 @@ export default function FreezerView() {
         tabs={[
           { id: 'bestand', label: '📦 Bestand' },
           { id: 'ablauf',  label: '⏰ Ablauf' },
-          { id: 'kochen',  label: '📖 Kochen' },
         ]}
         active={tab}
         onChange={setTab}
       />
 
-      {tab !== 'kochen' && <QuickAddBar />}
+      <QuickAddBar />
 
       {items.length === 0 && (
         <div className="m-4 p-5 rounded-2xl bg-white dark:bg-gray-800 text-center">
@@ -106,7 +104,7 @@ export default function FreezerView() {
                 <button key={s.id}
                   onClick={() => setActiveStorageId(s.id)}
                   className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                    active ? 'bg-indigo-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                    active ? 'bg-primary-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                   }`}
                 >
                   <span>{s.emoji}</span>
@@ -125,7 +123,7 @@ export default function FreezerView() {
                     <div className="font-bold text-gray-800 dark:text-gray-100">{c.label}</div>
                     <button
                       onClick={() => openForm({ storageId: activeStorage.id, compartmentId: c.id })}
-                      className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2.5 py-1 rounded-full"
+                      className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold px-2.5 py-1 rounded-full"
                     >+ Eintrag</button>
                   </div>
                   {(byCompartment[c.id] || []).length === 0 ? (
@@ -158,7 +156,6 @@ export default function FreezerView() {
         </div>
       )}
 
-      {tab === 'kochen' && <RecipesView />}
 
 
       {formOpen && (
@@ -186,7 +183,7 @@ function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
     setTouchX(null); setDx(0)
   }
 
-  const swipeBg = dx < -20 ? 'bg-indigo-100 dark:bg-indigo-900/40' : ''
+  const swipeBg = dx < -20 ? 'bg-primary-100 dark:bg-primary-900/40' : ''
 
   return (
     <li className={`relative overflow-hidden rounded-lg ${swipeBg}`}
@@ -213,7 +210,7 @@ function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
           }`}
           title="In Einkaufsliste">🛒</button>
         <button onClick={() => onConsume(item.id)}
-          className="flex-none text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2.5 py-1 rounded-full"
+          className="flex-none text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold px-2.5 py-1 rounded-full"
           title="Eine Portion verbraucht">−1</button>
         <button onClick={() => { if (confirm('Eintrag löschen?')) onRemove(item.id) }}
           className="flex-none text-gray-300 hover:text-red-500 px-1" title="Löschen">✕</button>

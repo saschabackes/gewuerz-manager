@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
-import CookPlan from './CookPlan'
+import InventoryCheck from './InventoryCheck'
 
 export default function RecipeDetail({ recipe, onBack, onEdit }) {
   const { deleteRecipe } = useStore()
@@ -56,7 +56,7 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
           {recipe.author && <span className="text-sm text-gray-500 dark:text-gray-400">{recipe.author}</span>}
           {recipe.sourceUrl && (
             <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer"
-              className="text-sm text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1">
+              className="text-sm text-primary-600 dark:text-primary-400 font-semibold flex items-center gap-1">
               Im Original öffnen
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" strokeLinecap="round" strokeLinejoin="round"/>
@@ -67,20 +67,20 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
         {recipe.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {recipe.tags.map(t => (
-              <span key={t} className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full px-2.5 py-0.5">{t}</span>
+              <span key={t} className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full px-2.5 py-0.5">{t}</span>
             ))}
           </div>
         )}
 
-        {/* Meine Gewürze dafür (Zuordnung zum Bestand) */}
+        {/* Bestandsabgleich (Gewürze + TK + Wein) */}
         {recipe.ingredients?.length > 0 && (
           <div className="card p-3">
             <button
               onClick={() => setShowSpices(v => !v)}
               className="w-full flex items-center gap-2 text-left"
             >
-              <span className="text-lg">🍲</span>
-              <span className="flex-1 font-bold text-gray-800 dark:text-gray-100 text-sm">Meine Gewürze dafür</span>
+              <span className="text-lg">📋</span>
+              <span className="flex-1 font-bold text-gray-800 dark:text-gray-100 text-sm">Bestandscheck</span>
               <svg className={`w-4 h-4 text-gray-400 transition-transform ${showSpices ? 'rotate-180' : ''}`}
                 fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>
@@ -88,7 +88,7 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
             </button>
             {showSpices && (
               <div className="mt-3">
-                <CookPlan ingredients={recipe.ingredients} />
+                <InventoryCheck ingredients={recipe.ingredients} />
               </div>
             )}
           </div>
@@ -103,7 +103,7 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
                 const name = typeof ing === 'string' ? ing : ing.name
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
-                    <span className="text-indigo-500 mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-none" />
+                    <span className="text-primary-500 mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-none" />
                     {name}
                   </li>
                 )
@@ -119,7 +119,7 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
             <ol className="space-y-3">
               {recipe.steps.map((step, i) => (
                 <li key={i} className="flex gap-3 text-sm text-gray-700 dark:text-gray-200">
-                  <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center justify-center">{i + 1}</span>
+                  <span className="flex-none w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-bold text-xs flex items-center justify-center">{i + 1}</span>
                   <span className="pt-0.5 leading-relaxed">{step}</span>
                 </li>
               ))}

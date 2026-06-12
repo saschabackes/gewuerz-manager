@@ -8,7 +8,8 @@ export default {
         green: {
           550: '#1a9e4a',
         },
-        indigo: {
+        // Markenfarbe (Petrol) — semantischer Name statt umgebogenem indigo
+        primary: {
           50:  '#E8F4F4',
           100: '#C4E3E4',
           200: '#9DD0D2',

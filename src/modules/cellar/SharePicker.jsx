@@ -95,7 +95,7 @@ export default function SharePicker({ onClose, preselected }) {
                       <button key={b.id} onClick={() => toggle(b.id)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
                           active
-                            ? 'bg-indigo-50 dark:bg-indigo-900/30 ring-2 ring-indigo-500'
+                            ? 'bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-500'
                             : 'bg-gray-50 dark:bg-gray-900/40 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}>
                         <span className="text-xl flex-none">{COLOR_EMOJI[b.color] || '🍷'}</span>
@@ -109,7 +109,7 @@ export default function SharePicker({ onClose, preselected }) {
                           <span className="text-xs text-amber-500 flex-none">{'★'.repeat(b.rating)}</span>
                         )}
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-none ${
-                          active ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
+                          active ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
                         }`}>
                           {active && <span className="text-white text-xs">✓</span>}
                         </div>
@@ -134,7 +134,7 @@ export default function SharePicker({ onClose, preselected }) {
               </div>
               <div className="flex gap-2">
                 <button onClick={copyLink}
-                  className="btn-primary flex-1 py-2.5" style={{ backgroundColor: '#0D7377' }}>
+                  className="btn-primary flex-1 py-2.5">
                   {copied ? '✓ Kopiert!' : '📋 Link kopieren'}
                 </button>
                 {typeof navigator.share === 'function' && (
@@ -154,7 +154,7 @@ export default function SharePicker({ onClose, preselected }) {
           <div className="border-t dark:border-gray-700 px-5 py-3 flex gap-2">
             <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
             <button onClick={generate} disabled={selected.size === 0}
-              className="btn-primary flex-1 disabled:opacity-40" style={{ backgroundColor: '#0D7377' }}>
+              className="btn-primary flex-1 disabled:opacity-40">
               Link erstellen ({selected.size})
             </button>
           </div>

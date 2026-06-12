@@ -131,7 +131,7 @@ export default function ExcelImport({ onClose }) {
                 du kannst die Zuordnung im nächsten Schritt anpassen.
               </p>
               <label className="inline-block">
-                <span className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl cursor-pointer inline-block">
+                <span className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl cursor-pointer inline-block">
                   Datei auswählen
                 </span>
                 <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
@@ -212,7 +212,7 @@ export default function ExcelImport({ onClose }) {
                   {storages.map(s => (
                     <button key={s.id} onClick={() => { setTargetStorageId(s.id); setTargetCompartmentId(s.compartments[0]?.id) }}
                       className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        targetStorageId === s.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        targetStorageId === s.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                       }`}>{s.emoji} {s.label}</button>
                   ))}
                 </div>
@@ -234,7 +234,7 @@ export default function ExcelImport({ onClose }) {
         {step === 'map' && (
           <div className="border-t dark:border-gray-700 px-5 py-3 flex gap-2">
             <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
-            <button onClick={doImport} className="btn-primary flex-1" style={{ backgroundColor: '#0D7377' }}>
+            <button onClick={doImport} className="btn-primary flex-1">
               {dataRows.length} importieren
             </button>
           </div>

@@ -48,12 +48,12 @@ export function CountryPicker({ value, onChange }) {
           <button key={c.code} type="button"
             onClick={() => onChange(value === c.label ? '' : c.label)}
             className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold ${
-              value === c.label ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+              value === c.label ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}>{c.flag} {c.label}</button>
         ))}
         <button type="button" onClick={() => setShowMore(o => !o)}
           className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold ${
-            showMore ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+            showMore ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
           }`}>{showMore ? '▾ Weniger' : '▸ Weitere'}</button>
       </div>
       {showMore && (
@@ -62,7 +62,7 @@ export function CountryPicker({ value, onChange }) {
             <button key={c.code} type="button"
               onClick={() => onChange(value === c.label ? '' : c.label)}
               className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold ${
-                value === c.label ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                value === c.label ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}>{c.flag} {c.label}</button>
           ))}
         </div>
