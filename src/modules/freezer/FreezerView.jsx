@@ -1,8 +1,12 @@
 import { useState, useMemo, useRef } from 'react'
 import { useFreezer, CATEGORIES } from './store'
 import FreezerForm from './FreezerForm'
+import FreezerSetup from './FreezerSetup'
 import QuickAddBar from './QuickAddBar'
 import StorageSettings from './StorageSettings'
+import ExcelImport from './ExcelImport'
+import SubTabs from '../../components/SubTabs'
+import RecipesView from '../../components/RecipesView'
 
 function daysUntil(dateStr) {
   if (!dateStr) return null
@@ -23,10 +27,11 @@ function catLabel(id) {
 
 export default function FreezerView() {
   const { storages, items, consumePortion, removeItem, toggleRestock, seedDemoData, clear, resetSetup,
-          formOpen, formPrefill, openForm, closeForm } = useFreezer()
-  const [tab, setTab] = useState('drawers') // drawers | expiry
+          setupDone, completeSetup, formOpen, formPrefill, openForm, closeForm } = useFreezer()
+  const [tab, setTab] = useState('bestand')
   const [activeStorageId, setActiveStorageId] = useState(storages[0]?.id)
   const [showSettings, setShowSettings] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   const activeStorage = storages.find(s => s.id === activeStorageId) || storages[0]
   const drawersOfActive = activeStorage?.compartments || []
@@ -46,46 +51,52 @@ export default function FreezerView() {
   )
   const totalPortions = items.reduce((s,i) => s + i.portions, 0)
 
+  if (!setupDone) {
+    return <FreezerSetup onComplete={completeSetup} />
+  }
+
   return (
-    <div className="flex-1 overflow-y-auto pb-24 bg-sky-50/50 dark:bg-gray-900">
-      <div className="bg-gradient-to-br from-sky-500 to-sky-700 text-white px-5 py-4">
+    <div className="flex-1 overflow-y-auto pb-24 bg-gray-50 dark:bg-gray-900">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">❄️ Tiefkühl</h2>
-            <p className="text-sky-100 text-sm">
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">❄️ Tiefkühl</p>
+            <p className="text-xs text-gray-400">
               {items.length} Eintrag{items.length === 1 ? '' : 'e'} · {totalPortions} Portionen · {storages.length} Schrank{storages.length===1?'':'e'}
             </p>
           </div>
-          <button onClick={() => setShowSettings(true)}
-            className="bg-white/20 hover:bg-white/30 rounded-full p-2 text-lg" title="Schränke verwalten">⚙️</button>
+          <div className="flex gap-1.5">
+            <button onClick={() => setShowImport(true)}
+              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg" title="Excel-Import">📥</button>
+            <button onClick={() => setShowSettings(true)}
+              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg" title="Schränke verwalten">⚙️</button>
+          </div>
         </div>
       </div>
 
-      <QuickAddBar />
+      <SubTabs
+        tabs={[
+          { id: 'bestand', label: '📦 Bestand' },
+          { id: 'ablauf',  label: '⏰ Ablauf' },
+          { id: 'kochen',  label: '📖 Kochen' },
+        ]}
+        active={tab}
+        onChange={setTab}
+      />
 
-      {/* Sub-Tabs */}
-      <div className="flex gap-2 px-4 py-3">
-        {['drawers','expiry'].map(t => (
-          <button key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
-              tab === t ? 'bg-sky-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300'
-            }`}
-          >{t === 'drawers' ? '🗃️ Schränke' : '⏰ Was muss weg?'}</button>
-        ))}
-      </div>
+      {tab !== 'kochen' && <QuickAddBar />}
 
       {items.length === 0 && (
         <div className="m-4 p-5 rounded-2xl bg-white dark:bg-gray-800 text-center">
           <p className="text-gray-700 dark:text-gray-200 font-medium">Noch nichts im TK.</p>
           <p className="text-xs text-gray-400 mt-1 mb-3">Lade Demodaten oder leg den ersten Eintrag an.</p>
           <button onClick={seedDemoData}
-            className="bg-sky-600 text-white text-sm font-semibold px-4 py-2 rounded-xl">🎲 Demodaten laden</button>
+            className="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl">🎲 Demodaten laden</button>
         </div>
       )}
 
       {/* Schubladen-Ansicht (pro Storage) */}
-      {tab === 'drawers' && (
+      {tab === 'bestand' && (
         <>
           {/* Storage-Switcher */}
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 pb-3">
@@ -96,7 +107,7 @@ export default function FreezerView() {
                 <button key={s.id}
                   onClick={() => setActiveStorageId(s.id)}
                   className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                    active ? 'bg-sky-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                    active ? 'bg-indigo-700 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                   }`}
                 >
                   <span>{s.emoji}</span>
@@ -115,7 +126,7 @@ export default function FreezerView() {
                     <div className="font-bold text-gray-800 dark:text-gray-100">{c.label}</div>
                     <button
                       onClick={() => openForm({ storageId: activeStorage.id, compartmentId: c.id })}
-                      className="text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-semibold px-2.5 py-1 rounded-full"
+                      className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2.5 py-1 rounded-full"
                     >+ Eintrag</button>
                   </div>
                   {(byCompartment[c.id] || []).length === 0 ? (
@@ -133,7 +144,7 @@ export default function FreezerView() {
       )}
 
       {/* Expiry-Ansicht */}
-      {tab === 'expiry' && items.length > 0 && (
+      {tab === 'ablauf' && items.length > 0 && (
         <div className="px-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm">
             <ul className="space-y-1.5">
@@ -148,7 +159,9 @@ export default function FreezerView() {
         </div>
       )}
 
-      {items.length > 0 && (
+      {tab === 'kochen' && <RecipesView />}
+
+      {items.length > 0 && tab !== 'kochen' && (
         <div className="px-4 pt-4 text-center space-x-3">
           <button onClick={() => { if (confirm('Alle TK-Einträge löschen?')) clear() }}
             className="text-xs text-gray-400 hover:text-red-500">🗑️ Items zurücksetzen</button>
@@ -162,6 +175,9 @@ export default function FreezerView() {
       )}
       {showSettings && (
         <StorageSettings onClose={() => setShowSettings(false)} />
+      )}
+      {showImport && (
+        <ExcelImport onClose={() => setShowImport(false)} />
       )}
     </div>
   )
@@ -179,7 +195,7 @@ function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
     setTouchX(null); setDx(0)
   }
 
-  const swipeBg = dx < -20 ? 'bg-sky-100 dark:bg-sky-900/40' : ''
+  const swipeBg = dx < -20 ? 'bg-indigo-100 dark:bg-indigo-900/40' : ''
 
   return (
     <li className={`relative overflow-hidden rounded-lg ${swipeBg}`}
@@ -206,7 +222,7 @@ function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
           }`}
           title="In Einkaufsliste">🛒</button>
         <button onClick={() => onConsume(item.id)}
-          className="flex-none text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-semibold px-2.5 py-1 rounded-full"
+          className="flex-none text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2.5 py-1 rounded-full"
           title="Eine Portion verbraucht">−1</button>
         <button onClick={() => { if (confirm('Eintrag löschen?')) onRemove(item.id) }}
           className="flex-none text-gray-300 hover:text-red-500 px-1" title="Löschen">✕</button>

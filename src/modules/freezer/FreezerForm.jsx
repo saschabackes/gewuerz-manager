@@ -98,7 +98,7 @@ export default function FreezerForm({ prefilled, onClose }) {
                 <button key={c.id} type="button"
                   onClick={() => { setAutoCat(false); setCategory(c.id) }}
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    category === c.id ? 'bg-sky-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    category === c.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
                 >{c.emoji} {c.label}</button>
               ))}
@@ -126,7 +126,7 @@ export default function FreezerForm({ prefilled, onClose }) {
                 <button key={s.id} type="button"
                   onClick={() => { setStorageId(s.id); setCompartmentId(s.compartments[0]?.id) }}
                   className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                    storageId === s.id ? 'bg-sky-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    storageId === s.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
                 >{s.emoji} {s.label}</button>
               ))}
@@ -137,7 +137,7 @@ export default function FreezerForm({ prefilled, onClose }) {
                   <button key={c.id} type="button"
                     onClick={() => setCompartmentId(c.id)}
                     className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      compartmentId === c.id ? 'bg-sky-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      compartmentId === c.id ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                     }`}
                   >{c.label}</button>
                 ))}
@@ -177,7 +177,7 @@ export default function FreezerForm({ prefilled, onClose }) {
             <input className="input py-2 text-sm" value={note} onChange={e => setNote(e.target.value)} />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-sky-50 dark:bg-sky-900/30 px-3 py-2 rounded-xl">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-2 rounded-xl">
             <input type="checkbox" checked={bulkMode} onChange={e => setBulkMode(e.target.checked)} />
             <span><b>Wocheneinkauf-Modus</b> – Form bleibt nach Speichern offen</span>
           </label>

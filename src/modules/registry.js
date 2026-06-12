@@ -7,29 +7,25 @@ export const MODULES = [
     id: 'spices',
     label: 'Gewürze',
     emoji: '🌿',
-    color: 'green',
     description: 'Gewürzregal, Füllstand, MHD',
-    isCore: true, // bestehende App
+    isCore: true,
   },
   {
     id: 'freezer',
     label: 'Tiefkühl',
     emoji: '❄️',
-    color: 'sky',
     description: 'Schubladen, Portionen, Einfrierdatum',
   },
   {
     id: 'cellar',
-    label: 'Weinkeller',
+    label: 'Wein',
     emoji: '🍷',
-    color: 'rose',
     description: 'Flaschen, Trinkfenster, Bewertung',
   },
   {
     id: 'shopping',
     label: 'Einkauf',
     emoji: '🛒',
-    color: 'emerald',
     description: 'Zentrale Einkaufsliste (alle Module)',
   },
 ]

@@ -52,7 +52,7 @@ export default function StorageSettings({ onClose }) {
                   </div>
                 ))}
                 <button onClick={() => addCompartment(s.id, `Fach ${s.compartments.length + 1}`)}
-                  className="w-full text-xs text-sky-600 font-semibold py-1.5 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg">
+                  className="w-full text-xs text-indigo-600 font-semibold py-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg">
                   + Fach hinzufügen
                 </button>
               </div>

@@ -11,13 +11,15 @@ import ActivityView from './components/ActivityView'
 import OnboardingView from './components/OnboardingView'
 import InventoryReviewView from './components/InventoryReviewView'
 import RecipesView from './components/RecipesView'
+import SubTabs from './components/SubTabs'
 import FreezerView from './modules/freezer/FreezerView'
 import CellarView from './modules/cellar/CellarView'
 import UnifiedShoppingList from './modules/shopping/UnifiedShoppingList'
+import SpiceSettings from './components/SpiceSettings'
+import SpiceSetup from './components/SpiceSetup'
 import { useFreezer } from './modules/freezer/store'
 import { useCellar } from './modules/cellar/store'
-
-const MODULES_ENABLED = import.meta.env.VITE_ENABLE_MODULES === '1' || import.meta.env.DEV
+import { MODULES_ENABLED, APP_NAME } from './branding'
 
 export default function App() {
   const { user, authLoading, init } = useStore()
@@ -26,7 +28,7 @@ export default function App() {
   const dataError = useStore(s => s.dataError)
   const currentUser = useStore(s => s.currentUser())
   const [module, setModule] = useState('spices')
-  const [view, setView] = useState('spices') // sub-tab innerhalb des Spices-Moduls
+  const [view, setView] = useState('bestand')
 
   function handleModuleAdd(modId) {
     if (modId === 'spices')  { setEditingSpice(null); setShowAddForm(true) }
@@ -41,8 +43,11 @@ export default function App() {
   const [showActivity, setShowActivity] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [formPrefill, setFormPrefill] = useState(null)
+  const [showSpiceSettings, setShowSpiceSettings] = useState(false)
   const reviewCount = useStore(s => s.pendingInventory.filter(p => p.status === 'ready').length)
   const resolvePending = useStore(s => s.resolvePending)
+  const spiceSetupDone = useStore(s => s.spiceSetupDone)
+  const completeSpiceSetup = useStore(s => s.completeSpiceSetup)
 
   useEffect(() => { init() }, [])
 
@@ -90,32 +95,35 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800">
       <header
-        className="bg-green-600 text-white px-4 pb-3 flex items-center justify-between sticky top-0 z-30"
+        className="bg-indigo-600 text-white px-4 pb-3 flex items-center justify-between sticky top-0 z-30"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-2xl">🌿</span>
-          <h1 className="text-lg font-bold tracking-tight">Gewürz Manager</h1>
+          {MODULES_ENABLED
+            ? <svg viewBox="0 0 40 40" width="28" height="28" className="flex-none"><rect x="6" y="10" width="28" height="4" rx="1.5" fill="currentColor" opacity="0.9"/><rect x="6" y="18" width="28" height="4" rx="1.5" fill="currentColor" opacity="0.7"/><rect x="6" y="26" width="28" height="4" rx="1.5" fill="currentColor" opacity="0.5"/></svg>
+            : <span className="text-xl">🌿</span>
+          }
+          <h1 className="text-lg font-bold tracking-tight">{APP_NAME}</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowReview(true)}
-            className="relative p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
+            className="relative p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
             title="Einräumen"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4l-2 3H10l-2-3H4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {reviewCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-green-600">
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-indigo-600">
                 {reviewCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setShowActivity(true)}
-            className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
-            title="Aktivitätsverlauf"
+            className="p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
+            title="Verlauf"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="9"/>
@@ -124,7 +132,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setShowHelp(true)}
-            className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
+            className="p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
             title="Hilfe"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -135,7 +143,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setShowSettings(true)}
-            className="p-1.5 rounded-full bg-green-700 hover:bg-green-800 transition-colors"
+            className="p-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors"
             title="Einstellungen"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -159,12 +167,27 @@ export default function App() {
       )}
 
       <main className="flex-1 overflow-hidden flex flex-col pb-20">
-        {module === 'spices' && (
+        {module === 'spices' && !spiceSetupDone && (
+          <SpiceSetup onComplete={completeSpiceSetup} />
+        )}
+        {module === 'spices' && spiceSetupDone && (
           <>
-            <SpicesSubNav view={view} onChange={setView} />
-            {view === 'spices'  && <SpiceList onEdit={handleEditSpice} onAdd={handleSpiceAddInline} />}
-            {view === 'mhd'     && <ExpiryView onEdit={handleEditSpice} />}
-            {view === 'recipes' && <RecipesView />}
+            <SubTabs
+              tabs={[
+                { id: 'bestand', label: '📦 Bestand' },
+                { id: 'ablauf',  label: '⏰ Ablauf' },
+                { id: 'kochen',  label: '📖 Kochen' },
+              ]}
+              active={view}
+              onChange={setView}
+              trailing={
+                <button onClick={() => setShowSpiceSettings(true)}
+                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg flex-none" title="Lagerorte & Kategorien">⚙️</button>
+              }
+            />
+            {view === 'bestand' && <SpiceList onEdit={handleEditSpice} onAdd={handleSpiceAddInline} />}
+            {view === 'ablauf'  && <ExpiryView onEdit={handleEditSpice} />}
+            {view === 'kochen'  && <RecipesView />}
           </>
         )}
         {module === 'freezer'  && <FreezerView />}
@@ -184,6 +207,10 @@ export default function App() {
         <InventoryReviewView onClose={() => setShowReview(false)} onNewPackage={handleNewPackage} />
       )}
 
+      {showSpiceSettings && (
+        <SpiceSettings onClose={() => setShowSpiceSettings(false)} />
+      )}
+
       {showSettings && (
         <SettingsView onClose={() => setShowSettings(false)} />
       )}
@@ -199,38 +226,15 @@ export default function App() {
   )
 }
 
-// ── Sub-Nav für Spices-Modul ──────────────────────────────────────────────────
-
-function SpicesSubNav({ view, onChange }) {
-  const tabs = [
-    { id: 'spices',  label: '🌿 Vorräte' },
-    { id: 'mhd',     label: '📅 MHD' },
-    { id: 'recipes', label: '📖 Rezepte' },
-  ]
-  return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 px-3 py-2 sticky top-0 z-20">
-      <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-        {tabs.map(t => (
-          <button key={t.id}
-            onClick={() => onChange(t.id)}
-            className={`flex-none px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              view === t.id ? 'bg-green-600 text-white shadow-sm'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
-            }`}
-          >{t.label}</button>
-        ))}
-      </div>
-    </div>
-  )
-}
+// SpicesSubNav entfernt – jetzt nutzt alles die gemeinsame SubTabs-Komponente
 
 // ── Ladebildschirm ────────────────────────────────────────────────────────────
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center">
       <div className="text-center text-white">
-        <div className="text-5xl mb-5">🌿</div>
+        <div className="text-5xl mb-5">🏠</div>
         <svg className="w-8 h-8 animate-spin mx-auto" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -251,7 +255,7 @@ function UserMenu() {
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 bg-green-700 rounded-full px-3 py-1.5 text-sm font-medium active:bg-green-800 transition-colors"
+        className="flex items-center gap-1.5 bg-indigo-700 rounded-full px-3 py-1.5 text-sm font-medium active:bg-indigo-800 transition-colors"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>

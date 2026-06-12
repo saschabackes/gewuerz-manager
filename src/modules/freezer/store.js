@@ -1,6 +1,11 @@
 // LocalStorage-Store für den TK-Prototyp.
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import useStore from '../../store/useStore'
+
+function logActivity(action, target, detail) {
+  try { useStore.getState()._logActivity(action, target, detail) } catch {}
+}
 
 export const FREEZER_SHELF_LIFE = {
   fleisch_roh: 240, fleisch_gegart: 90, fisch: 120, geflügel: 270,
@@ -120,11 +125,15 @@ export const useFreezer = create(
     (set, get) => ({
       storages: DEFAULT_STORAGES,
       items: [], // {id, name, category, storageId, compartmentId, portions, portionSize, frozenAt, expiryDate, note, photoData}
+      setupDone: false,
       lastUsedCompartment: null, // {storageId, compartmentId}
       recentNames: [], // Häufigkeitsverlauf
       formOpen: false,
       formPrefill: null,
       pending: [], // [{id, name, fromItemId?, photoData?, category?, portionSize?, storageId?, compartmentId?}]
+
+      completeSetup() { set({ setupDone: true }) },
+      restartSetup()  { set({ setupDone: false }) },
 
       openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
       closeForm()              { set({ formOpen: false, formPrefill: null }) },
@@ -214,6 +223,7 @@ export const useFreezer = create(
             recentNames: recent,
           }
         })
+        logActivity('freezer_added', item.name, `${item.portions}× ${item.portionSize || 'Portion'}`)
         return item.id
       },
 
@@ -226,13 +236,19 @@ export const useFreezer = create(
       },
 
       consumePortion(id) {
+        const item = get().items.find(it => it.id === id)
         set(s => ({
           items: s.items
             .map(it => it.id===id ? { ...it, portions: it.portions - 1 } : it)
             .filter(it => it.portions > 0),
         }))
+        if (item) logActivity('freezer_consumed', item.name)
       },
-      removeItem(id) { set(s => ({ items: s.items.filter(it => it.id !== id) })) },
+      removeItem(id) {
+        const item = get().items.find(it => it.id === id)
+        set(s => ({ items: s.items.filter(it => it.id !== id) }))
+        if (item) logActivity('freezer_deleted', item.name)
+      },
 
       toggleRestock(id) {
         set(s => ({ items: s.items.map(it => it.id === id ? { ...it, needsRestock: !it.needsRestock } : it) }))
@@ -265,6 +281,15 @@ export const useFreezer = create(
       clear() { set({ items: [], recentNames: [], lastUsedCompartment: null }) },
       resetSetup() { set({ storages: DEFAULT_STORAGES, items: [], recentNames: [], lastUsedCompartment: null }) },
     }),
-    { name: 'haushalt-freezer-v3' }
+    {
+      name: 'haushalt-freezer-v3',
+      version: 1,
+      migrate: (persisted, version) => {
+        if (version === 0 && persisted && !('setupDone' in persisted)) {
+          persisted.setupDone = true
+        }
+        return persisted
+      },
+    }
   )
 )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useStore from '../store/useStore'
+import { MODULES_ENABLED, APP_NAME, APP_TAGLINE } from '../branding'
 
 export default function Login() {
   const { signIn, signUp, resetPassword } = useStore()
@@ -56,12 +57,15 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex flex-col items-center justify-center p-6 pt-safe">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex flex-col items-center justify-center p-6 pt-safe">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="text-6xl mb-3">🌿</div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Gewürz Manager</h1>
-        <p className="text-green-200 mt-1 text-sm">Dein Gewürz-Vorrat im Überblick</p>
+        {MODULES_ENABLED
+          ? <div className="mb-3"><svg viewBox="0 0 40 40" width="56" height="56"><rect x="6" y="10" width="28" height="4" rx="1.5" fill="#fff" opacity="0.9"/><rect x="6" y="18" width="28" height="4" rx="1.5" fill="#fff" opacity="0.7"/><rect x="6" y="26" width="28" height="4" rx="1.5" fill="#fff" opacity="0.5"/></svg></div>
+          : <div className="text-6xl mb-3">🌿</div>
+        }
+        <h1 className="text-3xl font-bold text-white tracking-tight">{APP_NAME}</h1>
+        <p className="text-indigo-200 mt-1 text-sm">{APP_TAGLINE}</p>
       </div>
 
       {/* Form Card */}
@@ -88,7 +92,7 @@ export default function Login() {
               Keine Mail erhalten? Prüfe den Spam-Ordner oder{' '}
               <button
                 onClick={() => switchMode('register')}
-                className="text-green-600 dark:text-green-400 underline"
+                className="text-indigo-600 dark:text-indigo-400 underline"
               >
                 erneut registrieren
               </button>
@@ -143,7 +147,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => switchMode('reset')}
-                    className="text-xs text-gray-400 hover:text-green-600 dark:text-green-400 transition-colors"
+                    className="text-xs text-gray-400 hover:text-indigo-600 dark:text-indigo-400 transition-colors"
                   >
                     Vergessen?
                   </button>
@@ -161,7 +165,7 @@ export default function Login() {
           )}
 
           {message && (
-            <div className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
+            <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
               </svg>
@@ -192,7 +196,7 @@ export default function Login() {
           {mode === 'login' && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Noch kein Konto?{' '}
-              <button onClick={() => switchMode('register')} className="text-green-600 dark:text-green-400 font-semibold">
+              <button onClick={() => switchMode('register')} className="text-indigo-600 dark:text-indigo-400 font-semibold">
                 Registrieren
               </button>
             </p>
@@ -200,14 +204,14 @@ export default function Login() {
           {mode === 'register' && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Bereits registriert?{' '}
-              <button onClick={() => switchMode('login')} className="text-green-600 dark:text-green-400 font-semibold">
+              <button onClick={() => switchMode('login')} className="text-indigo-600 dark:text-indigo-400 font-semibold">
                 Anmelden
               </button>
             </p>
           )}
           {mode === 'reset' && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              <button onClick={() => switchMode('login')} className="text-green-600 dark:text-green-400 font-semibold">
+              <button onClick={() => switchMode('login')} className="text-indigo-600 dark:text-indigo-400 font-semibold">
                 ← Zurück zur Anmeldung
               </button>
             </p>
@@ -217,7 +221,7 @@ export default function Login() {
         )}
       </div>
 
-      <p className="text-green-300 text-xs mt-6 text-center">
+      <p className="text-indigo-300 text-xs mt-6 text-center">
         Daten werden in der Cloud gespeichert · alle Geräte synchron
       </p>
     </div>

@@ -192,6 +192,9 @@ const useStore = create((set, get) => ({
   recipes:       [],
   dataLoading:   false,
   dataError:     null,
+  spiceSetupDone: localStorage.getItem('spice-setup-done') === '1',
+  completeSpiceSetup() { localStorage.setItem('spice-setup-done', '1'); set({ spiceSetupDone: true }) },
+  restartSpiceSetup()  { localStorage.removeItem('spice-setup-done'); set({ spiceSetupDone: false }) },
 
   // ── Aktivitätsverlauf ───────────────────────────────────────────────────
 
@@ -639,9 +642,10 @@ const useStore = create((set, get) => ({
       supabase.from('recipes').select('*').eq('household_id', household.id).order('created_at', { ascending: false }),
     ])
 
-    set({
+    const spices = (spicesData ?? []).map(toJS)
+    const patch = {
       household,
-      spices:        (spicesData ?? []).map(toJS),
+      spices,
       shoppingItems: (shopData   ?? []).map(shopToJS),
       locations:     (locData    ?? []).map(locToJS),
       categories:    (catData    ?? []).map(catToJS),
@@ -649,7 +653,12 @@ const useStore = create((set, get) => ({
       recipes:       (recipeData ?? []).map(recipeToJS),
       dataLoading:   false,
       _dataLoadingLock: false,
-    })
+    }
+    if (!get().spiceSetupDone && spices.length > 0) {
+      localStorage.setItem('spice-setup-done', '1')
+      patch.spiceSetupDone = true
+    }
+    set(patch)
   },
 
   // ── Rezepte ──────────────────────────────────────────────────────────

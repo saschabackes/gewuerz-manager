@@ -1,25 +1,91 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import useStore from '../../store/useStore'
 
 function uid(p='w') { return p + '_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36) }
 
-// Default-Regale (frei umbenennbar/erweiterbar)
+function logActivity(action, target, detail) {
+  try { useStore.getState()._logActivity(action, target, detail) } catch {}
+}
+
+// Default-Regale (frei umbenennbar/erweiterbar) – mit realistischen Lagerbedingungen
 const DEFAULT_RACKS = [
-  { id: 'r_wz',     label: 'Regal Wohnzimmer', emoji: '🛋️', slots: ['A/1','A/2','A/3','B/1','B/2','B/3','C/1','C/2','C/3'] },
-  { id: 'r_keller', label: 'Regal Keller',     emoji: '🔻', slots: ['1','2','3','4','5','6'] },
-  { id: 'r_kueche', label: 'Weinkühlschrank',  emoji: '🧊', slots: ['oben','mitte','unten'] },
+  { id: 'r_wz',     label: 'Regal Wohnzimmer', emoji: '🛋️',
+    slots: ['A/1','A/2','A/3','B/1','B/2','B/3','C/1','C/2','C/3'],
+    conditions: { temperature: 'normal', light: 'mixed',  humidity: 'normal', vibration: 'still' } },
+  { id: 'r_keller', label: 'Regal Keller',     emoji: '🔻',
+    slots: ['1','2','3','4','5','6'],
+    conditions: { temperature: 'cool',   light: 'dark',   humidity: 'humid',  vibration: 'still' } },
+  { id: 'r_kueche', label: 'Weinkühlschrank',  emoji: '🧊',
+    slots: ['oben','mitte','unten'],
+    conditions: { temperature: 'cool',   light: 'dark',   humidity: 'normal', vibration: 'some'  } },
 ]
+
+// ── Lagerbedingungen ─────────────────────────────────────────────────────────
+export const CONDITION_OPTIONS = {
+  temperature: [
+    { id: 'cool',   label: '🧊 Kühl <14°',   pts: 40 },
+    { id: 'normal', label: '🌤️ Normal 14-20°', pts: 20 },
+    { id: 'warm',   label: '🥵 Warm >20°',    pts: 0  },
+  ],
+  light: [
+    { id: 'dark',   label: '🌑 Dunkel',  pts: 25 },
+    { id: 'mixed',  label: '🌗 Gemischt', pts: 12 },
+    { id: 'bright', label: '☀️ Hell',    pts: 0  },
+  ],
+  humidity: [
+    { id: 'humid',  label: '💦 Feucht 60-80%', pts: 20 },
+    { id: 'normal', label: '🌬️ Normal',        pts: 10 },
+    { id: 'dry',    label: '🏜️ Trocken',       pts: 0  },
+  ],
+  vibration: [
+    { id: 'still',  label: '🔇 Ruhig',         pts: 15 },
+    { id: 'some',   label: '🔊 Leichte Vibration', pts: 5 },
+  ],
+}
+
+const DEFAULT_CONDITIONS = { temperature: 'normal', light: 'mixed', humidity: 'normal', vibration: 'still' }
+
+export function qualityScore(conditions) {
+  const c = conditions || DEFAULT_CONDITIONS
+  let s = 0
+  Object.keys(CONDITION_OPTIONS).forEach(k => {
+    const opt = CONDITION_OPTIONS[k].find(o => o.id === c[k])
+    s += opt?.pts ?? 0
+  })
+  return Math.min(100, s)
+}
+
+export function qualityLabel(score) {
+  if (score >= 85) return { label: 'Optimal', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }
+  if (score >= 65) return { label: 'Gut',     cls: 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300' }
+  if (score >= 40) return { label: 'Mittel',  cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }
+  return                { label: 'Schlecht', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }
+}
+
+// Effektives Trinkfenster bei realer Lagerung – verkürzt Span nach Score
+export function effectiveDrinkUntil(bottle, rack) {
+  const score = qualityScore(rack?.conditions)
+  const span  = bottle.drinkUntil - bottle.drinkFrom
+  if (score >= 85 || span <= 0) return bottle.drinkUntil
+  const factor = 0.4 + (score / 100) * 0.6 // 0.4..1.0
+  return Math.round(bottle.drinkFrom + span * factor)
+}
 
 export const useCellar = create(
   persist(
     (set, get) => ({
       racks: DEFAULT_RACKS,
       bottles: [],
+      setupDone: false,
       recentNames: [],
       lastUsedRack: null, // {rackId, slot}
       formOpen: false,
       formPrefill: null,
       pending: [], // [{id, name, fromBottleId?, ...}]
+
+      completeSetup() { set({ setupDone: true }) },
+      restartSetup()  { set({ setupDone: false }) },
 
       openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
       closeForm()              { set({ formOpen: false, formPrefill: null }) },
@@ -33,9 +99,11 @@ export const useCellar = create(
           pending: [...s.pending, {
             id: pid, name: b.name, fromBottleId: bottleId,
             winery: b.winery, vintage: b.vintage, region: b.region, country: b.country,
-            grape: b.grape, color: b.color, alcoholFree: b.alcoholFree,
+            grape: b.grape, color: b.color, wineType: b.wineType, sweetness: b.sweetness,
+            alcoholFree: b.alcoholFree,
             drinkFrom: b.drinkFrom, drinkUntil: b.drinkUntil,
             rackId: b.rackId, slot: b.slot, photoData: b.photoData,
+            retailer: b.retailer, priceEur: b.priceEur, link: b.link,
           }],
           bottles: s.bottles.map(x => x.id === bottleId ? { ...x, restock: false } : x),
         }))
@@ -60,9 +128,12 @@ export const useCellar = create(
 
       // ── Racks ──────────────────────────────────────────────────────────────
       addRack(label, emoji='🍷') {
-        const r = { id: uid('r'), label, emoji, slots: ['1','2','3'] }
+        const r = { id: uid('r'), label, emoji, slots: ['1','2','3'], conditions: { ...DEFAULT_CONDITIONS } }
         set(s => ({ racks: [...s.racks, r] }))
         return r.id
+      },
+      setRackConditions(id, conditions) {
+        set(s => ({ racks: s.racks.map(r => r.id === id ? { ...r, conditions: { ...(r.conditions || DEFAULT_CONDITIONS), ...conditions } } : r) }))
       },
       renameRack(id, label, emoji) {
         set(s => ({ racks: s.racks.map(r => r.id===id ? { ...r, label, emoji: emoji ?? r.emoji } : r) }))
@@ -94,8 +165,7 @@ export const useCellar = create(
 
       // ── Bottles ────────────────────────────────────────────────────────────
       addBottle(data) {
-        const b = {
-          id: uid('b'),
+        const base = {
           name: data.name.trim(),
           winery: data.winery || '',
           vintage: Number(data.vintage) || new Date().getFullYear(),
@@ -103,35 +173,58 @@ export const useCellar = create(
           country: data.country || '',
           grape: data.grape || '',
           color: data.color || 'rot',
+          wineType: data.wineType || 'wein',
+          sweetness: data.sweetness || '',
+          classification: data.classification || '',
           alcohol: data.alcohol || '',
           alcoholFree: !!data.alcoholFree,
           drinkFrom: Number(data.drinkFrom) || (Number(data.vintage) || new Date().getFullYear()) + 1,
           drinkUntil: Number(data.drinkUntil) || (Number(data.vintage) || new Date().getFullYear()) + 5,
-          rackId: data.rackId,
-          slot: data.slot || '',
           bought: data.bought || '',
           priceEur: data.priceEur ? Number(data.priceEur) : null,
+          retailer: data.retailer || '',
+          purchaseDate: data.purchaseDate || '',
+          link: data.link || '',
+          barcode: data.barcode || '',
           rating: Number(data.rating) || 0,
           tastingNotes: data.tastingNotes || '',
-          tasteProfile: data.tasteProfile || {}, // { sweetness, body, acidity, tannin, oak }
+          tasteProfile: data.tasteProfile || {},
           aromas: data.aromas || [],
           pairings: data.pairings || [],
           restock: !!data.restock,
-          count: Math.max(1, Number(data.count) || 1),
           note: data.note || '',
           photoData: data.photoData || null,
-          history: [], // [{ id, date, rating, occasion, note }]
+          history: [],
         }
-        set(s => ({
-          bottles: [...s.bottles, b],
-          lastUsedRack: { rackId: data.rackId, slot: data.slot },
-          recentNames: [b.name, ...s.recentNames.filter(n => n !== b.name)].slice(0, 30),
-        }))
-        return b.id
+        const locations = data.locations && data.locations.length > 0
+          ? data.locations
+          : [{ rackId: data.rackId, slot: data.slot || '', count: Math.max(1, Number(data.count) || 1) }]
+        const grouped = {}
+        locations.forEach(loc => {
+          const key = `${loc.rackId}__${loc.slot}`
+          if (!grouped[key]) grouped[key] = { rackId: loc.rackId, slot: loc.slot, count: 0 }
+          grouped[key].count += (loc.count || 1)
+        })
+        const ids = []
+        const entries = Object.values(grouped)
+        entries.forEach(loc => {
+          const b = { ...base, id: uid('b'), rackId: loc.rackId, slot: loc.slot, count: loc.count }
+          ids.push(b.id)
+          set(s => ({
+            bottles: [...s.bottles, b],
+            lastUsedRack: { rackId: loc.rackId, slot: loc.slot },
+            recentNames: [b.name, ...s.recentNames.filter(n => n !== b.name)].slice(0, 30),
+          }))
+        })
+        const totalCount = entries.reduce((s, l) => s + l.count, 0)
+        logActivity('wine_added', base.name, `${totalCount}× ${base.vintage}`)
+        return ids.length === 1 ? ids[0] : ids
       },
 
       updateBottle(id, patch) {
+        const b = get().bottles.find(x => x.id === id)
         set(s => ({ bottles: s.bottles.map(b => b.id === id ? { ...b, ...patch } : b) }))
+        if (b) logActivity('wine_updated', b.name)
       },
 
       toggleRestock(id) {
@@ -164,9 +257,14 @@ export const useCellar = create(
             }
           }),
         }))
-        // count==0 → trotzdem behalten (Geschichte interessant). Erst auf Wunsch entfernen.
+        const bottle = get().bottles.find(x => x.id === id)
+        if (bottle) logActivity('wine_consumed', bottle.name)
       },
-      removeBottle(id) { set(s => ({ bottles: s.bottles.filter(b => b.id !== id) })) },
+      removeBottle(id) {
+        const b = get().bottles.find(x => x.id === id)
+        set(s => ({ bottles: s.bottles.filter(b => b.id !== id) }))
+        if (b) logActivity('wine_deleted', b.name)
+      },
 
       seedDemoData() {
         const samples = [
@@ -235,15 +333,27 @@ export const useCellar = create(
       clear() { set({ bottles: [], recentNames: [], lastUsedRack: null }) },
       resetSetup() { set({ racks: DEFAULT_RACKS, bottles: [], recentNames: [], lastUsedRack: null }) },
     }),
-    { name: 'haushalt-cellar-v5' }
+    {
+      name: 'haushalt-cellar-v6',
+      version: 1,
+      migrate: (persisted, version) => {
+        if (version === 0 && persisted && !('setupDone' in persisted)) {
+          persisted.setupDone = true
+        }
+        return persisted
+      },
+    }
   )
 )
 
-export function drinkStatus(b) {
+// Status mit Berücksichtigung der Lagerbedingungen.
+// Wenn das effektive Trinkfenster wegen schlechter Lagerung enger ist, zeigen wir das.
+export function drinkStatus(b, rack) {
   const y = new Date().getFullYear()
-  if (y < b.drinkFrom) return { label: `noch ${b.drinkFrom - y} J zu jung`,    cls: 'bg-sky-100 text-sky-700' }
-  if (y > b.drinkUntil) return { label: `${y - b.drinkUntil} J über Höhepunkt`, cls: 'bg-red-100 text-red-700' }
-  const rest = b.drinkUntil - y
-  if (rest <= 1) return { label: `bald trinken (bis ${b.drinkUntil})`,         cls: 'bg-orange-100 text-orange-700' }
-  return { label: `optimal bis ${b.drinkUntil}`,                                cls: 'bg-emerald-100 text-emerald-700' }
+  const effUntil = rack ? effectiveDrinkUntil(b, rack) : b.drinkUntil
+  if (y < b.drinkFrom) return { label: `noch ${b.drinkFrom - y} J zu jung`, cls: 'bg-sky-100 text-sky-700', effUntil }
+  if (y > effUntil)    return { label: `${y - effUntil} J über Höhepunkt`,  cls: 'bg-red-100 text-red-700', effUntil }
+  const rest = effUntil - y
+  if (rest <= 1) return { label: `bald trinken (bis ${effUntil})`,          cls: 'bg-orange-100 text-orange-700', effUntil }
+  return { label: `optimal bis ${effUntil}`,                                 cls: 'bg-emerald-100 text-emerald-700', effUntil }
 }

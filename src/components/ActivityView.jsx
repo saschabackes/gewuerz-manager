@@ -2,11 +2,18 @@ import { useEffect } from 'react'
 import useStore from '../store/useStore'
 
 const ACTIONS = {
-  spice_added:    { emoji: '➕', bg: 'bg-green-100 dark:bg-green-900/40',   text: (e) => <>hat <b>{e.target}</b> hinzugefügt</> },
+  spice_added:    { emoji: '🌿', bg: 'bg-green-100 dark:bg-green-900/40',   text: (e) => <>hat <b>{e.target}</b> hinzugefügt</> },
   spice_updated:  { emoji: '✏️', bg: 'bg-blue-100 dark:bg-blue-900/40',     text: (e) => <>hat <b>{e.target}</b> bearbeitet</> },
   spice_deleted:  { emoji: '🗑️', bg: 'bg-red-100 dark:bg-red-900/40',       text: (e) => <>hat <b>{e.target}</b> gelöscht</> },
   fill_changed:   { emoji: '📊', bg: 'bg-amber-100 dark:bg-amber-900/40',   text: (e) => <><b>{e.target}</b> → {e.detail}</> },
   shopping_added: { emoji: '🛒', bg: 'bg-purple-100 dark:bg-purple-900/40', text: (e) => <>hat <b>{e.target}</b> zum Einkauf hinzugefügt</> },
+  freezer_added:  { emoji: '❄️', bg: 'bg-sky-100 dark:bg-sky-900/40',       text: (e) => <>hat <b>{e.target}</b> eingefroren{e.detail ? ` (${e.detail})` : ''}</> },
+  freezer_consumed:{ emoji: '🍽️', bg: 'bg-sky-100 dark:bg-sky-900/40',      text: (e) => <>hat eine Portion <b>{e.target}</b> verbraucht</> },
+  freezer_deleted:{ emoji: '🗑️', bg: 'bg-red-100 dark:bg-red-900/40',       text: (e) => <>hat <b>{e.target}</b> aus dem TK entfernt</> },
+  wine_added:     { emoji: '🍷', bg: 'bg-purple-100 dark:bg-purple-900/40', text: (e) => <>hat <b>{e.target}</b> eingelagert{e.detail ? ` (${e.detail})` : ''}</> },
+  wine_consumed:  { emoji: '🥂', bg: 'bg-purple-100 dark:bg-purple-900/40', text: (e) => <>hat <b>{e.target}</b> getrunken</> },
+  wine_deleted:   { emoji: '🗑️', bg: 'bg-red-100 dark:bg-red-900/40',       text: (e) => <>hat <b>{e.target}</b> aus dem Keller entfernt</> },
+  wine_updated:   { emoji: '✏️', bg: 'bg-purple-100 dark:bg-purple-900/40', text: (e) => <>hat <b>{e.target}</b> bearbeitet</> },
 }
 
 function avatarColor(name = '') {
@@ -76,7 +83,7 @@ export default function ActivityView({ onClose }) {
               <div className="text-5xl mb-4">🕓</div>
               <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-1">Noch keine Aktivitäten</h3>
               <p className="text-sm text-gray-400">
-                Änderungen an Gewürzen und der Einkaufsliste erscheinen hier.
+                Änderungen an Gewürzen, TK-Vorräten und Weinen erscheinen hier.
               </p>
             </div>
           ) : (

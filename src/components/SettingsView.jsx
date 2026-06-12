@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import useStore from '../store/useStore'
-import { CATEGORY_COLORS } from '../data/spices'
-import StatsView from './StatsView'
+import { MODULES_ENABLED, APP_NAME, APP_URL } from '../branding'
+import { useFreezer } from '../modules/freezer/store'
+import { useCellar } from '../modules/cellar/store'
 import { adminGetMembers, adminResetPassword, adminBanUser, adminRemoveMember, adminChangeRole,
          superListUsers, superBanUser, superResetPassword, superDeleteUser, superBackup, superStats } from '../lib/userAdmin'
 
@@ -89,13 +90,13 @@ export default function SettingsView({ onClose }) {
                 onClick={() => { setTab('super'); setNewUserCount(0) }}
                 className={`relative flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   tab === 'super'
-                    ? 'bg-rose-600 text-white'
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                 }`}
               >
                 Betreiber
                 {newUserCount > 0 && tab !== 'super' && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-indigo-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow">
                     {newUserCount}
                   </span>
                 )}
@@ -111,27 +112,17 @@ export default function SettingsView({ onClose }) {
             <div className="border-t border-gray-100 dark:border-gray-700" />
             <HouseholdSection />
             <div className="border-t border-gray-100 dark:border-gray-700" />
-            <LocationsSection />
-            <div className="border-t border-gray-100 dark:border-gray-700" />
-            <CategoriesSection />
-            <div className="border-t border-gray-100 dark:border-gray-700" />
             <BringSection />
             <div className="border-t border-gray-100 dark:border-gray-700" />
             <CookidooSection />
             <div className="border-t border-gray-100 dark:border-gray-700" />
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 bg-teal-100 dark:bg-teal-900/40 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-teal-600 dark:text-teal-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <h3 className="font-bold text-gray-800 dark:text-gray-100">Statistik</h3>
-              </div>
-              <StatsView />
-            </div>
-            <div className="border-t border-gray-100 dark:border-gray-700" />
             <ExportSection />
+            {MODULES_ENABLED && (
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-700" />
+                <SetupAssistantSection onClose={onClose} />
+              </>
+            )}
           </div>
         )}
 
@@ -181,7 +172,7 @@ function HouseholdSection() {
   }
 
   function shareCode() {
-    const text = `Tritt meinem Gewürz-Haushalt bei!\nEinladungscode: ${displayCode}\n\nhttps://gewuerzmanager.netlify.app`
+    const text = `Tritt meinem Gewürz-Haushalt bei!\nEinladungscode: ${displayCode}\n\n${APP_URL}`
     if (navigator.share) {
       navigator.share({ text })
     } else {
@@ -378,9 +369,9 @@ function InviteSection() {
   function buildMessage() {
     const p = personalMsg.trim() ? `${personalMsg.trim()}\n\n` : ''
     if (mode === 'household') {
-      return `Hey! 🌿\n\n${p}${senderName} lädt dich ein, unsere Gewürzsammlung gemeinsam zu verwalten.\n\nWir nutzen dafür den Gewürz-Manager – eine App die uns hilft den Überblick zu behalten:\n• Welche Gewürze haben wir, wie viel ist noch da?\n• Wo ist was gelagert?\n• Was müssen wir nachkaufen?\n\nSo trittst du „${houseName}" bei:\n1. App öffnen → https://gewuerzmanager.netlify.app\n2. Konto erstellen\n3. „Anderem Haushalt beitreten" wählen\n4. Einladungscode eingeben: ${displayCode}\n\nBis gleich! 👋`
+      return `Hey!\n\n${p}${senderName} lädt dich ein, unsere Vorräte gemeinsam zu verwalten.\n\nWir nutzen dafür ${APP_NAME} – eine App die uns hilft den Überblick zu behalten:\n• Welche Gewürze haben wir, wie viel ist noch da?\n• Wo ist was gelagert?\n• Was müssen wir nachkaufen?\n\nSo trittst du „${houseName}" bei:\n1. App öffnen → ${APP_URL}\n2. Konto erstellen\n3. „Anderem Haushalt beitreten" wählen\n4. Einladungscode eingeben: ${displayCode}\n\nBis gleich! 👋`
     }
-    return `Hey! 🌿\n\n${p}Kennst du den Gewürz-Manager? Eine kostenlose App um die eigene Gewürzsammlung im Griff zu behalten.\n\nWas du damit machen kannst:\n• Gewürze mit Foto, Menge & Lagerort erfassen\n• Ablaufdaten & Füllstand im Blick behalten\n• Einkaufsliste – optional mit Bring!-Anbindung\n• Haushalt mit Familie teilen (wenn du magst)\n\nEinfach kostenlos registrieren:\nhttps://gewuerzmanager.netlify.app\n\nViel Spaß! 👋`
+    return `Hey!\n\n${p}Kennst du ${APP_NAME}? Eine kostenlose App um Gewürze${MODULES_ENABLED ? ', Tiefkühl-Vorräte und Weine' : ''} im Griff zu behalten.\n\nWas du damit machen kannst:\n• Vorräte mit Foto, Menge & Lagerort erfassen\n• Ablaufdaten & Füllstand im Blick behalten\n• Einkaufsliste – optional mit Bring!-Anbindung\n• Haushalt mit Familie teilen (wenn du magst)\n\nEinfach kostenlos registrieren:\n${APP_URL}\n\nViel Spaß! 👋`
   }
 
   function handleShare() {
@@ -771,7 +762,7 @@ function SuperAdminSection() {
       const url  = URL.createObjectURL(blob)
       const a    = document.createElement('a')
       a.href     = url
-      a.download = `gewuerzmanager-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.download = `${MODULES_ENABLED ? 'depot' : 'gewuerzmanager'}-backup-${new Date().toISOString().slice(0, 10)}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -801,8 +792,8 @@ function SuperAdminSection() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 bg-rose-100 dark:bg-rose-900/40 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
@@ -839,7 +830,7 @@ function SuperAdminSection() {
       <button
         onClick={handleBackup}
         disabled={busy}
-        className="w-full flex items-center justify-center gap-2 bg-rose-600 text-white rounded-2xl py-3 text-sm font-semibold hover:bg-rose-700 transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-2xl py-3 text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -882,9 +873,9 @@ function SuperAdminSection() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{u.name}</span>
                       {u.email.toLowerCase() === SUPER_ADMIN_EMAIL && (
-                        <span className="text-xs bg-rose-600 text-white font-semibold rounded-full px-2 py-0.5">Betreiber</span>
+                        <span className="text-xs bg-indigo-600 text-white font-semibold rounded-full px-2 py-0.5">Betreiber</span>
                       )}
-                      {isNew(u) && <span className="text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-semibold rounded-full px-2 py-0.5">Neu</span>}
+                      {isNew(u) && <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-semibold rounded-full px-2 py-0.5">Neu</span>}
                       {u.isBanned && <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 font-semibold rounded-full px-2 py-0.5">Gesperrt</span>}
                       {!u.confirmed && <span className="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 font-semibold rounded-full px-2 py-0.5">Unbestätigt</span>}
                     </div>
@@ -1127,163 +1118,6 @@ function BringSection() {
   )
 }
 
-// ── Farbwähler ────────────────────────────────────────────────────────────────
-
-function ColorPicker({ value, onChange }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {Object.entries(CATEGORY_COLORS).map(([key, cls]) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => onChange(key)}
-          title={key}
-          className={`w-7 h-7 rounded-full transition-all ${cls.bg} border-2 ${
-            value === key
-              ? 'border-gray-500 scale-110 shadow'
-              : 'border-transparent hover:scale-105'
-          }`}
-        />
-      ))}
-    </div>
-  )
-}
-
-// ── Kategorien ────────────────────────────────────────────────────────────────
-
-function CategoriesSection() {
-  const { categories, spices, addCategory, updateCategory, deleteCategory } = useStore()
-  const [newName, setNewName]   = useState('')
-  const [newColor, setNewColor] = useState('green')
-  const [editingId, setEditingId]   = useState(null)
-  const [editName, setEditName]     = useState('')
-  const [editColor, setEditColor]   = useState('green')
-
-  function handleAdd(e) {
-    e.preventDefault()
-    if (!newName.trim()) return
-    addCategory({ name: newName.trim(), color: newColor, sortOrder: categories.length })
-    setNewName('')
-    setNewColor('green')
-  }
-
-  function startEdit(cat) {
-    setEditingId(cat.id)
-    setEditName(cat.name)
-    setEditColor(cat.color)
-  }
-
-  function saveEdit(id) {
-    if (editName.trim()) updateCategory(id, { name: editName.trim(), color: editColor })
-    setEditingId(null)
-  }
-
-  function handleDelete(cat) {
-    const count = spices.filter(s => s.category === cat.id).length
-    const msg = count > 0
-      ? `"${cat.name}" löschen? ${count} Gewürz${count !== 1 ? 'e verlieren' : ' verliert'} die Kategorie-Zuweisung.`
-      : `"${cat.name}" wirklich löschen?`
-    if (confirm(msg)) deleteCategory(cat.id)
-  }
-
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <h3 className="font-bold text-gray-800 dark:text-gray-100">Kategorien</h3>
-        {categories.length > 0 && (
-          <span className="ml-auto text-xs text-gray-400 font-medium">{categories.length} Kategorien</span>
-        )}
-      </div>
-
-      <div className="space-y-2 mb-4">
-        {categories.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">Noch keine Kategorien angelegt.</p>
-        )}
-        {categories.map(cat => {
-          const count = spices.filter(s => s.category === cat.id).length
-          const cls   = CATEGORY_COLORS[cat.color] ?? CATEGORY_COLORS.gray
-          if (editingId === cat.id) {
-            return (
-              <div key={cat.id} className="card p-3 space-y-3 ring-2 ring-green-500">
-                <input
-                  type="text"
-                  className="input py-2 text-sm"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  placeholder="Name"
-                  autoFocus
-                />
-                <div>
-                  <p className="text-xs text-gray-400 mb-2">Farbe</p>
-                  <ColorPicker value={editColor} onChange={setEditColor} />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => saveEdit(cat.id)} className="btn-primary flex-1 py-2 text-sm">Speichern</button>
-                  <button onClick={() => setEditingId(null)} className="btn-secondary flex-1 py-2 text-sm">Abbrechen</button>
-                </div>
-              </div>
-            )
-          }
-          return (
-            <div key={cat.id} className="card px-4 py-3 flex items-center gap-3">
-              <div className={`w-8 h-8 ${cls.bg} rounded-lg flex-none`} />
-              <div className="flex-1 min-w-0">
-                <div className={`font-semibold text-sm ${cls.text}`}>{cat.name}</div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {count === 0 ? 'Keine Gewürze' : `${count} Gewürz${count !== 1 ? 'e' : ''}`}
-                </div>
-              </div>
-              <div className="flex gap-1 flex-none">
-                <button
-                  onClick={() => startEdit(cat)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleDelete(cat)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <form onSubmit={handleAdd} className="space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Neue Kategorie</p>
-        <input
-          type="text"
-          className="input py-2.5 text-sm"
-          placeholder="z.B. Kräuter, Asiatisch, Scharf…"
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-        />
-        <div>
-          <p className="text-xs text-gray-400 mb-2">Farbe</p>
-          <ColorPicker value={newColor} onChange={setNewColor} />
-        </div>
-        <button type="submit" className="btn-primary w-full" disabled={!newName.trim()}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Kategorie hinzufügen
-        </button>
-      </form>
-    </div>
-  )
-}
 
 // ── Darstellung (Dark Mode) ───────────────────────────────────────────────────
 
@@ -1328,16 +1162,78 @@ function AppearanceSection() {
 
 function ExportSection() {
   const { exportData, spices, categories, locations, household } = useStore()
+  const freezerItems = useFreezer(s => s.items)
+  const freezerStorages = useFreezer(s => s.storages)
+  const cellarBottles = useCellar(s => s.bottles)
+  const cellarRacks = useCellar(s => s.racks)
   const [done, setDone] = useState(false)
 
   function handleExport() {
-    const data = exportData()
+    const spiceData = exportData()
+    const data = {
+      exportedAt: new Date().toISOString(),
+      version: 2,
+      haushalt: household?.name ?? '',
+      modules: {
+        spices: {
+          kategorien: spiceData.kategorien,
+          lagerorte: spiceData.lagerorte,
+          gewuerze: spiceData.gewuerze,
+        },
+        freezer: {
+          storages: freezerStorages.map(s => ({
+            label: s.label,
+            emoji: s.emoji,
+            compartments: s.compartments.map(c => ({ label: c.label })),
+          })),
+          items: freezerItems.map(it => ({
+            name: it.name,
+            category: it.category ?? null,
+            portions: it.portions ?? null,
+            portionSize: it.portionSize ?? null,
+            frozenAt: it.frozenAt ?? null,
+            expiryDate: it.expiryDate ?? null,
+            note: it.note ?? null,
+            needsRestock: it.needsRestock ?? false,
+          })),
+        },
+        cellar: {
+          racks: cellarRacks.map(r => ({
+            label: r.label,
+            emoji: r.emoji,
+            slots: r.slots,
+            conditions: r.conditions ?? null,
+          })),
+          bottles: cellarBottles.map(b => ({
+            name: b.name,
+            winery: b.winery ?? null,
+            vintage: b.vintage ?? null,
+            region: b.region ?? null,
+            country: b.country ?? null,
+            grape: b.grape ?? null,
+            color: b.color ?? null,
+            sweetness: b.sweetness ?? null,
+            wineType: b.wineType ?? null,
+            alcohol: b.alcohol ?? null,
+            alcoholFree: b.alcoholFree ?? false,
+            classification: b.classification ?? null,
+            drinkFrom: b.drinkFrom ?? null,
+            drinkUntil: b.drinkUntil ?? null,
+            price: b.price ?? null,
+            retailer: b.retailer ?? null,
+            note: b.note ?? null,
+            rating: b.rating ?? null,
+            restock: b.restock ?? false,
+          })),
+        },
+      },
+    }
     const json = JSON.stringify(data, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = `gewuerze-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `haushalt-backup-${new Date().toISOString().slice(0, 10)}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -1358,13 +1254,25 @@ function ExportSection() {
       </div>
 
       <div className="card px-4 py-3">
-        <p className="text-sm text-gray-700 dark:text-gray-200 mb-0.5">
-          <span className="font-semibold">{spices.length} Gewürze</span>
-          {categories.length > 0 && <span className="text-gray-400"> · {categories.length} Kategorien</span>}
-          {locations.length  > 0 && <span className="text-gray-400"> · {locations.length} Lagerorte</span>}
-        </p>
+        <div className="space-y-1 mb-3">
+          <p className="text-sm text-gray-700 dark:text-gray-200">
+            <span className="font-semibold">{spices.length}</span> <span className="text-gray-400">Gewürze</span>
+            {categories.length > 0 && <span className="text-gray-400"> · {categories.length} Kategorien</span>}
+            {locations.length  > 0 && <span className="text-gray-400"> · {locations.length} Lagerorte</span>}
+          </p>
+          {freezerItems.length > 0 && (
+            <p className="text-sm text-gray-700 dark:text-gray-200">
+              <span className="font-semibold">{freezerItems.length}</span> <span className="text-gray-400">Tiefkühl-Einträge · {freezerStorages.length} Schränke</span>
+            </p>
+          )}
+          {cellarBottles.length > 0 && (
+            <p className="text-sm text-gray-700 dark:text-gray-200">
+              <span className="font-semibold">{cellarBottles.length}</span> <span className="text-gray-400">Flaschen · {cellarRacks.length} Lagerorte</span>
+            </p>
+          )}
+        </div>
         <p className="text-xs text-gray-400 mb-3">
-          Haushalt „{household?.name ?? '…'}" · JSON-Datei, lokal gespeichert
+          Haushalt „{household?.name ?? '…'}" · alle Module · JSON-Datei
         </p>
         <button
           onClick={handleExport}
@@ -1386,7 +1294,7 @@ function ExportSection() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Daten exportieren
+              Komplettes Backup exportieren
             </>
           )}
         </button>
@@ -1486,125 +1394,38 @@ function CookidooSection() {
   )
 }
 
-// ── Lagerorte ─────────────────────────────────────────────────────────────────
+// ── Setup-Assistenten neu starten ────────────────────────────────────────────
 
-function LocationsSection() {
-  const { locations, spices, addLocation, updateLocation, deleteLocation } = useStore()
-  const [newName, setNewName] = useState('')
-  const [newDesc, setNewDesc] = useState('')
-  const [editingId, setEditingId] = useState(null)
-  const [editName, setEditName] = useState('')
-  const [editDesc, setEditDesc] = useState('')
+function SetupAssistantSection({ onClose }) {
+  const { restartSpiceSetup } = useStore()
+  const restartFreezer = useFreezer(s => s.restartSetup)
+  const restartCellar = useCellar(s => s.restartSetup)
 
-  function handleAdd(e) {
-    e.preventDefault()
-    if (!newName.trim()) return
-    addLocation({ name: newName.trim(), description: newDesc.trim(), sortOrder: locations.length })
-    setNewName('')
-    setNewDesc('')
-  }
-
-  function startEdit(loc) {
-    setEditingId(loc.id)
-    setEditName(loc.name)
-    setEditDesc(loc.description)
-  }
-
-  function saveEdit(id) {
-    if (editName.trim()) {
-      updateLocation(id, { name: editName.trim(), description: editDesc.trim(), sortOrder: locations.find(l => l.id === id)?.sortOrder ?? 0 })
-    }
-    setEditingId(null)
-  }
-
-  function handleDelete(loc) {
-    const count = spices.filter(s => s.locationId === loc.id).length
-    const msg = count > 0
-      ? `"${loc.name}" löschen? ${count} Gewürz${count !== 1 ? 'e verlieren' : ' verliert'} die Lagerort-Zuweisung.`
-      : `"${loc.name}" wirklich löschen?`
-    if (confirm(msg)) deleteLocation(loc.id)
-  }
+  const modules = [
+    { label: '🌿 Gewürze', restart: restartSpiceSetup },
+    { label: '❄️ Tiefkühl', restart: restartFreezer },
+    { label: '🍷 Weinkeller', restart: restartCellar },
+  ]
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <h3 className="font-bold text-gray-800 dark:text-gray-100">Lagerorte</h3>
-        {locations.length > 0 && (
-          <span className="ml-auto text-xs text-gray-400 font-medium">{locations.length} Orte</span>
-        )}
+        <div className="w-7 h-7 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center text-sm">🧙</div>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100">Setup-Assistenten</h3>
       </div>
-
-      <div className="space-y-2 mb-4">
-        {locations.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">Noch keine Lagerorte angelegt.</p>
-        )}
-        {locations.map(loc => {
-          const count = spices.filter(s => s.locationId === loc.id).length
-          if (editingId === loc.id) {
-            return (
-              <div key={loc.id} className="card p-3 space-y-2 ring-2 ring-green-500">
-                <input type="text" className="input py-2 text-sm" value={editName}
-                  onChange={e => setEditName(e.target.value)} placeholder="Name" autoFocus />
-                <input type="text" className="input py-2 text-sm" value={editDesc}
-                  onChange={e => setEditDesc(e.target.value)} placeholder="Beschreibung (optional)" />
-                <div className="flex gap-2">
-                  <button onClick={() => saveEdit(loc.id)} className="btn-primary flex-1 py-2 text-sm">Speichern</button>
-                  <button onClick={() => setEditingId(null)} className="btn-secondary flex-1 py-2 text-sm">Abbrechen</button>
-                </div>
-              </div>
-            )
-          }
-          return (
-            <div key={loc.id} className="card px-4 py-3 flex items-center gap-3">
-              <div className="w-8 h-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center flex-none">
-                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{loc.name}</div>
-                {loc.description && <div className="text-xs text-gray-400">{loc.description}</div>}
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {count === 0 ? 'Keine Gewürze' : `${count} Gewürz${count !== 1 ? 'e' : ''}`}
-                </div>
-              </div>
-              <div className="flex gap-1 flex-none">
-                <button onClick={() => startEdit(loc)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button onClick={() => handleDelete(loc)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 dark:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )
-        })}
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        Starte den Einrichtungsassistenten für ein Modul erneut, um Lagerorte und Einstellungen anzupassen.
+      </p>
+      <div className="space-y-2">
+        {modules.map(m => (
+          <button key={m.label} onClick={() => { if (confirm(`Setup-Assistent für ${m.label.slice(3)} neu starten?`)) { m.restart(); onClose() } }}
+            className="w-full flex items-center justify-between bg-gray-50 dark:bg-gray-900/40 rounded-xl px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <span>{m.label}</span>
+            <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">Neu starten ↺</span>
+          </button>
+        ))}
       </div>
-
-      <form onSubmit={handleAdd} className="space-y-2 border-t border-gray-100 dark:border-gray-700 pt-4">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Neuer Lagerort</p>
-        <input type="text" className="input py-2.5 text-sm" placeholder="z.B. Oberschrank links, Kiste 1…"
-          value={newName} onChange={e => setNewName(e.target.value)} />
-        <input type="text" className="input py-2.5 text-sm" placeholder="Beschreibung (optional)"
-          value={newDesc} onChange={e => setNewDesc(e.target.value)} />
-        <button type="submit" className="btn-primary w-full" disabled={!newName.trim()}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Lagerort hinzufügen
-        </button>
-      </form>
     </div>
   )
 }
+

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useCellar, drinkStatus } from './store'
+import { useCellar, drinkStatus, effectiveDrinkUntil, qualityScore, qualityLabel } from './store'
 import { DISH_CATEGORIES, TASTE_AXES, AROMAS, dishById } from './pairing'
+import { isSparkling, CountryPicker } from './wineConstants'
 
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 const COLOR_BG    = { rot: 'from-rose-900 to-rose-700', weiß: 'from-yellow-700 to-yellow-500', rosé: 'from-pink-500 to-pink-400', schaum: 'from-amber-600 to-amber-400' }
@@ -10,14 +11,17 @@ const COUNTRY_FLAG = {
   'Südafrika':'🇿🇦','Neuseeland':'🇳🇿','Australien':'🇦🇺','Griechenland':'🇬🇷','Ungarn':'🇭🇺',
 }
 
-export default function WineDetail({ bottle, onClose, onOpenPairing }) {
+export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) {
   const { racks, drinkOne, removeBottle, updateBottle, toggleRestock } = useCellar()
   const [showDrink, setShowDrink] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
 
   if (!bottle) return null
   const rack = racks.find(r => r.id === bottle.rackId)
-  const status = drinkStatus(bottle)
+  const status = drinkStatus(bottle, rack)
+  const effUntil = effectiveDrinkUntil(bottle, rack)
+  const qScore = qualityScore(rack?.conditions)
+  const ql = qualityLabel(qScore)
   const tp = bottle.tasteProfile || {}
   const drunken = bottle.history?.length || 0
   const flag = COUNTRY_FLAG[bottle.country] || ''
@@ -48,6 +52,9 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
           {bottle.winery && <p className="text-white/90 text-sm mt-0.5">{bottle.winery}</p>}
           <p className="text-white/80 text-xs mt-1">
             {bottle.vintage} · {bottle.color} · {bottle.alcohol || '—'}
+            {bottle.sweetness && <span className="ml-1">· {bottle.sweetness}</span>}
+            {bottle.classification && <span className="ml-1">· {bottle.classification}</span>}
+            {bottle.wineType && bottle.wineType !== 'wein' && <span className="ml-1">· {bottle.wineType}</span>}
             {bottle.alcoholFree && <span className="ml-2 bg-emerald-500/90 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">🚫 ALKOHOLFREI</span>}
           </p>
           <StarRow value={bottle.rating} onChange={r => updateBottle(bottle.id, { rating: r })} large />
@@ -58,28 +65,45 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
       <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 dark:bg-gray-800/50">
         <Fact icon={flag || '🌍'} label="Region" value={`${bottle.region}${bottle.country ? `, ${bottle.country}` : ''}`} />
         <Fact icon="🍇" label="Rebsorte" value={bottle.grape || '—'} />
-        <Fact icon="📅" label="Trinkfenster" value={`${bottle.drinkFrom}–${bottle.drinkUntil}`} sub={status.label} />
+        <Fact icon="📅" label="Trinkfenster" value={`${bottle.drinkFrom}–${effUntil}`}
+          sub={effUntil !== bottle.drinkUntil ? `nominal bis ${bottle.drinkUntil}` : status.label} />
         <Fact icon={rack?.emoji || '📦'} label={rack?.label || '—'} value={bottle.slot || '—'} sub={`${bottle.count}× Bestand · ${drunken}× getrunken`} />
       </div>
 
-      {/* Trinkfenster-Status */}
+      {/* Trinkfenster-Status + Lagerqualität */}
       <div className={`mx-3 mt-3 rounded-xl p-2.5 text-center text-sm font-semibold ${status.cls}`}>
         {status.label}
       </div>
+      {rack && (
+        <div className="mx-3 mt-2 rounded-xl p-2.5 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-3">
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-none ${ql.cls}`}>
+            {qScore}/100 · {ql.label}
+          </span>
+          <div className="text-[11px] text-gray-500 dark:text-gray-300">
+            <span className="font-semibold">{rack.emoji} {rack.label}</span>
+            {effUntil !== bottle.drinkUntil && (
+              <span> — Trinkfenster verkürzt auf {effUntil} (statt {bottle.drinkUntil})</span>
+            )}
+            {effUntil === bottle.drinkUntil && (
+              <span> — optimale Lagerung, volles Trinkfenster</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Ausverkauft → Wiederkauf-CTA */}
       {bottle.count <= 0 && (
-        <div className="mx-3 mt-3 rounded-xl p-3 bg-rose-50 dark:bg-rose-900/30 flex items-center gap-3">
+        <div className="mx-3 mt-3 rounded-xl p-3 bg-gray-100 dark:bg-gray-800/60 flex items-center gap-3">
           <span className="text-2xl">🍷</span>
           <div className="flex-1">
-            <p className="text-sm font-bold text-rose-900 dark:text-rose-200">Ausgetrunken</p>
-            <p className="text-[11px] text-rose-700 dark:text-rose-300">
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-200">Ausgetrunken</p>
+            <p className="text-[11px] text-gray-600 dark:text-gray-300">
               War {bottle.rating > 0 ? `mit ${bottle.rating} Sternen ` : ''}in deiner Sammlung. Wieder kaufen?
             </p>
           </div>
           <button onClick={() => toggleRestock(bottle.id)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-              bottle.restock ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+              bottle.restock ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'
             }`}>
             {bottle.restock ? '✓ auf Einkaufsliste' : '🔄 Wieder kaufen'}
           </button>
@@ -100,7 +124,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
         {bottle.aromas?.length > 0
           ? <div className="flex flex-wrap gap-1.5">
               {bottle.aromas.map(a => (
-                <span key={a} className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-xs font-semibold px-2.5 py-1 rounded-full">
+                <span key={a} className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2.5 py-1 rounded-full">
                   {a}
                 </span>
               ))}
@@ -111,7 +135,7 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
       {/* Pairings */}
       <Section title="🍽️ Passt zu" action={
         <button onClick={onOpenPairing}
-          className="text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-semibold px-2 py-1 rounded-full">
+          className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-1 rounded-full">
           🔄 Wein zu Gericht finden
         </button>
       }>
@@ -160,9 +184,17 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
       )}
 
       {/* Preis & Nachkauf */}
-      <Section title="💶 Preis & Nachkauf">
-        <div className="flex items-center gap-3 flex-wrap">
-          {bottle.priceEur != null && <span className="text-sm text-gray-700 dark:text-gray-200">{bottle.priceEur.toFixed(2)} € pro Flasche</span>}
+      <Section title="💶 Kauf & Nachkauf">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            {bottle.priceEur != null && <span className="text-sm text-gray-700 dark:text-gray-200">{bottle.priceEur.toFixed(2)} € pro Flasche</span>}
+            {bottle.retailer && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">🏪 {bottle.retailer}</span>}
+            {bottle.purchaseDate && <span className="text-xs text-gray-500">🗓️ {bottle.purchaseDate}</span>}
+          </div>
+          {bottle.link && (
+            <a href={bottle.link} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-indigo-600 dark:text-indigo-400 underline truncate block">🔗 {bottle.link}</a>
+          )}
           <button
             onClick={() => toggleRestock(bottle.id)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
@@ -178,10 +210,14 @@ export default function WineDetail({ bottle, onClose, onOpenPairing }) {
       {/* Aktionen */}
       <div className="px-3 py-4 flex gap-2">
         <button onClick={() => setShowDrink(true)}
-          className="flex-1 bg-rose-600 text-white font-semibold py-3 rounded-2xl"
+          className="flex-1 bg-indigo-600 text-white font-semibold py-3 rounded-2xl"
           disabled={bottle.count <= 0}>
           🥂 Getrunken
         </button>
+        {onShare && (
+          <button onClick={() => onShare(bottle.id)}
+            className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-4 rounded-2xl" title="Empfehlen">🔗</button>
+        )}
         <button onClick={() => { if (confirm('Position komplett löschen?')) { removeBottle(bottle.id); onClose() } }}
           className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-4 rounded-2xl">🗑️</button>
       </div>
@@ -245,7 +281,7 @@ function AxisRow({ axis, value, onChange }) {
         {axis.steps.map((s, i) => (
           <button key={s} onClick={() => onChange(s === value ? null : s)}
             className={`flex-1 h-2 rounded-full transition-colors ${
-              i <= idx && idx >= 0 ? 'bg-rose-500' : 'bg-gray-200 dark:bg-gray-700'
+              i <= idx && idx >= 0 ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-700'
             }`}
             title={s}
           />
@@ -291,7 +327,7 @@ function DrinkSheet({ bottle, onClose, onSave }) {
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button onClick={() => onSave({ rating: rating || undefined, occasion, note, date })}
-            className="btn-primary flex-1" style={{ backgroundColor: '#e11d48' }}>Eintragen</button>
+            className="btn-primary flex-1" style={{ backgroundColor: '#0D7377' }}>Eintragen</button>
         </div>
       </div>
     </>
@@ -306,6 +342,13 @@ function EditSheet({ bottle, onClose, onSave }) {
   const [country, setCountry] = useState(bottle.country || '')
   const [grape, setGrape]     = useState(bottle.grape || '')
   const [alcohol, setAlcohol] = useState(bottle.alcohol || '')
+  const [sweetness, setSweetness] = useState(bottle.sweetness || '')
+  const [classification, setClassification] = useState(bottle.classification || '')
+  const [wineType, setWineType]   = useState(bottle.wineType || 'wein')
+  const [retailer, setRetailer]   = useState(bottle.retailer || '')
+  const [priceEur, setPriceEur]   = useState(bottle.priceEur ?? '')
+  const [purchaseDate, setPurchaseDate] = useState(bottle.purchaseDate || '')
+  const [link, setLink]           = useState(bottle.link || '')
   const [aromas, setAromas]   = useState(bottle.aromas || [])
   const [pairings, setPairings] = useState(bottle.pairings || [])
   const [alcoholFree, setAlcoholFree] = useState(!!bottle.alcoholFree)
@@ -326,9 +369,50 @@ function EditSheet({ bottle, onClose, onSave }) {
             <div><label className="label">Name</label><input className="input text-sm" value={name} onChange={e => setName(e.target.value)} /></div>
             <div><label className="label">Weingut</label><input className="input text-sm" value={winery} onChange={e => setWinery(e.target.value)} /></div>
             <div><label className="label">Region</label><input className="input text-sm" value={region} onChange={e => setRegion(e.target.value)} /></div>
-            <div><label className="label">Land</label><input className="input text-sm" value={country} onChange={e => setCountry(e.target.value)} /></div>
+            <div className="col-span-2"><label className="label">Land</label><CountryPicker value={country} onChange={setCountry} /></div>
             <div><label className="label">Rebsorte</label><input className="input text-sm" value={grape} onChange={e => setGrape(e.target.value)} /></div>
             <div><label className="label">Alkohol</label><input className="input text-sm" value={alcohol} onChange={e => setAlcohol(e.target.value)} placeholder="13.5 %" /></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="label">Geschmack</label>
+              <select className="input text-sm" value={sweetness} onChange={e => setSweetness(e.target.value)}>
+                <option value="">—</option>
+                {isSparkling(bottle.color, wineType) && <>
+                  <option value="brut nature">Brut Nature</option>
+                  <option value="extra brut">Extra Brut</option>
+                  <option value="brut">Brut</option>
+                  <option value="extra dry">Extra Dry</option>
+                </>}
+                <option value="trocken">Trocken</option>
+                <option value="halbtrocken">Halbtrocken</option>
+                <option value="lieblich">Lieblich</option>
+                <option value="süß">Süß</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Art</label>
+              <select className="input text-sm" value={wineType} onChange={e => setWineType(e.target.value)}>
+                <option value="wein">Wein</option>
+                <option value="sekt">Sekt</option>
+                <option value="schorle">Schorle</option>
+                <option value="gluehwein">Glühwein</option>
+                <option value="sonstige">Sonstige</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className="label">Qualität</label><input className="input text-sm" value={classification} onChange={e => setClassification(e.target.value)} placeholder="z.B. Spätlese, DOC" /></div>
+            <div><label className="label">Preis (€)</label><input type="number" step="0.01" className="input text-sm" value={priceEur} onChange={e => setPriceEur(e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className="label">Händler</label><input className="input text-sm" value={retailer} onChange={e => setRetailer(e.target.value)} placeholder="z.B. Jacques'" /></div>
+            <div><label className="label">Kaufdatum</label><input type="date" className="input text-sm" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} /></div>
+          </div>
+          <div>
+            <label className="label">Link</label><input type="url" className="input text-sm" value={link} onChange={e => setLink(e.target.value)} placeholder="https://…" />
           </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 rounded-xl">
@@ -342,7 +426,7 @@ function EditSheet({ bottle, onClose, onSave }) {
               {AROMAS.map(a => (
                 <button key={a} onClick={() => toggle(aromas, setAromas, a)}
                   className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    aromas.includes(a) ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
+                    aromas.includes(a) ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
                   }`}>{a}</button>
               ))}
             </div>
@@ -363,8 +447,8 @@ function EditSheet({ bottle, onClose, onSave }) {
           <div className="flex gap-2 pt-2 pb-4">
             <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
             <button
-              onClick={() => onSave({ name, winery, region, country, grape, alcohol, alcoholFree, aromas, pairings })}
-              className="btn-primary flex-1" style={{ backgroundColor: '#e11d48' }}>Speichern</button>
+              onClick={() => onSave({ name, winery, region, country, grape, alcohol, alcoholFree, sweetness, classification, wineType, retailer, priceEur: priceEur ? Number(priceEur) : null, purchaseDate, link, aromas, pairings })}
+              className="btn-primary flex-1" style={{ backgroundColor: '#0D7377' }}>Speichern</button>
           </div>
         </div>
       </div>

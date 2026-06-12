@@ -25,10 +25,10 @@ export default function UnifiedShoppingList() {
   const openToStore = freezerPending.length + cellarPending.length
 
   return (
-    <div className="flex-1 overflow-y-auto pb-24 bg-emerald-50/30 dark:bg-gray-900">
-      <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white px-5 py-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">🛒 Einkaufsliste</h2>
-        <p className="text-emerald-100 text-sm">
+    <div className="flex-1 overflow-y-auto pb-24 bg-gray-50 dark:bg-gray-900">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3">
+        <p className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">🛒 Einkaufsliste</p>
+        <p className="text-xs text-gray-400">
           {openToShop} einzukaufen · {openToStore} einzuräumen
         </p>
       </div>
@@ -54,7 +54,7 @@ export default function UnifiedShoppingList() {
                   <p className="text-[10px] text-gray-400">Tiefkühl{p.portionSize ? ` · ${p.portionSize}` : ''}</p>
                 </div>
                 <button onClick={() => openTKForm({ pendingId: p.id, name: p.name, category: p.category, portionSize: p.portionSize, storageId: p.storageId, compartmentId: p.compartmentId, photoData: p.photoData })}
-                  className="text-xs bg-sky-600 text-white font-semibold px-3 py-1.5 rounded-full">
+                  className="text-xs bg-indigo-600 text-white font-semibold px-3 py-1.5 rounded-full">
                   📦 Einräumen
                 </button>
                 <button onClick={() => removeTKPend(p.id)}
@@ -77,7 +77,7 @@ export default function UnifiedShoppingList() {
                   grape: p.grape, color: p.color, alcoholFree: p.alcoholFree,
                   drinkFrom: p.drinkFrom, drinkUntil: p.drinkUntil,
                   rackId: p.rackId, slot: p.slot, photoData: p.photoData })}
-                  className="text-xs bg-rose-600 text-white font-semibold px-3 py-1.5 rounded-full">
+                  className="text-xs bg-indigo-600 text-white font-semibold px-3 py-1.5 rounded-full">
                   📦 Einräumen
                 </button>
                 <button onClick={() => removeWnPend(p.id)}
@@ -174,8 +174,8 @@ export default function UnifiedShoppingList() {
 
 function Section({ title, count, hint, accent, children }) {
   return (
-    <div className={`m-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden ${accent ? 'ring-2 ring-emerald-500/40' : ''}`}>
-      <div className={`px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between ${accent ? 'bg-emerald-50 dark:bg-emerald-900/30' : ''}`}>
+    <div className={`m-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden ${accent ? 'ring-2 ring-indigo-500/40' : ''}`}>
+      <div className={`px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between ${accent ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}>
         <div>
           <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{title}</p>
           {hint && <p className="text-[10px] text-gray-400">{hint}</p>}

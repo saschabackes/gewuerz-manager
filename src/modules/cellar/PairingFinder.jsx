@@ -61,7 +61,7 @@ export default function PairingFinder({ onOpenWine }) {
             <button key={d.id}
               onClick={() => { setSelected(d.id === selected ? null : d.id); setQuery('') }}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                selected === d.id ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                selected === d.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}>{d.emoji} {d.label}</button>
           ))}
         </div>
@@ -72,7 +72,7 @@ export default function PairingFinder({ onOpenWine }) {
               <button key={d.id}
                 onClick={() => { setSelected(d.id === selected ? null : d.id); setQuery('') }}
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  selected === d.id ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  selected === d.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}>{d.emoji} {d.label}</button>
             ))}
           </div>
@@ -91,7 +91,7 @@ export default function PairingFinder({ onOpenWine }) {
           ].map(f => (
             <button key={f.id} onClick={() => setAlcoholFilter(f.id)}
               className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
-                alcoholFilter === f.id ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                alcoholFilter === f.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
               }`}>{f.label}</button>
           ))}
         </div>
@@ -118,7 +118,7 @@ export default function PairingFinder({ onOpenWine }) {
 
       {results?.map(({ wine, score, checks, marked, dishId }) => {
         const rack = racks.find(r => r.id === wine.rackId)
-        const status = drinkStatus(wine)
+        const status = drinkStatus(wine, rack)
         return (
           <button key={wine.id} onClick={() => onOpenWine(wine.id)}
             className="w-full text-left bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm active:scale-[0.99] transition-transform">

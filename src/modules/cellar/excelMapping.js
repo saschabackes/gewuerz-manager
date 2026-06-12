@@ -11,6 +11,9 @@ export const TARGETS = [
   { id: 'country',    label: 'Land' },
   { id: 'grape',      label: 'Rebsorte' },
   { id: 'color',      label: 'Farbe (rot/weiß/rosé/schaum)' },
+  { id: 'sweetness',  label: 'Geschmack (trocken/brut/…)' },
+  { id: 'wineType',   label: 'Art (wein/sekt/…)' },
+  { id: 'classification', label: 'Qualität/Klassifikation' },
   { id: 'alcohol',    label: 'Alkohol-Angabe' },
   { id: 'alcoholFree',label: 'Alkoholfrei (ja/nein)' },
   { id: 'drinkFrom',  label: 'Trinken ab' },
@@ -18,9 +21,9 @@ export const TARGETS = [
   { id: 'count',      label: 'Anzahl Flaschen' },
   { id: 'priceEur',   label: 'Preis (€)' },
   { id: 'rating',     label: 'Bewertung (1–5)' },
-  { id: 'rackLabel',  label: 'Regal (Name)' },
-  { id: 'slot',       label: 'Fach' },
-  { id: 'note',       label: 'Notiz' },
+  { id: 'rackLabel',  label: 'Regal (Name/Reihe)' },
+  { id: 'slot',       label: 'Fach (Spalte/Position)' },
+  { id: 'note',       label: 'Notiz / Besonderes' },
 ]
 
 // Header-Schlüsselwörter → Ziel-ID (de + en + häufige Synonyme)
@@ -28,11 +31,14 @@ const HEADER_HINTS = [
   // Reihenfolge zählt – spezifischere zuerst
   [/^(name|wein(?:name)?|bezeichnung|titel|product|cuvée)$/i,            'name'],
   [/^(weingut|gut|erzeuger|hersteller|produzent|winery|domaine|château|chateau)$/i, 'winery'],
-  [/^(jahr(gang)?|year|vintage|vintage[ -]?year)$/i,                    'vintage'],
+  [/^(jahr(gang)?|year|vintage|vintage[ -]?year|jhg\.?)$/i,             'vintage'],
   [/^(region|anbaugebiet|gebiet|appellation|origin)$/i,                  'region'],
   [/^(land|country|herkunftsland)$/i,                                    'country'],
   [/^(rebsorte|sorte|grape|grapes|traube|traubensorte|cépage|cepage)$/i, 'grape'],
-  [/^(farbe|color|colour|typ|art)$/i,                                    'color'],
+  [/^(farbe|color|colour)$/i,                                           'color'],
+  [/^(geschmack|sweetness|art)$/i,                                       'sweetness'],
+  [/^(typ|wein[ -]?art|wine[ -]?type|kategorie)$/i,                     'wineType'],
+  [/^(qualit(ä|ae?)t|classification|klassifikation|prädikat|praedikat|stufe)$/i, 'classification'],
   [/^(alk(ohol)?[\.\s%]?|alcohol|abv|vol|%vol)$/i,                       'alcohol'],
   [/^(alkoholfrei|ohne[ -]?alkohol|alc[ -]?free|non[ -]?alc|0\s?%)$/i,   'alcoholFree'],
   [/^(trinken[ -]?ab|drink[ -]?from|from|ab)$/i,                        'drinkFrom'],
@@ -40,9 +46,9 @@ const HEADER_HINTS = [
   [/^(anzahl|menge|qty|quantity|flaschen|bottles|count|stück)$/i,        'count'],
   [/^(preis|price|€|eur|kosten|cost)$/i,                                 'priceEur'],
   [/^(rating|bewertung|punkte|score|sterne|stars)$/i,                    'rating'],
-  [/^(regal|rack|lager|standort|location|shelf)$/i,                     'rackLabel'],
-  [/^(fach|slot|platz|position)$/i,                                      'slot'],
-  [/^(notiz(en)?|note|notes|kommentar|comment|remark)$/i,                'note'],
+  [/^(regal|rack|lager|standort|location|shelf|reihe)$/i,               'rackLabel'],
+  [/^(fach|slot|platz|position|spalte)$/i,                               'slot'],
+  [/^(notiz(en)?|note|notes|kommentar|comment|remark|besonder(e|es|s)|bemerkung)$/i, 'note'],
 ]
 
 // Inhalts-Heuristiken (wenn Header nichts hergibt)
@@ -61,8 +67,14 @@ function classifyByContent(samples) {
     if (avg >= 1 && avg <= 50)      return 'count'
   }
 
-  const colorRe = /(rot|red|weiß|weiss|white|blanc|rosé|rose|rosato|sekt|schaum|champagner|champagne|sparkling|spumante|cava|prosecco)/i
-  if (clean.filter(v => colorRe.test(v)).length / clean.length > 0.6) return 'color'
+  const colorRe = /^(r|w|rot|red|weiß|weiss|white|blanc|rosé|rose|rosato|sekt|schaum|champagner|champagne|sparkling|spumante|cava|prosecco|zcham|zperlw|zsekt)/i
+  if (clean.filter(v => colorRe.test(v.trim())).length / clean.length > 0.6) return 'color'
+
+  const sweetnessRe = /^(tr|htr|s|trocken|halbtrocken|lieblich|süß|süss|brut|extra\s*(brut|dry)|feinherb|sweet|dry|sec|demi[- ]sec)$/i
+  if (clean.filter(v => sweetnessRe.test(v.trim())).length / clean.length > 0.5) return 'sweetness'
+
+  const classRe = /(kabinett|spätlese|auslese|beerenauslese|trockenbeerenauslese|eiswein|qmp|qw|doc|docg|aoc|igp|igt|grand\s*cru|premier\s*cru|reserva|riserva|crianza|a\.?p\.?c|a\.?h\.?m\.?c)/i
+  if (clean.filter(v => classRe.test(v.trim())).length / clean.length > 0.4) return 'classification'
 
   const grapeRe = /(riesling|chardonnay|pinot|nebbiolo|sangiovese|merlot|cabernet|grenache|syrah|shiraz|sauvignon|tempranillo|spätburgunder|silvaner|gewürztraminer|grauburgunder|weißburgunder)/i
   if (clean.filter(v => grapeRe.test(v)).length / clean.length > 0.5) return 'grape'
@@ -113,14 +125,73 @@ export function autoMapColumns(headers, dataRows) {
   })
 }
 
-// Farbe normieren
+// Farbe normieren (inkl. gängige Abkürzungen)
 export function normalizeColor(v) {
-  const s = String(v || '').toLowerCase()
+  const s = String(v || '').toLowerCase().trim()
+  if (!s) return ''
+  if (/^r$/.test(s)) return 'rot'
+  if (/^w$/.test(s)) return 'weiß'
   if (/(rot|red|tinto|rosso)/.test(s)) return 'rot'
   if (/(weiß|weiss|white|blanc|bianco)/.test(s)) return 'weiß'
-  if (/(rosé|rose|rosato)/.test(s)) return 'rosé'
-  if (/(sekt|schaum|champagner|champagne|sparkling|spumante|cava|prosecco)/.test(s)) return 'schaum'
-  return s ? 'rot' : ''
+  if (/^(rosé|rose|rosato)$/i.test(s)) return 'rosé'
+  if (/(sekt|schaum|champagner|champagne|sparkling|spumante|cava|prosecco|perlw|zcham|zsekt)/i.test(s)) return 'schaum'
+  if (/ros[eé]/i.test(s)) return 'rosé'
+  return 'rot'
+}
+
+// Land normieren (Abkürzungen → voller Name)
+const COUNTRY_ABBREV = {
+  d: 'Deutschland', de: 'Deutschland',
+  f: 'Frankreich', fr: 'Frankreich',
+  i: 'Italien', it: 'Italien',
+  e: 'Spanien', es: 'Spanien',
+  a: 'Österreich', at: 'Österreich',
+  ch: 'Schweiz',
+  pt: 'Portugal',
+  us: 'USA', usa: 'USA',
+  ar: 'Argentinien',
+  cl: 'Chile',
+  za: 'Südafrika',
+  au: 'Australien',
+  nz: 'Neuseeland',
+  gr: 'Griechenland',
+  hu: 'Ungarn',
+  hr: 'Kroatien',
+  si: 'Slowenien',
+  ge: 'Georgien',
+  lb: 'Libanon',
+  ro: 'Rumänien',
+  bg: 'Bulgarien',
+  rs: 'Serbien',
+  tr: 'Türkei',
+  lu: 'Luxemburg',
+  br: 'Brasilien',
+  mx: 'Mexiko',
+  uy: 'Uruguay',
+  md: 'Moldau',
+}
+
+export function normalizeCountry(v) {
+  const s = String(v || '').trim()
+  if (!s) return ''
+  const lower = s.toLowerCase()
+  if (COUNTRY_ABBREV[lower]) return COUNTRY_ABBREV[lower]
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+// Geschmack normieren (Abkürzungen → Standardwerte)
+export function normalizeSweetness(v) {
+  const s = String(v || '').toLowerCase().trim()
+  if (!s) return ''
+  if (/^tr$/.test(s) || /^trocken$/.test(s)) return 'trocken'
+  if (/^htr$/.test(s) || /^halbtrocken$/.test(s) || /^feinherb$/.test(s)) return 'halbtrocken'
+  if (/^s$/.test(s) || /^süß$/.test(s) || /^süss$/.test(s) || /^sweet$/.test(s)) return 'süß'
+  if (/^lieblich$/.test(s)) return 'lieblich'
+  if (/^brut\s*nature$/i.test(s) || /^bn$/.test(s)) return 'brut nature'
+  if (/^extra\s*brut$/i.test(s) || /^eb$/.test(s)) return 'extra brut'
+  if (/^brut$/.test(s)) return 'brut'
+  if (/^extra\s*dry$/i.test(s) || /^ed$/.test(s)) return 'extra dry'
+  return s
 }
 
 // Alkoholfrei normieren
@@ -137,7 +208,9 @@ export function rowToWine(row, mapping) {
     if (m.target === 'ignore') return
     const raw = row[m.colIndex]
     if (raw == null || raw === '') return
-    if (m.target === 'color')        out.color = normalizeColor(raw)
+    if (m.target === 'color')           out.color = normalizeColor(raw)
+    else if (m.target === 'country')    out.country = normalizeCountry(raw)
+    else if (m.target === 'sweetness')  out.sweetness = normalizeSweetness(raw)
     else if (m.target === 'alcoholFree') out.alcoholFree = normalizeBool(raw)
     else if (m.target === 'vintage' || m.target === 'drinkFrom' || m.target === 'drinkUntil' || m.target === 'count' || m.target === 'rating') {
       const n = parseInt(String(raw).replace(/\D+/g, ''), 10)
@@ -152,5 +225,10 @@ export function rowToWine(row, mapping) {
   // Auto-Farbe aus Namen, falls fehlt
   if (!out.color && out.name) out.color = normalizeColor(out.name) || normalizeColor(out.grape)
   if (!out.color) out.color = 'rot'
+  // Schaum-Farbe aus Sekt-Type oder Schaumwein-Sweetness ableiten
+  if (out.wineType === 'sekt' && !out.color) out.color = 'schaum'
+  if (['brut nature','extra brut','brut','extra dry'].includes(out.sweetness) && out.color !== 'schaum') {
+    out.color = 'schaum'
+  }
   return out
 }

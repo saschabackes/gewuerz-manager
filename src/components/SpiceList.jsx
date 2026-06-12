@@ -134,7 +134,7 @@ export default function SpiceList({ onEdit, onAdd }) {
             onClick={() => setFilter(f.id)}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
               filter === f.id
-                ? 'bg-green-600 text-white'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
@@ -159,7 +159,7 @@ export default function SpiceList({ onEdit, onAdd }) {
           <button
             onClick={() => setCategoryFilter('all')}
             className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              categoryFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+              categoryFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             Alle
@@ -377,7 +377,7 @@ function SpiceCard({ spice, expanded, onToggle, onEdit, onAddToShopping, onZoomI
             disabled={justAdded}
             className={`py-2 px-3 text-xs rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors ${
               justAdded
-                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
                 : 'btn-secondary'
             }`}
           >

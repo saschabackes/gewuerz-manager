@@ -65,12 +65,12 @@ export default function RecipesView() {
       {allTags.length > 0 && (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
           <button onClick={() => setTagFilter(null)}
-            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === null ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+            className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === null ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
             Alle
           </button>
           {allTags.map(t => (
             <button key={t} onClick={() => setTagFilter(f => f === t ? null : t)}
-              className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === t ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+              className={`flex-none rounded-full px-3 py-1 text-xs font-semibold transition-colors ${tagFilter === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
               {t}
             </button>
           ))}
@@ -113,7 +113,7 @@ export default function RecipesView() {
                   {r.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {r.tags.slice(0, 3).map(t => (
-                        <span key={t} className="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full px-2 py-0.5">{t}</span>
+                        <span key={t} className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full px-2 py-0.5">{t}</span>
                       ))}
                     </div>
                   )}
@@ -128,7 +128,7 @@ export default function RecipesView() {
       {/* + Button */}
       <button
         onClick={() => { setEditing(null); setMode('form') }}
-        className="absolute bottom-24 right-5 bg-green-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:bg-green-700 transition-colors z-20"
+        className="absolute bottom-24 right-5 bg-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:bg-indigo-700 transition-colors z-20"
         aria-label="Rezept hinzufügen"
       >
         <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/></svg>
