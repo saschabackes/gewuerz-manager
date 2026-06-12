@@ -271,6 +271,11 @@ const useStore = create((set, get) => ({
     return { needsConfirmation: !data.session }
   },
 
+  async resendConfirmation(email) {
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() })
+    if (error) throw error
+  },
+
   async resetPassword(email) {
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: window.location.origin,

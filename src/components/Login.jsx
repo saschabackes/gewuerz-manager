@@ -3,7 +3,7 @@ import useStore from '../store/useStore'
 import { MODULES_ENABLED, APP_NAME, APP_TAGLINE } from '../branding'
 
 export default function Login() {
-  const { signIn, signUp, resetPassword } = useStore()
+  const { signIn, signUp, resetPassword, resendConfirmation } = useStore()
   const [mode, setMode] = useState('login')  // 'login' | 'register' | 'reset'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -11,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -56,16 +57,18 @@ export default function Login() {
     setMessage('')
   }
 
+  const primaryColor = MODULES_ENABLED ? '#0D7377' : undefined
+  const bgGradient = MODULES_ENABLED
+    ? 'from-[#0a5c5f] to-[#0D7377]'
+    : 'from-indigo-600 to-indigo-800'
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex flex-col items-center justify-center p-6 pt-safe">
+    <div className={`min-h-screen bg-gradient-to-br ${bgGradient} flex flex-col items-center justify-center p-6 pt-safe`}>
       {/* Logo */}
       <div className="text-center mb-8">
-        {MODULES_ENABLED
-          ? <div className="mb-3"><svg viewBox="0 0 40 40" width="56" height="56"><rect x="6" y="10" width="28" height="4" rx="1.5" fill="#fff" opacity="0.9"/><rect x="6" y="18" width="28" height="4" rx="1.5" fill="#fff" opacity="0.7"/><rect x="6" y="26" width="28" height="4" rx="1.5" fill="#fff" opacity="0.5"/></svg></div>
-          : <div className="text-6xl mb-3">🌿</div>
-        }
+        <div className="text-6xl mb-3">{MODULES_ENABLED ? '🏠' : '🌿'}</div>
         <h1 className="text-3xl font-bold text-white tracking-tight">{APP_NAME}</h1>
-        <p className="text-indigo-200 mt-1 text-sm">{APP_TAGLINE}</p>
+        <p className="text-white/70 mt-1 text-sm">{APP_TAGLINE}</p>
       </div>
 
       {/* Form Card */}
@@ -85,16 +88,28 @@ export default function Login() {
             <button
               onClick={() => switchMode('login')}
               className="btn-primary w-full"
+              style={primaryColor ? { backgroundColor: primaryColor } : undefined}
             >
               Zur Anmeldung
             </button>
             <p className="text-xs text-gray-400 mt-3">
               Keine Mail erhalten? Prüfe den Spam-Ordner oder{' '}
               <button
-                onClick={() => switchMode('register')}
+                disabled={resending}
+                onClick={async () => {
+                  setResending(true)
+                  try {
+                    await resendConfirmation(email)
+                    setMessage('Bestätigungs-Mail erneut gesendet!')
+                  } catch (e) {
+                    setError(e.message)
+                  } finally {
+                    setResending(false)
+                  }
+                }}
                 className="text-indigo-600 dark:text-indigo-400 underline"
               >
-                erneut registrieren
+                {resending ? 'Wird gesendet…' : 'Mail erneut senden'}
               </button>
             </p>
           </div>
@@ -182,7 +197,8 @@ export default function Login() {
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
+          <button type="submit" className="btn-primary w-full" disabled={loading}
+            style={primaryColor ? { backgroundColor: primaryColor } : undefined}>
             {loading ? (
               <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -221,7 +237,7 @@ export default function Login() {
         )}
       </div>
 
-      <p className="text-indigo-300 text-xs mt-6 text-center">
+      <p className="text-white/50 text-xs mt-6 text-center">
         Daten werden in der Cloud gespeichert · alle Geräte synchron
       </p>
     </div>
