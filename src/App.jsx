@@ -79,7 +79,9 @@ export default function App() {
   if (!user) return <Login />
 
   // Erstnutzer (oder erneut gestartet) → Willkommens-Tour
-  const showOnboarding = !user.user_metadata?.onboarding_done || onboardingReplay
+  // localStorage als Fallback, damit onAuthStateChange-Zwischenzustände keinen Flash erzeugen
+  const onboardingDone = user.user_metadata?.onboarding_done || localStorage.getItem('depot_onboarding_done') === '1'
+  const showOnboarding = !onboardingDone || onboardingReplay
   if (showOnboarding) {
     return <OnboardingView onFinish={finishOnboarding} />
   }

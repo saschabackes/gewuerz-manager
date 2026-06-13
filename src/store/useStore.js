@@ -153,6 +153,7 @@ const useStore = create((set, get) => ({
   startOnboarding() { set({ onboardingReplay: true }) },
   async finishOnboarding() {
     set({ onboardingReplay: false })
+    localStorage.setItem('depot_onboarding_done', '1')
     const { user } = get()
     if (user && !user.user_metadata?.onboarding_done) {
       await supabase.auth.updateUser({ data: { onboarding_done: true } })
