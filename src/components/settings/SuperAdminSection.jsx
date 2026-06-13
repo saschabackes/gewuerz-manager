@@ -3,6 +3,32 @@ import { MODULES_ENABLED } from '../../branding'
 import { superListUsers, superBanUser, superResetPassword, superDeleteUser, superBackup, superStats } from '../../lib/userAdmin'
 import { getLastSeen, markSeen } from './lastSeen'
 
+const SUPER_ADMIN_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || '').toLowerCase()
+
+function avatarColor(name = '') {
+  const palette = ['bg-green-400','bg-blue-400','bg-purple-400','bg-pink-400','bg-orange-400','bg-teal-400']
+  const hash = [...name].reduce((a, c) => a + c.charCodeAt(0), 0)
+  return palette[hash % palette.length]
+}
+
+function initials(name = '') {
+  return name.split(' ').map(p => p[0] ?? '').join('').toUpperCase().slice(0, 2) || '?'
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function householdLabel(u) {
+  if (!u.householdName || u.householdName === '—' || u.role === '—') return 'Kein Haushalt'
+  if (u.role === 'owner') {
+    if ((u.householdSize ?? 1) <= 1) return 'Eigener Haushalt'
+    return `Inhaber · ${u.householdName} (${u.householdSize} Mitglieder)`
+  }
+  return `Mitglied · ${u.householdName}`
+}
+
 // ── Super-Admin (App-Betreiber) ───────────────────────────────────────────────
 
 function SuperAdminSection() {
