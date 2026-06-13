@@ -4,6 +4,14 @@
 
 export const CHANGELOG = [
   {
+    version: '1.5.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'new',      text: 'Wein-Import: importierte Flaschen landen jetzt im Einräumen-Dialog, wo du Regal und Fach zuweisen kannst.' },
+      { type: 'improved', text: 'Einräumen-Badge im Weinkeller zeigt wartende Flaschen an.' },
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-06-13',
     entries: [

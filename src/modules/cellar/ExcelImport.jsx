@@ -3,8 +3,8 @@ import * as XLSX from 'xlsx'
 import { useCellar } from './store'
 import { TARGETS, autoMapColumns, looksLikeHeader, rowToWine } from './excelMapping'
 
-export default function ExcelImport({ onClose }) {
-  const { racks, addBottle } = useCellar()
+export default function ExcelImport({ onClose, onImported }) {
+  const { racks, addPendingBatch } = useCellar()
   const [step, setStep] = useState('pick')   // pick | sheet | map | confirm
   const [error, setError] = useState('')
   const [wb, setWb] = useState(null)
@@ -12,7 +12,6 @@ export default function ExcelImport({ onClose }) {
   const [rawRows, setRawRows] = useState([])
   const [hasHeader, setHasHeader] = useState(true)
   const [mapping, setMapping] = useState([])
-  const [targetRackId, setTargetRackId] = useState(racks[0]?.id)
 
   async function handleFile(e) {
     setError('')
@@ -70,21 +69,10 @@ export default function ExcelImport({ onClose }) {
   const preview = dataRows.slice(0, 5).map(r => rowToWine(r, mapping))
 
   function doImport() {
-    let n = 0
-    const rack = racks.find(r => r.id === targetRackId)
-    dataRows.forEach(r => {
-      const w = rowToWine(r, mapping)
-      if (!w.name) return
-      addBottle({
-        rackId: targetRackId,
-        slot: w.slot || (rack?.slots[0] || ''),
-        count: w.count || 1,
-        ...w,
-      })
-      n++
-    })
-    alert(`✓ ${n} Wein${n===1?'':'e'} importiert`)
+    const wines = dataRows.map(r => rowToWine(r, mapping)).filter(w => w.name)
+    const n = addPendingBatch(wines)
     onClose()
+    if (onImported) onImported(n)
   }
 
   return (
@@ -185,17 +173,11 @@ export default function ExcelImport({ onClose }) {
                 </div>
               </div>
 
-              {/* Ziel-Regal */}
-              <div>
-                <label className="label">Welches Regal nutzen für nicht zugeordnete Flaschen?</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {racks.map(r => (
-                    <button key={r.id} onClick={() => setTargetRackId(r.id)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        targetRackId === r.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                      }`}>{r.emoji} {r.label}</button>
-                  ))}
-                </div>
+              {/* Hinweis: Lagerort wird im Einräumen-Schritt zugewiesen */}
+              <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl px-3 py-2.5">
+                <p className="text-xs text-primary-700 dark:text-primary-300">
+                  📦 Lagerorte werden im nächsten Schritt zugewiesen — dort kannst du jede Flasche einem Regal und Fach zuordnen.
+                </p>
               </div>
             </div>
           )}

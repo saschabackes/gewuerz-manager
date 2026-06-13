@@ -5,6 +5,7 @@ import CellarSetup from './CellarSetup'
 import RackSettings from './RackSettings'
 import WineDetail from './WineDetail'
 import ExcelImport from './ExcelImport'
+import WinePendingView from './WinePendingView'
 import SharePicker from './SharePicker'
 import SubTabs from '../../components/SubTabs'
 
@@ -13,12 +14,13 @@ const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' 
 export default function CellarView() {
   const { racks, bottles, drinkOne, removeBottle,
           setupDone, completeSetup, recentNames, quickAddByName, lastUsedRack,
-          formOpen, formPrefill, openForm, closeForm } = useCellar()
+          formOpen, formPrefill, openForm, closeForm, pending } = useCellar()
   const [tab, setTab] = useState('bestand')
   const [memoryFilter, setMemoryFilter] = useState('all') // all | loved | stocked | empty
   const [activeRackId, setActiveRackId] = useState(racks[0]?.id)
   const [showSettings, setShowSettings] = useState(false)
   const [showImport, setShowImport]   = useState(false)
+  const [showPending, setShowPending] = useState(false)
   const [showShare, setShowShare]     = useState(false)
   const [sharePreselect, setSharePreselect] = useState(null)
   const [hint, setHint] = useState('')
@@ -97,6 +99,15 @@ export default function CellarView() {
           <div className="flex items-center gap-2">
             <button onClick={() => { setSharePreselect(null); setShowShare(true) }}
               className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg" title="Weine empfehlen">🔗</button>
+            {pending.length > 0 && (
+              <button onClick={() => setShowPending(true)}
+                className="relative bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 rounded-full p-2 text-lg" title="Einräumen">
+                📦
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {pending.length}
+                </span>
+              </button>
+            )}
             <button onClick={() => setShowImport(true)}
               className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg" title="Excel-Import">📥</button>
             <button onClick={() => setShowSettings(true)}
@@ -247,7 +258,8 @@ export default function CellarView() {
 
       {formOpen && <CellarForm prefilled={formPrefill} onClose={closeForm} />}
       {showSettings && <RackSettings onClose={() => setShowSettings(false)} />}
-      {showImport   && <ExcelImport  onClose={() => setShowImport(false)} />}
+      {showImport   && <ExcelImport  onClose={() => setShowImport(false)} onImported={() => setShowPending(true)} />}
+      {showPending  && <WinePendingView onClose={() => setShowPending(false)} />}
       {showShare    && <SharePicker  preselected={sharePreselect} onClose={() => setShowShare(false)} />}
 
       {detailBottle && (

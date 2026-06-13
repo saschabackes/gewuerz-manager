@@ -114,8 +114,38 @@ export const useCellar = create(
         set(s => ({ pending: [...s.pending, { id: pid, name }] }))
         return pid
       },
+      addPendingBatch(wines) {
+        const rks = get().racks
+        const items = wines.map(w => {
+          let rackId = ''
+          let slot = w.slot || ''
+          if (w.rackLabel) {
+            const label = w.rackLabel.toLowerCase().trim()
+            const match = rks.find(r => r.label.toLowerCase().trim() === label)
+            if (match) rackId = match.id
+          }
+          return {
+            id: uid('p'), name: w.name || '',
+            winery: w.winery || '', vintage: w.vintage,
+            region: w.region || '', country: w.country || '',
+            grape: w.grape || '', color: w.color || 'rot',
+            wineType: w.wineType || 'wein', sweetness: w.sweetness || '',
+            classification: w.classification || '', alcohol: w.alcohol || '',
+            alcoholFree: !!w.alcoholFree,
+            drinkFrom: w.drinkFrom, drinkUntil: w.drinkUntil,
+            count: w.count || 1, priceEur: w.priceEur,
+            retailer: w.retailer || '', note: w.note || '',
+            rackId, slot, rackLabel: w.rackLabel || '',
+          }
+        }).filter(w => w.name)
+        set(s => ({ pending: [...s.pending, ...items] }))
+        return items.length
+      },
       removePending(pid) {
         set(s => ({ pending: s.pending.filter(p => p.id !== pid) }))
+      },
+      clearPending() {
+        set({ pending: [] })
       },
       // Bestand bereits vorhandener Flasche um count erhöhen
       restockBottle(bottleId, count = 1) {

@@ -14,7 +14,7 @@ export default function UnifiedShoppingList() {
   const removeTKPend   = useFreezer(s => s.removePending)
 
   const cellarBottles  = useCellar(s => s.bottles)
-  const cellarPending  = useCellar(s => s.pending)
+  const cellarPending  = useCellar(s => s.pending.filter(p => p.fromBottleId))
   const markBoughtWine = useCellar(s => s.markBought)
   const openCellarForm = useCellar(s => s.openForm)
   const removeWnPend   = useCellar(s => s.removePending)
