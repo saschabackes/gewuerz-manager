@@ -4,6 +4,16 @@
 
 export const CHANGELOG = [
   {
+    version: '1.3.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'new',      text: 'Einladungs-Links: Familienmitglieder treten jetzt per Link automatisch bei – kein Code-Abtippen mehr.' },
+      { type: 'new',      text: 'Eigene Domain: Depot ist jetzt unter depotapp.online erreichbar.' },
+      { type: 'improved', text: 'Einladungstexte an alle Module angepasst (nicht mehr nur Gewürze).' },
+      { type: 'fixed',    text: 'Betreiber-Ansicht zeigte keine Nutzer an (fehlende Hilfsfunktionen nach Refactoring).' },
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-06-12',
     entries: [

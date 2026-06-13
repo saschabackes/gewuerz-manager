@@ -164,7 +164,9 @@ const HELP_GROUPS = [
         title: 'Mit Familie teilen',
         body: [
           'Öffne Einstellungen → Verwaltung → Einladen und wähle „Familie / Mitbewohner".',
-          'Teile den Einladungscode – die Person tritt deinem Haushalt bei und ihr verwaltet die Gewürze gemeinsam.',
+          MODULES_ENABLED
+            ? 'Teile den Einladungscode – die Person tritt deinem Haushalt bei und ihr verwaltet Gewürze, TK, Wein und Rezepte gemeinsam.'
+            : 'Teile den Einladungscode – die Person tritt deinem Haushalt bei und ihr verwaltet die Gewürze gemeinsam.',
           'Alle Änderungen sind sofort für alle Mitglieder sichtbar.',
         ],
       },
@@ -195,7 +197,9 @@ const HELP_GROUPS = [
         emoji: '💾',
         title: 'Datensicherung',
         body: [
-          'Einstellungen → Datensicherung exportiert deine komplette Sammlung (Gewürze, Kategorien, Lagerorte) als Datei auf dein Gerät.',
+          MODULES_ENABLED
+            ? 'Einstellungen → Datensicherung exportiert deine kompletten Daten (Gewürze, TK, Weine, Rezepte, Kategorien, Lagerorte) als Datei auf dein Gerät.'
+            : 'Einstellungen → Datensicherung exportiert deine komplette Sammlung (Gewürze, Kategorien, Lagerorte) als Datei auf dein Gerät.',
           'Empfehlung: ab und zu ein Backup ziehen – die Datei ist lesbar und lässt sich aufbewahren.',
           'So bist du auf der sicheren Seite, falls mal etwas schiefgeht.',
         ],

@@ -50,7 +50,17 @@ export default function App() {
   const spiceSetupDone = useStore(s => s.spiceSetupDone)
   const completeSpiceSetup = useStore(s => s.completeSpiceSetup)
 
-  useEffect(() => { init() }, [])
+  const [pendingInvite, setPendingInvite] = useState(null)
+
+  useEffect(() => {
+    init()
+    const params = new URLSearchParams(window.location.search)
+    const invite = params.get('invite')
+    if (invite) {
+      setPendingInvite(invite.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -237,7 +247,78 @@ export default function App() {
       {showActivity && (
         <ActivityView onClose={() => setShowActivity(false)} />
       )}
+
+      {pendingInvite && (
+        <InviteJoinDialog code={pendingInvite} onClose={() => setPendingInvite(null)} />
+      )}
     </div>
+  )
+}
+
+function InviteJoinDialog({ code, onClose }) {
+  const { joinHousehold } = useStore()
+  const [status, setStatus] = useState('confirm')
+  const [error, setError] = useState('')
+  const displayCode = code.length >= 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code
+
+  async function handleJoin() {
+    setStatus('joining')
+    setError('')
+    try {
+      const name = await joinHousehold(code)
+      setStatus('success')
+      setTimeout(onClose, 2000)
+    } catch (e) {
+      setError(e.message)
+      setStatus('confirm')
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-[70] fade-enter" onClick={onClose} />
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[71] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 max-w-sm mx-auto sheet-enter">
+        <div className="text-center mb-5">
+          <div className="text-4xl mb-3">🏠</div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Einladung zum Haushalt</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Du wurdest eingeladen, einem Haushalt beizutreten.
+          </p>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-3 mb-5 text-center">
+          <p className="text-xs text-gray-400 font-medium mb-1">Einladungscode</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-widest font-mono">{displayCode}</p>
+        </div>
+
+        {status === 'success' ? (
+          <div className="text-center text-green-600 dark:text-green-400 font-semibold text-sm py-2">
+            Beigetreten! Daten werden geladen…
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2 mb-3">{error}</div>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleJoin}
+                disabled={status === 'joining'}
+                className="flex-1 btn-primary py-3 text-sm font-semibold disabled:opacity-50"
+              >
+                {status === 'joining' ? 'Trete bei…' : 'Beitreten'}
+              </button>
+              <button onClick={onClose} className="flex-1 btn-secondary py-3 text-sm font-semibold">
+                Abbrechen
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 text-center mt-3">
+              Du verlässt deinen aktuellen Haushalt und trittst dem neuen bei.
+            </p>
+          </>
+        )}
+      </div>
+    </>
   )
 }
 

@@ -28,7 +28,8 @@ function HouseholdSection() {
   }
 
   function shareCode() {
-    const text = `Tritt meinem Gewürz-Haushalt bei!\nEinladungscode: ${displayCode}\n\n${APP_URL}`
+    const inviteLink = `${APP_URL}?invite=${household?.inviteCode || ''}`
+    const text = `Tritt meinem Haushalt bei!\n\n${inviteLink}`
     if (navigator.share) {
       navigator.share({ text })
     } else {

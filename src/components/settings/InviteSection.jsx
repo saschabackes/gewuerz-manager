@@ -20,7 +20,11 @@ function InviteSection() {
   function buildMessage() {
     const p = personalMsg.trim() ? `${personalMsg.trim()}\n\n` : ''
     if (mode === 'household') {
-      return `Hey!\n\n${p}${senderName} lädt dich ein, unsere Vorräte gemeinsam zu verwalten.\n\nWir nutzen dafür ${APP_NAME} – eine App die uns hilft den Überblick zu behalten:\n• Welche Gewürze haben wir, wie viel ist noch da?\n• Wo ist was gelagert?\n• Was müssen wir nachkaufen?\n\nSo trittst du „${houseName}" bei:\n1. App öffnen → ${APP_URL}\n2. Konto erstellen\n3. „Anderem Haushalt beitreten" wählen\n4. Einladungscode eingeben: ${displayCode}\n\nBis gleich! 👋`
+      const inviteLink = `${APP_URL}?invite=${household?.inviteCode || ''}`
+      return `Hey!\n\n${p}${senderName} lädt dich ein, unsere Vorräte gemeinsam zu verwalten.\n\nWir nutzen dafür ${APP_NAME} – eine App die uns hilft den Überblick zu behalten:\n${MODULES_ENABLED
+        ? '• Gewürze, Tiefkühl-Vorräte und Weine verwalten\n• Rezepte speichern und Bestandscheck machen\n• Gemeinsame Einkaufsliste – optional mit Bring!'
+        : '• Welche Gewürze haben wir, wie viel ist noch da?\n• Wo ist was gelagert?\n• Was müssen wir nachkaufen?'
+      }\n\nSo trittst du „${houseName}" bei:\n1. Öffne diesen Link → ${inviteLink}\n2. Erstelle ein Konto (oder melde dich an)\n3. Fertig – der Beitritt passiert automatisch!\n\nBis gleich! 👋`
     }
     return `Hey!\n\n${p}Kennst du ${APP_NAME}? Eine kostenlose App um Gewürze${MODULES_ENABLED ? ', Tiefkühl-Vorräte und Weine' : ''} im Griff zu behalten.\n\nWas du damit machen kannst:\n• Vorräte mit Foto, Menge & Lagerort erfassen\n• Ablaufdaten & Füllstand im Blick behalten\n• Einkaufsliste – optional mit Bring!-Anbindung\n• Haushalt mit Familie teilen (wenn du magst)\n\nEinfach kostenlos registrieren:\n${APP_URL}\n\nViel Spaß! 👋`
   }
@@ -62,7 +66,7 @@ function InviteSection() {
         >
           <div className="text-lg mb-0.5">🏠</div>
           <div className="font-semibold text-sm text-gray-800 dark:text-gray-100">Familie / Mitbewohner</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">Gemeinsame Gewürzsammlung verwalten</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">{MODULES_ENABLED ? 'Gemeinsame Vorräte verwalten' : 'Gemeinsame Gewürzsammlung verwalten'}</div>
         </button>
         <button
           onClick={() => setMode('friend')}
@@ -95,7 +99,7 @@ function InviteSection() {
           className="input resize-none text-sm"
           rows={2}
           placeholder={mode === 'household'
-            ? 'z.B. Hey Lisa, damit verwalten wir ab jetzt unsere Gewürze…'
+            ? MODULES_ENABLED ? 'z.B. Hey Lisa, damit verwalten wir ab jetzt unsere Vorräte…' : 'z.B. Hey Lisa, damit verwalten wir ab jetzt unsere Gewürze…'
             : 'z.B. Hey Max, ich nutze das schon eine Weile und finds super…'
           }
           value={personalMsg}
