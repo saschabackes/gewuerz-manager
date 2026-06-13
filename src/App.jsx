@@ -74,6 +74,10 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
+  useEffect(() => {
+    if (hasUnseenChangelog()) setShowChangelog(true)
+  }, [])
+
   // Supabase-Session wird geprüft → Ladebildschirm
   if (authLoading) return <LoadingScreen />
 
@@ -87,11 +91,6 @@ export default function App() {
   if (showOnboarding) {
     return <OnboardingView onFinish={finishOnboarding} />
   }
-
-  // "Was ist neu?" automatisch zeigen nach Update (einmalig pro Version)
-  useEffect(() => {
-    if (hasUnseenChangelog()) setShowChangelog(true)
-  }, [])
 
   function handleEditSpice(spice) {
     setEditingSpice(spice)
