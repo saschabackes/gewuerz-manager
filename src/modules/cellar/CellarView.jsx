@@ -58,14 +58,19 @@ export default function CellarView() {
     return arr.filter(b => b.count > 0).sort((a,b) => a.drinkUntil - b.drinkUntil)
   }, [bottles, tab, activeRack, alcoholFilter])
 
-  // Erinnerungen: bewertet ODER mind. 1× getrunken (egal ob noch Bestand)
+  // Weintagebuch: bewertet ODER mind. 1× getrunken (egal ob noch Bestand)
   const memories = useMemo(() => {
-    let arr = bottles.filter(b => (b.rating > 0) || (b.history?.length > 0))
+    let arr
+    if (memoryFilter === 'archived') {
+      arr = bottles.filter(b => b.archived)
+    } else {
+      arr = bottles.filter(b => !b.archived && ((b.rating > 0) || (b.history?.length > 0)))
+      if (memoryFilter === 'loved')   arr = arr.filter(b => (b.rating || 0) >= 4)
+      if (memoryFilter === 'stocked') arr = arr.filter(b => b.count > 0)
+      if (memoryFilter === 'empty')   arr = arr.filter(b => b.count <= 0)
+    }
     if (alcoholFilter === 'alc')  arr = arr.filter(b => !b.alcoholFree)
     if (alcoholFilter === 'free') arr = arr.filter(b => b.alcoholFree)
-    if (memoryFilter === 'loved')   arr = arr.filter(b => (b.rating || 0) >= 4)
-    if (memoryFilter === 'stocked') arr = arr.filter(b => b.count > 0)
-    if (memoryFilter === 'empty')   arr = arr.filter(b => b.count <= 0)
     const lastTasted = (b) => {
       const h = b.history || []
       return h.length ? new Date(h[h.length-1].date).getTime() : 0
@@ -150,13 +155,13 @@ export default function CellarView() {
           { id: 'bestand',  label: '📦 Bestand' },
           { id: 'ablauf',   label: '⏰ Ablauf' },
           { id: 'lager',    label: '🗄️ Lager' },
-          { id: 'probiert', label: '💎 Probiert' },
+          { id: 'tagebuch', label: '📒 Weintagebuch' },
         ]}
         active={tab}
         onChange={setTab}
       />
 
-      {tab !== 'probiert' && (
+      {tab !== 'tagebuch' && (
         <div className="flex gap-1.5 px-4 pb-2">
           {[
             { id: 'all',  label: 'Alle' },
@@ -171,19 +176,20 @@ export default function CellarView() {
         </div>
       )}
 
-      {tab === 'probiert' && (
+      {tab === 'tagebuch' && (
         <div className="flex gap-1.5 px-4 pb-2 overflow-x-auto no-scrollbar">
           {[
-            { id: 'all',     label: 'Alle probiert',  count: bottles.filter(b => b.rating > 0 || b.history?.length).length },
-            { id: 'loved',   label: '⭐⭐⭐⭐+ Lieblinge', count: bottles.filter(b => (b.rating||0) >= 4).length },
-            { id: 'stocked', label: 'Im Bestand',     count: bottles.filter(b => (b.rating > 0 || b.history?.length) && b.count > 0).length },
-            { id: 'empty',   label: 'Ausgetrunken',   count: bottles.filter(b => (b.rating > 0 || b.history?.length) && b.count <= 0).length },
+            { id: 'all',      label: 'Alle',            count: bottles.filter(b => !b.archived && (b.rating > 0 || b.history?.length)).length },
+            { id: 'loved',    label: 'Lieblinge',       count: bottles.filter(b => !b.archived && (b.rating||0) >= 4).length },
+            { id: 'stocked',  label: 'Im Bestand',      count: bottles.filter(b => !b.archived && (b.rating > 0 || b.history?.length) && b.count > 0).length },
+            { id: 'empty',    label: 'Ausgetrunken',    count: bottles.filter(b => !b.archived && (b.rating > 0 || b.history?.length) && b.count <= 0).length },
+            { id: 'archived', label: '📦 Archiv',       count: bottles.filter(b => b.archived).length },
           ].map(f => (
             <button key={f.id} onClick={() => setMemoryFilter(f.id)}
               className={`flex-none text-xs font-semibold px-2.5 py-1 rounded-full ${
                 memoryFilter === f.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
               }`}>
-              {f.label} <span className="opacity-70">·{f.count}</span>
+              {f.label} {f.count > 0 && <span className="opacity-70">·{f.count}</span>}
             </button>
           ))}
         </div>
@@ -215,21 +221,25 @@ export default function CellarView() {
         </div>
       )}
 
-      {tab === 'probiert' && (
+      {tab === 'tagebuch' && (
         <div className="px-4 space-y-2.5">
           {memories.length === 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 text-center">
-              <p className="text-3xl mb-2">💎</p>
+              <p className="text-3xl mb-2">📒</p>
               <p className="text-sm text-gray-500 dark:text-gray-300">
-                Noch nichts probiert. Sobald du eine Flasche getrunken & bewertet hast, taucht sie hier auf – auch nach dem Ausverkauf.
+                {memoryFilter === 'archived'
+                  ? 'Kein Wein archiviert. Archiviere Weine, die du ausblenden möchtest.'
+                  : 'Noch keine Einträge. Sobald du eine Flasche getrunken & bewertet hast, taucht sie hier auf.'}
               </p>
             </div>
           )}
-          {memories.map(b => <MemoryCard key={b.id} b={b} racks={racks} onOpen={() => setDetailId(b.id)} onRestock={() => useCellar.getState().toggleRestock(b.id)} />)}
+          {memories.map(b => <MemoryCard key={b.id} b={b} racks={racks} onOpen={() => setDetailId(b.id)}
+            onRestock={() => useCellar.getState().toggleRestock(b.id)}
+            onArchive={() => useCellar.getState().updateBottle(b.id, { archived: !b.archived })} />)}
         </div>
       )}
 
-      {tab !== 'probiert' && (
+      {tab !== 'tagebuch' && (
         <div className="px-4 space-y-2.5">
           {filtered.map(b => {
             const r = racks.find(r => r.id === b.rackId)
@@ -261,6 +271,7 @@ export default function CellarView() {
                         <span className="text-xs text-gray-400">{b.vintage}</span>
                         {b.rating > 0 && <span className="text-xs">{'⭐'.repeat(b.rating)}</span>}
                         {b.alcoholFree && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">🚫 0%</span>}
+                        {b.archived && <span className="text-[10px] font-bold bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 px-1.5 py-0.5 rounded">📦 Archiv</span>}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {b.winery && <span>{b.winery} · </span>}{b.region}{b.grape && <span> · {b.grape}</span>}
@@ -310,8 +321,8 @@ export default function CellarView() {
   )
 }
 
-// ── Memory-Card (für "💎 Probiert") ──────────────────────────────────────────
-function MemoryCard({ b, racks, onOpen, onRestock }) {
+// ── Memory-Card (Weintagebuch) ───────────────────────────────────────────────
+function MemoryCard({ b, racks, onOpen, onRestock, onArchive }) {
   const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
   const lastTaste = b.history?.length ? b.history[b.history.length - 1] : null
   const r = racks.find(r => r.id === b.rackId)
@@ -336,6 +347,7 @@ function MemoryCard({ b, racks, onOpen, onRestock }) {
             <span className="text-xs text-gray-400">{b.vintage}</span>
             {b.rating > 0 && <span className="text-xs">{'⭐'.repeat(b.rating)}</span>}
             {b.alcoholFree && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">🚫 0%</span>}
+            {b.archived && <span className="text-[10px] font-bold bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 px-1.5 py-0.5 rounded">📦 Archiv</span>}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {b.winery}{b.region && ` · ${b.region}`}{b.grape && ` · ${b.grape}`}
@@ -367,6 +379,10 @@ function MemoryCard({ b, racks, onOpen, onRestock }) {
                 : 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
           }`}>
           {b.restock ? '✓ auf Einkaufsliste' : empty ? '🔄 Wieder kaufen' : '+ Einkaufsliste'}
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); onArchive() }}
+          className="text-xs font-semibold py-1.5 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+          {b.archived ? '📤 Wiederherstellen' : '📦 Archivieren'}
         </button>
       </div>
     </div>

@@ -4,6 +4,16 @@
 
 export const CHANGELOG = [
   {
+    version: '1.7.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'improved', text: '„Probiert" heißt jetzt „Weintagebuch" – persönlicher und passender.' },
+      { type: 'new',      text: 'Wein-Archiv: Weine im Tagebuch archivieren, um irrelevante auszublenden. Bleiben über Bestand/Lager auffindbar.' },
+      { type: 'new',      text: 'Lagerort bearbeiten: Regal und Fach bei Weinen und TK-Einträgen nachträglich ändern.' },
+      { type: 'new',      text: 'TK-Einträge bearbeiten: Name, Kategorie, Portionen und Lagerort anpassen.' },
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-06-13',
     entries: [

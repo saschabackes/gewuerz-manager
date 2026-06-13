@@ -207,6 +207,21 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
         </div>
       </Section>
 
+      {/* Archiv-Status */}
+      {bottle.archived && (
+        <div className="mx-3 mt-3 rounded-xl p-3 bg-gray-100 dark:bg-gray-800/60 flex items-center gap-3">
+          <span className="text-2xl">📦</span>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-200">Archiviert</p>
+            <p className="text-[11px] text-gray-600 dark:text-gray-300">Dieser Wein ist im Archiv und wird im Weintagebuch ausgeblendet.</p>
+          </div>
+          <button onClick={() => updateBottle(bottle.id, { archived: false })}
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary-600 text-white">
+            📤 Wiederherstellen
+          </button>
+        </div>
+      )}
+
       {/* Aktionen */}
       <div className="px-3 py-4 flex gap-2">
         <button onClick={() => setShowDrink(true)}
@@ -217,6 +232,10 @@ export default function WineDetail({ bottle, onClose, onOpenPairing, onShare }) 
         {onShare && (
           <button onClick={() => onShare(bottle.id)}
             className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-4 rounded-2xl" title="Empfehlen">🔗</button>
+        )}
+        {!bottle.archived && (
+          <button onClick={() => updateBottle(bottle.id, { archived: true })}
+            className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-4 rounded-2xl" title="Archivieren">📦</button>
         )}
         <button onClick={() => { if (confirm('Position komplett löschen?')) { removeBottle(bottle.id); onClose() } }}
           className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-4 rounded-2xl">🗑️</button>
