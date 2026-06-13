@@ -336,6 +336,7 @@ function DrinkSheet({ bottle, onClose, onSave }) {
 
 // ── Edit-Sheet: Aromen, Pairings, Stammdaten ─────────────────────────────────
 function EditSheet({ bottle, onClose, onSave }) {
+  const { racks } = useCellar()
   const [name, setName]       = useState(bottle.name)
   const [winery, setWinery]   = useState(bottle.winery || '')
   const [region, setRegion]   = useState(bottle.region || '')
@@ -352,6 +353,9 @@ function EditSheet({ bottle, onClose, onSave }) {
   const [aromas, setAromas]   = useState(bottle.aromas || [])
   const [pairings, setPairings] = useState(bottle.pairings || [])
   const [alcoholFree, setAlcoholFree] = useState(!!bottle.alcoholFree)
+  const [rackId, setRackId] = useState(bottle.rackId || racks[0]?.id)
+  const [slot, setSlot]     = useState(bottle.slot || '')
+  const selectedRack = racks.find(r => r.id === rackId)
 
   function toggle(arr, set, v) { set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]) }
 
@@ -415,6 +419,33 @@ function EditSheet({ bottle, onClose, onSave }) {
             <label className="label">Link</label><input type="url" className="input text-sm" value={link} onChange={e => setLink(e.target.value)} placeholder="https://…" />
           </div>
 
+          <div>
+            <label className="label">📦 Lagerposition</label>
+            <div className="flex flex-wrap gap-1.5">
+              {racks.map(r => (
+                <button key={r.id} type="button"
+                  onClick={() => { setRackId(r.id); setSlot(r.slots?.[0] || '') }}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                    rackId === r.id ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                >{r.emoji} {r.label}</button>
+              ))}
+            </div>
+            {selectedRack?.slots?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedRack.slots.map(s => (
+                  <button key={s} type="button" onClick={() => setSlot(s)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      slot === s ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}>{s}</button>
+                ))}
+              </div>
+            )}
+            {(!selectedRack?.slots || selectedRack.slots.length === 0) && (
+              <input className="input text-sm mt-2" placeholder="Fach / Slot" value={slot} onChange={e => setSlot(e.target.value)} />
+            )}
+          </div>
+
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 rounded-xl">
             <input type="checkbox" checked={alcoholFree} onChange={e => setAlcoholFree(e.target.checked)} />
             <span>🚫 <b>Alkoholfrei</b> – kein Promille, taugt für Schwangerschaft, Autofahrer, abends auf der Couch</span>
@@ -447,7 +478,7 @@ function EditSheet({ bottle, onClose, onSave }) {
           <div className="flex gap-2 pt-2 pb-4">
             <button onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
             <button
-              onClick={() => onSave({ name, winery, region, country, grape, alcohol, alcoholFree, sweetness, classification, wineType, retailer, priceEur: priceEur ? Number(priceEur) : null, purchaseDate, link, aromas, pairings })}
+              onClick={() => onSave({ name, winery, region, country, grape, alcohol, alcoholFree, sweetness, classification, wineType, retailer, priceEur: priceEur ? Number(priceEur) : null, purchaseDate, link, aromas, pairings, rackId, slot })}
               className="btn-primary flex-1">Speichern</button>
           </div>
         </div>

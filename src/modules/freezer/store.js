@@ -261,6 +261,9 @@ export const useFreezer = create(
         logActivity('freezer_deleted', `Alle ${count} Einträge gelöscht`)
       },
 
+      updateItem(id, patch) {
+        set(s => ({ items: s.items.map(it => it.id === id ? { ...it, ...patch } : it) }))
+      },
       toggleRestock(id) {
         set(s => ({ items: s.items.map(it => it.id === id ? { ...it, needsRestock: !it.needsRestock } : it) }))
       },
