@@ -4,6 +4,14 @@
 
 export const CHANGELOG = [
   {
+    version: '1.9.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'improved', text: 'TK und Weinkeller werden jetzt in der Cloud gespeichert – Daten bleiben auch nach Cache-Leerung erhalten und sind auf allen Geräten synchron.' },
+      { type: 'improved', text: 'Bestehende lokale TK- und Wein-Daten werden beim ersten Login automatisch migriert.' },
+    ],
+  },
+  {
     version: '1.8.0',
     date: '2026-06-13',
     entries: [

@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { bringLogin, bringGetLists, bringAddItem, bringGetItems, bringRemoveItem, bringRefreshToken } from '../lib/bring'
 import { cookidooVerify } from '../lib/cookidoo'
+import { useFreezer } from '../modules/freezer/store'
+import { useCellar } from '../modules/cellar/store'
 
 // ── Einladungscode generieren ─────────────────────────────────────────────────
 // Verwirrbaren Zeichen (0/O, 1/I/l) ausgeschlossen
@@ -669,6 +671,28 @@ const useStore = create((set, get) => ({
       patch.spiceSetupDone = true
     }
     set(patch)
+
+    // ── Freezer + Cellar: Supabase laden + localStorage-Migration ──────
+    const freezer = useFreezer.getState()
+    const cellar  = useCellar.getState()
+
+    const [freezerResult, cellarResult] = await Promise.all([
+      freezer._loadFromSupabase(household.id),
+      cellar._loadFromSupabase(household.id),
+    ])
+
+    if ((!freezerResult.storages.length && !freezerResult.items.length)) {
+      await freezer._migrateFromLocalStorage(household.id)
+      if (localStorage.getItem('_migrated_haushalt-freezer-v3')) {
+        await useFreezer.getState()._loadFromSupabase(household.id)
+      }
+    }
+    if ((!cellarResult.racks.length && !cellarResult.bottles.length)) {
+      await cellar._migrateFromLocalStorage(household.id)
+      if (localStorage.getItem('_migrated_haushalt-cellar-v6')) {
+        await useCellar.getState()._loadFromSupabase(household.id)
+      }
+    }
   },
 
   // ── Rezepte ──────────────────────────────────────────────────────────

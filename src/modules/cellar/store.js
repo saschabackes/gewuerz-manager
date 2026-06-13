@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { supabase } from '../../lib/supabase'
 import useStore from '../../store/useStore'
 
 function uid(p='w') { return p + '_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36) }
@@ -7,8 +8,8 @@ function uid(p='w') { return p + '_' + Math.random().toString(36).slice(2,10) + 
 function logActivity(action, target, detail) {
   try { useStore.getState()._logActivity(action, target, detail) } catch {}
 }
+function getHousehold() { return useStore.getState().household }
 
-// Default-Regale (frei umbenennbar/erweiterbar) – mit realistischen Lagerbedingungen
 const DEFAULT_RACKS = [
   { id: 'r_wz',     label: 'Regal Wohnzimmer', emoji: '🛋️',
     slots: ['A/1','A/2','A/3','B/1','B/2','B/3','C/1','C/2','C/3'],
@@ -63,34 +64,180 @@ export function qualityLabel(score) {
   return                { label: 'Schlecht', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }
 }
 
-// Effektives Trinkfenster bei realer Lagerung – verkürzt Span nach Score
 export function effectiveDrinkUntil(bottle, rack) {
   const score = qualityScore(rack?.conditions)
   const span  = bottle.drinkUntil - bottle.drinkFrom
   if (score >= 85 || span <= 0) return bottle.drinkUntil
-  const factor = 0.4 + (score / 100) * 0.6 // 0.4..1.0
+  const factor = 0.4 + (score / 100) * 0.6
   return Math.round(bottle.drinkFrom + span * factor)
 }
+
+// ── DB-Konvertierung ────────────────────────────────────────────────────────
+
+function rackToJS(row) {
+  return {
+    id:         row.id,
+    label:      row.label,
+    emoji:      row.emoji ?? '🍷',
+    slots:      row.slots ?? [],
+    conditions: row.conditions ?? { ...DEFAULT_CONDITIONS },
+    sortOrder:  row.sort_order ?? 0,
+  }
+}
+
+function bottleToJS(row) {
+  return {
+    id:             row.id,
+    name:           row.name,
+    winery:         row.winery ?? '',
+    vintage:        row.vintage,
+    region:         row.region ?? '',
+    country:        row.country ?? '',
+    grape:          row.grape ?? '',
+    color:          row.color ?? 'rot',
+    wineType:       row.wine_type ?? 'wein',
+    sweetness:      row.sweetness ?? '',
+    classification: row.classification ?? '',
+    alcohol:        row.alcohol ?? '',
+    alcoholFree:    row.alcohol_free ?? false,
+    drinkFrom:      row.drink_from,
+    drinkUntil:     row.drink_until,
+    rackId:         row.rack_id ?? '',
+    slot:           row.slot ?? '',
+    count:          row.count ?? 1,
+    priceEur:       row.price_eur,
+    retailer:       row.retailer ?? '',
+    purchaseDate:   row.purchase_date ?? '',
+    link:           row.link ?? '',
+    barcode:        row.barcode ?? '',
+    rating:         row.rating ?? 0,
+    tastingNotes:   row.tasting_notes ?? '',
+    tasteProfile:   row.taste_profile ?? {},
+    aromas:         row.aromas ?? [],
+    pairings:       row.pairings ?? [],
+    restock:        row.restock ?? false,
+    note:           row.note ?? '',
+    photoData:      row.photo_data ?? null,
+    history:        row.history ?? [],
+    archived:       row.archived ?? false,
+    bought:         row.bought ?? '',
+  }
+}
+
+function bottleToDB(data) {
+  return {
+    name:            data.name,
+    winery:          data.winery ?? '',
+    vintage:         data.vintage ?? null,
+    region:          data.region ?? '',
+    country:         data.country ?? '',
+    grape:           data.grape ?? '',
+    color:           data.color ?? 'rot',
+    wine_type:       data.wineType ?? 'wein',
+    sweetness:       data.sweetness ?? '',
+    classification:  data.classification ?? '',
+    alcohol:         data.alcohol ?? '',
+    alcohol_free:    data.alcoholFree ?? false,
+    drink_from:      data.drinkFrom ?? null,
+    drink_until:     data.drinkUntil ?? null,
+    rack_id:         data.rackId ?? null,
+    slot:            data.slot ?? '',
+    count:           data.count ?? 1,
+    price_eur:       data.priceEur ?? null,
+    retailer:        data.retailer ?? '',
+    purchase_date:   data.purchaseDate ?? '',
+    link:            data.link ?? '',
+    barcode:         data.barcode ?? '',
+    rating:          data.rating ?? 0,
+    tasting_notes:   data.tastingNotes ?? '',
+    taste_profile:   data.tasteProfile ?? {},
+    aromas:          data.aromas ?? [],
+    pairings:        data.pairings ?? [],
+    restock:         data.restock ?? false,
+    note:            data.note ?? '',
+    photo_data:      data.photoData ?? null,
+    history:         data.history ?? [],
+    archived:        data.archived ?? false,
+    bought:          data.bought ?? '',
+  }
+}
+
+// ── Store ────────────────────────────────────────────────────────────────────
 
 export const useCellar = create(
   persist(
     (set, get) => ({
-      racks: DEFAULT_RACKS,
+      racks: [],
       bottles: [],
       setupDone: false,
       recentNames: [],
-      lastUsedRack: null, // {rackId, slot}
+      lastUsedRack: null,
       formOpen: false,
       formPrefill: null,
-      pending: [], // [{id, name, fromBottleId?, ...}]
+      pending: [],
+      _loaded: false,
 
-      completeSetup() { set({ setupDone: true }) },
+      completeSetup() {
+        set({ setupDone: true })
+        if (!get().racks.length) get().addRack('Weinregal', '🍷')
+      },
       restartSetup()  { set({ setupDone: false }) },
 
       openForm(prefill = null) { set({ formOpen: true, formPrefill: prefill }) },
       closeForm()              { set({ formOpen: false, formPrefill: null }) },
 
-      // Wein als gekauft markieren → Einräumen-Queue
+      // ── Data Loading (von useStore.loadData aufgerufen) ───────────────────
+      async _loadFromSupabase(householdId) {
+        const [{ data: racksData }, { data: bottlesData }] = await Promise.all([
+          supabase.from('cellar_racks').select('*').eq('household_id', householdId).order('sort_order'),
+          supabase.from('cellar_bottles').select('*').eq('household_id', householdId).order('name'),
+        ])
+        const racks = (racksData ?? []).map(rackToJS)
+        const bottles = (bottlesData ?? []).map(bottleToJS)
+        const patch = { racks, bottles, _loaded: true }
+        if (!get().setupDone && (racks.length > 0 || bottles.length > 0)) {
+          patch.setupDone = true
+        }
+        set(patch)
+        return { racks, bottles }
+      },
+
+      // ── localStorage-Migration ────────────────────────────────────────────
+      async _migrateFromLocalStorage(householdId) {
+        const raw = localStorage.getItem('haushalt-cellar-v6')
+        if (!raw) return false
+        let parsed
+        try { parsed = JSON.parse(raw) } catch { return false }
+        const localRacks = parsed?.state?.racks
+        const localBottles = parsed?.state?.bottles
+        if ((!localRacks || !localRacks.length) && (!localBottles || !localBottles.length)) return false
+
+        if (localRacks?.length) {
+          const rows = localRacks.map((r, i) => ({
+            id: r.id,
+            household_id: householdId,
+            label: r.label,
+            emoji: r.emoji ?? '🍷',
+            slots: r.slots ?? [],
+            conditions: r.conditions ?? { ...DEFAULT_CONDITIONS },
+            sort_order: i,
+          }))
+          await supabase.from('cellar_racks').upsert(rows, { onConflict: 'id' })
+        }
+        if (localBottles?.length) {
+          const rows = localBottles.map(b => ({
+            id: b.id,
+            household_id: householdId,
+            ...bottleToDB(b),
+          }))
+          await supabase.from('cellar_bottles').upsert(rows, { onConflict: 'id' })
+        }
+        localStorage.setItem('_migrated_haushalt-cellar-v6', raw)
+        localStorage.removeItem('haushalt-cellar-v6')
+        return true
+      },
+
+      // ── Einräumen-Queue (bleibt lokal) ────────────────────────────────────
       markBought(bottleId) {
         const b = get().bottles.find(x => x.id === bottleId)
         if (!b) return
@@ -107,6 +254,7 @@ export const useCellar = create(
           }],
           bottles: s.bottles.map(x => x.id === bottleId ? { ...x, restock: false } : x),
         }))
+        supabase.from('cellar_bottles').update({ restock: false }).eq('id', bottleId).then(() => {})
         return pid
       },
       addPendingByName(name) {
@@ -147,35 +295,48 @@ export const useCellar = create(
       clearPending() {
         set({ pending: [] })
       },
-      // Bestand bereits vorhandener Flasche um count erhöhen
       restockBottle(bottleId, count = 1) {
+        const newCount = (get().bottles.find(b => b.id === bottleId)?.count || 0) + Number(count)
         set(s => ({
           bottles: s.bottles.map(b => b.id === bottleId
-            ? { ...b, count: (b.count || 0) + Number(count), restock: false }
-            : b),
+            ? { ...b, count: newCount, restock: false } : b),
         }))
+        supabase.from('cellar_bottles').update({ count: newCount, restock: false }).eq('id', bottleId).then(() => {})
       },
 
       // ── Racks ──────────────────────────────────────────────────────────────
       addRack(label, emoji='🍷') {
-        const r = { id: uid('r'), label, emoji, slots: ['1','2','3'], conditions: { ...DEFAULT_CONDITIONS } }
+        const h = getHousehold()
+        const r = { id: uid('r'), label, emoji, slots: ['1','2','3'], conditions: { ...DEFAULT_CONDITIONS }, sortOrder: get().racks.length }
         set(s => ({ racks: [...s.racks, r] }))
+        if (h) supabase.from('cellar_racks').insert([{
+          id: r.id, household_id: h.id, label, emoji, slots: r.slots, conditions: r.conditions, sort_order: r.sortOrder,
+        }]).then(({ error }) => { if (error) console.error('addRack:', error) })
         return r.id
       },
       setRackConditions(id, conditions) {
         set(s => ({ racks: s.racks.map(r => r.id === id ? { ...r, conditions: { ...(r.conditions || DEFAULT_CONDITIONS), ...conditions } } : r) }))
+        const merged = get().racks.find(r => r.id === id)?.conditions
+        if (merged) supabase.from('cellar_racks').update({ conditions: merged }).eq('id', id).then(() => {})
       },
       renameRack(id, label, emoji) {
         set(s => ({ racks: s.racks.map(r => r.id===id ? { ...r, label, emoji: emoji ?? r.emoji } : r) }))
+        const patch = { label }
+        if (emoji) patch.emoji = emoji
+        supabase.from('cellar_racks').update(patch).eq('id', id).then(() => {})
       },
       removeRack(id) {
         set(s => ({
           racks: s.racks.filter(r => r.id !== id),
           bottles: s.bottles.filter(b => b.rackId !== id),
         }))
+        supabase.from('cellar_racks').delete().eq('id', id).then(() => {})
+        supabase.from('cellar_bottles').delete().eq('rack_id', id).then(() => {})
       },
       addSlot(rackId, label) {
         set(s => ({ racks: s.racks.map(r => r.id===rackId ? { ...r, slots: [...r.slots, label] } : r) }))
+        const r = get().racks.find(r => r.id === rackId)
+        if (r) supabase.from('cellar_racks').update({ slots: r.slots }).eq('id', rackId).then(() => {})
       },
       renameSlot(rackId, oldLabel, newLabel) {
         set(s => ({
@@ -184,6 +345,9 @@ export const useCellar = create(
             : r),
           bottles: s.bottles.map(b => b.rackId===rackId && b.slot===oldLabel ? { ...b, slot: newLabel } : b),
         }))
+        const r = get().racks.find(r => r.id === rackId)
+        if (r) supabase.from('cellar_racks').update({ slots: r.slots }).eq('id', rackId).then(() => {})
+        supabase.from('cellar_bottles').update({ slot: newLabel }).eq('rack_id', rackId).eq('slot', oldLabel).then(() => {})
       },
       removeSlot(rackId, label) {
         set(s => ({
@@ -191,10 +355,14 @@ export const useCellar = create(
             ? { ...r, slots: r.slots.filter(s2 => s2 !== label) } : r),
           bottles: s.bottles.filter(b => !(b.rackId===rackId && b.slot===label)),
         }))
+        const r = get().racks.find(r => r.id === rackId)
+        if (r) supabase.from('cellar_racks').update({ slots: r.slots }).eq('id', rackId).then(() => {})
+        supabase.from('cellar_bottles').delete().eq('rack_id', rackId).eq('slot', label).then(() => {})
       },
 
       // ── Bottles ────────────────────────────────────────────────────────────
       addBottle(data) {
+        const h = getHousehold()
         const base = {
           name: data.name.trim(),
           winery: data.winery || '',
@@ -245,6 +413,13 @@ export const useCellar = create(
             lastUsedRack: { rackId: loc.rackId, slot: loc.slot },
             recentNames: [b.name, ...s.recentNames.filter(n => n !== b.name)].slice(0, 30),
           }))
+          if (h) supabase.from('cellar_bottles').insert([{ id: b.id, household_id: h.id, ...bottleToDB(b) }])
+            .then(({ error }) => {
+              if (error) {
+                console.error('addBottle:', error)
+                set(s => ({ bottles: s.bottles.filter(x => x.id !== b.id) }))
+              }
+            })
         })
         const totalCount = entries.reduce((s, l) => s + l.count, 0)
         logActivity('wine_added', base.name, `${totalCount}× ${base.vintage}`)
@@ -253,12 +428,49 @@ export const useCellar = create(
 
       updateBottle(id, patch) {
         const b = get().bottles.find(x => x.id === id)
-        set(s => ({ bottles: s.bottles.map(b => b.id === id ? { ...b, ...patch } : b) }))
+        set(s => ({ bottles: s.bottles.map(x => x.id === id ? { ...x, ...patch } : x) }))
         if (b) logActivity('wine_updated', b.name)
+        const dbPatch = {}
+        if ('name' in patch)           dbPatch.name = patch.name
+        if ('winery' in patch)         dbPatch.winery = patch.winery
+        if ('vintage' in patch)        dbPatch.vintage = patch.vintage
+        if ('region' in patch)         dbPatch.region = patch.region
+        if ('country' in patch)        dbPatch.country = patch.country
+        if ('grape' in patch)          dbPatch.grape = patch.grape
+        if ('color' in patch)          dbPatch.color = patch.color
+        if ('wineType' in patch)       dbPatch.wine_type = patch.wineType
+        if ('sweetness' in patch)      dbPatch.sweetness = patch.sweetness
+        if ('classification' in patch) dbPatch.classification = patch.classification
+        if ('alcohol' in patch)        dbPatch.alcohol = patch.alcohol
+        if ('alcoholFree' in patch)    dbPatch.alcohol_free = patch.alcoholFree
+        if ('drinkFrom' in patch)      dbPatch.drink_from = patch.drinkFrom
+        if ('drinkUntil' in patch)     dbPatch.drink_until = patch.drinkUntil
+        if ('rackId' in patch)         dbPatch.rack_id = patch.rackId
+        if ('slot' in patch)           dbPatch.slot = patch.slot
+        if ('count' in patch)          dbPatch.count = patch.count
+        if ('priceEur' in patch)       dbPatch.price_eur = patch.priceEur
+        if ('retailer' in patch)       dbPatch.retailer = patch.retailer
+        if ('purchaseDate' in patch)   dbPatch.purchase_date = patch.purchaseDate
+        if ('link' in patch)           dbPatch.link = patch.link
+        if ('barcode' in patch)        dbPatch.barcode = patch.barcode
+        if ('rating' in patch)         dbPatch.rating = patch.rating
+        if ('tastingNotes' in patch)   dbPatch.tasting_notes = patch.tastingNotes
+        if ('tasteProfile' in patch)   dbPatch.taste_profile = patch.tasteProfile
+        if ('aromas' in patch)         dbPatch.aromas = patch.aromas
+        if ('pairings' in patch)       dbPatch.pairings = patch.pairings
+        if ('restock' in patch)        dbPatch.restock = patch.restock
+        if ('note' in patch)           dbPatch.note = patch.note
+        if ('photoData' in patch)      dbPatch.photo_data = patch.photoData
+        if ('history' in patch)        dbPatch.history = patch.history
+        if ('archived' in patch)       dbPatch.archived = patch.archived
+        if ('bought' in patch)         dbPatch.bought = patch.bought
+        if (Object.keys(dbPatch).length) supabase.from('cellar_bottles').update(dbPatch).eq('id', id).then(() => {})
       },
 
       toggleRestock(id) {
-        set(s => ({ bottles: s.bottles.map(b => b.id === id ? { ...b, restock: !b.restock } : b) }))
+        const val = !get().bottles.find(b => b.id === id)?.restock
+        set(s => ({ bottles: s.bottles.map(b => b.id === id ? { ...b, restock: val } : b) }))
+        supabase.from('cellar_bottles').update({ restock: val }).eq('id', id).then(() => {})
       },
 
       quickAddByName(name) {
@@ -271,43 +483,55 @@ export const useCellar = create(
       drinkOne(id, entry = {}) {
         const date = entry.date || new Date().toISOString().slice(0, 10)
         const rating = Number(entry.rating) || undefined
+        const bottle = get().bottles.find(x => x.id === id)
+        const newHistory = [...(bottle?.history || []), {
+          id: uid('h'), date, rating: rating ?? null,
+          occasion: entry.occasion || '', note: entry.note || '',
+        }]
+        const newCount = (bottle?.count ?? 1) - 1
         set(s => ({
           bottles: s.bottles.map(b => {
             if (b.id !== id) return b
-            const history = [...(b.history || []), {
-              id: uid('h'), date, rating: rating ?? null,
-              occasion: entry.occasion || '', note: entry.note || '',
-            }]
             return {
               ...b,
-              count: b.count - 1,
+              count: newCount,
               rating: rating ?? b.rating,
               tastingNotes: entry.note ? entry.note : b.tastingNotes,
-              history,
+              history: newHistory,
             }
           }),
         }))
-        const bottle = get().bottles.find(x => x.id === id)
+        const dbPatch = { count: newCount, history: newHistory }
+        if (rating) dbPatch.rating = rating
+        if (entry.note) dbPatch.tasting_notes = entry.note
+        supabase.from('cellar_bottles').update(dbPatch).eq('id', id).then(() => {})
         if (bottle) logActivity('wine_consumed', bottle.name)
       },
       removeBottle(id) {
         const b = get().bottles.find(x => x.id === id)
-        set(s => ({ bottles: s.bottles.filter(b => b.id !== id) }))
+        set(s => ({ bottles: s.bottles.filter(x => x.id !== id) }))
+        supabase.from('cellar_bottles').delete().eq('id', id).then(() => {})
         if (b) logActivity('wine_deleted', b.name)
       },
       bulkDeleteBottles(ids) {
         if (!ids.length) return
         set(s => ({ bottles: s.bottles.filter(b => !ids.includes(b.id)) }))
+        supabase.from('cellar_bottles').delete().in('id', ids).then(() => {})
         logActivity('wine_deleted', `${ids.length} Weine gelöscht`)
       },
       clearAllBottles() {
+        const h = getHousehold()
         const count = get().bottles.length
         if (!count) return
         set({ bottles: [] })
+        if (h) supabase.from('cellar_bottles').delete().eq('household_id', h.id).then(() => {})
         logActivity('wine_deleted', `Alle ${count} Weine gelöscht`)
       },
 
+      // ── Demo + Reset ──────────────────────────────────────────────────────
       seedDemoData() {
+        const h = getHousehold()
+        const defaultRacks = DEFAULT_RACKS.map((r, i) => ({ ...r, sortOrder: i }))
         const samples = [
           { name: 'Riesling Kabinett', winery: 'Loosen',    vintage: 2022, region: 'Mosel',     country: 'Deutschland', grape: 'Riesling', color: 'weiß', alcohol: '8.5 %',
             drinkFrom: 2023, drinkUntil: 2028, rackId: 'r_wz', slot: 'A/1', count: 3, priceEur: 14, rating: 4,
@@ -365,30 +589,48 @@ export const useCellar = create(
             pairings: ['pizza','pasta_tomate','käse_hart'],
             tastingNotes: 'Solider Speisebegleiter ohne Promille.' },
         ]
+        const bottleRows = samples.map(s => ({ id: uid('b'), note: '', photoData: null, restock: false, history: [], archived: false, bought: '', wineType: 'wein', sweetness: '', classification: '', purchaseDate: '', link: '', barcode: '', ...s }))
         set({
-          bottles: samples.map(s => ({ id: uid('b'), note: '', photoData: null, restock: false, history: [], ...s })),
+          racks: defaultRacks,
+          bottles: bottleRows,
           recentNames: ['Riesling Kabinett','Barolo','Sauvignon Blanc','Spätburgunder'],
           lastUsedRack: { rackId: 'r_wz', slot: 'A/1' },
         })
+        if (h) {
+          supabase.from('cellar_racks').upsert(defaultRacks.map((r, i) => ({
+            id: r.id, household_id: h.id, label: r.label, emoji: r.emoji, slots: r.slots, conditions: r.conditions, sort_order: i,
+          })), { onConflict: 'id' }).then(() => {})
+          supabase.from('cellar_bottles').upsert(bottleRows.map(b => ({
+            id: b.id, household_id: h.id, ...bottleToDB(b),
+          })), { onConflict: 'id' }).then(() => {})
+        }
       },
-      clear() { set({ bottles: [], recentNames: [], lastUsedRack: null }) },
-      resetSetup() { set({ racks: DEFAULT_RACKS, bottles: [], recentNames: [], lastUsedRack: null }) },
+      clear() {
+        const h = getHousehold()
+        set({ bottles: [], recentNames: [], lastUsedRack: null })
+        if (h) supabase.from('cellar_bottles').delete().eq('household_id', h.id).then(() => {})
+      },
+      resetSetup() {
+        const h = getHousehold()
+        set({ racks: [], bottles: [], recentNames: [], lastUsedRack: null, setupDone: false })
+        if (h) {
+          supabase.from('cellar_bottles').delete().eq('household_id', h.id).then(() => {})
+          supabase.from('cellar_racks').delete().eq('household_id', h.id).then(() => {})
+        }
+      },
     }),
     {
-      name: 'haushalt-cellar-v6',
-      version: 1,
-      migrate: (persisted, version) => {
-        if (version === 0 && persisted && !('setupDone' in persisted)) {
-          persisted.setupDone = true
-        }
-        return persisted
-      },
+      name: 'haushalt-cellar-local-ui',
+      partialize: (state) => ({
+        setupDone: state.setupDone,
+        lastUsedRack: state.lastUsedRack,
+        recentNames: state.recentNames,
+        pending: state.pending,
+      }),
     }
   )
 )
 
-// Status mit Berücksichtigung der Lagerbedingungen.
-// Wenn das effektive Trinkfenster wegen schlechter Lagerung enger ist, zeigen wir das.
 export function drinkStatus(b, rack) {
   const y = new Date().getFullYear()
   const effUntil = rack ? effectiveDrinkUntil(b, rack) : b.drinkUntil
