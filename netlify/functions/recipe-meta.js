@@ -30,8 +30,9 @@ function parseRecipe(desc) {
   const lines = desc.split(/\r?\n/).map(l => l.trim())
 
   const stepHeaderRe = /^(anleitung|zubereitung|zubereitungsschritte|so geht'?s|schritte|method|preparation|und so geht'?s)\b\s*:?\.?$/i
-  const promoRe = /(https?:\/\/|^#|abonn|affiliate|patreon|instagram|tiktok|spotify|linktr|youtube\.com|equipment|kochkurs|foodtour|werbung|^@|folg[te]? mir|unterst[üu]tz)/i
+  const promoRe = /(https?:\/\/|^#|abonn|affiliate|patreon|instagram|tiktok|spotify|linktr|youtube\.com|equipment|kochkurs|foodtour|werbung|^@|folg[te]? mir|unterst[üu]tz|werde teil|teil der familie)/i
   const sectionOnlyRe = /^[A-Za-zÄÖÜäöüß /&-]{3,30}:$/          // "Gewürze:", "Suppeneinlage:"
+  const timestampRe = /^\d{1,2}:\d{2}/
   const startsQtyRe = /^([0-9]|½|¼|¾|⅓|⅔|\d+\/\d+|etwas\b|eine?r?\b|optional|prise|nach belieben|ein paar|je\b)/i
 
   // Indizes finden
@@ -56,6 +57,7 @@ function parseRecipe(desc) {
     for (let i = firstIng; i < ingredientEnd; i++) {
       const l = lines[i]
       if (!l) continue
+      if (timestampRe.test(l)) continue                   // YouTube-Kapitelmarken überspringen
       if (sectionOnlyRe.test(l)) continue                 // reine Überschrift überspringen
       if (promoRe.test(l)) break
       const wordCount = l.split(/\s+/).length
@@ -143,7 +145,27 @@ async function fetchViaApi(vid) {
   } catch (e) { return null }
 }
 
-// 3. Fallback: oEmbed (nur Titel/Autor)
+// 3. YouTube Data API v3 (zuverlässig von Datacenter-IPs, braucht GOOGLE_API_KEY)
+async function fetchViaDataApi(vid) {
+  const apiKey = (process.env.GOOGLE_API_KEY || '').trim()
+  if (!apiKey) return null
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${vid}&key=${apiKey}`
+    )
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    const snippet = data?.items?.[0]?.snippet
+    if (!snippet) return null
+    return {
+      title: snippet.title || '',
+      author: snippet.channelTitle || '',
+      description: snippet.description || '',
+    }
+  } catch (e) { return null }
+}
+
+// 4. Fallback: oEmbed (nur Titel/Autor)
 async function fetchViaOembed(vid) {
   try {
     const res = await fetch('https://www.youtube.com/oembed?format=json&url=' +
@@ -155,10 +177,26 @@ async function fetchViaOembed(vid) {
 }
 
 async function fetchYouTube(vid) {
-  return (await fetchViaPage(vid)) ||
-         (await fetchViaApi(vid)) ||
-         (await fetchViaOembed(vid)) ||
-         { title: '', author: '', description: '' }
+  const page = await fetchViaPage(vid)
+  const api  = await fetchViaApi(vid)
+  const dataApi = await fetchViaDataApi(vid)
+  const oembed = await fetchViaOembed(vid)
+
+  // Bestes Ergebnis zusammenführen: Page-Scraping hat oft die vollständige
+  // Beschreibung, aber von Datacenter-IPs liefert YouTube generische Platzhalter.
+  const genericDesc = /angesagtesten Videos|die besten Videos|find.*videos.*tracks/i
+  const best = { title: '', author: '', description: '' }
+
+  for (const src of [page, api, dataApi, oembed]) {
+    if (!src) continue
+    if (!best.title && src.title) best.title = src.title
+    if (!best.author && src.author) best.author = src.author
+    if (!best.description && src.description && !genericDesc.test(src.description)) {
+      best.description = src.description
+    }
+  }
+
+  return best
 }
 
 exports.handler = async function (event) {
