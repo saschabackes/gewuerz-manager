@@ -187,16 +187,6 @@ async function fetchYouTube(vid) {
   const genericDesc = /angesagtesten Videos|die besten Videos|find.*videos.*tracks/i
   const best = { title: '', author: '', description: '' }
 
-  // Debug: welche Quellen haben was geliefert
-  const _debug = {
-    page:    page    ? { title: !!page.title, desc: (page.description||'').length }    : null,
-    api:     api     ? { title: !!api.title, desc: (api.description||'').length }     : null,
-    dataApi: dataApi ? { title: !!dataApi.title, desc: (dataApi.description||'').length } : null,
-    oembed:  oembed  ? { title: !!oembed.title, desc: (oembed.description||'').length } : null,
-    hasGoogleKey: !!(process.env.GOOGLE_API_KEY || '').trim(),
-  }
-  best._debug = _debug
-
   for (const src of [page, api, dataApi, oembed]) {
     if (!src) continue
     if (!best.title && src.title) best.title = src.title
@@ -218,10 +208,6 @@ exports.handler = async function (event) {
   let body
   try { body = JSON.parse(event.body || '{}') } catch (e) { return err('Invalid JSON') }
   const url = (body.url || '').trim()
-  if (url === '__env_check__') {
-    var envKeys = Object.keys(process.env).filter(function(k) { return /^(GOOGLE|SUPABASE|SUPER)/.test(k) })
-    return ok({ envKeys: envKeys })
-  }
   if (!url) return err('url erforderlich')
 
   const vid = youtubeId(url)
@@ -241,7 +227,6 @@ exports.handler = async function (event) {
         description,
         ingredients,
         steps,
-        _debug: meta._debug,
       })
     } catch (e) {
       return ok({
