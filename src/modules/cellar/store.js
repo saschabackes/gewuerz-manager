@@ -295,6 +295,17 @@ export const useCellar = create(
         set(s => ({ bottles: s.bottles.filter(b => b.id !== id) }))
         if (b) logActivity('wine_deleted', b.name)
       },
+      bulkDeleteBottles(ids) {
+        if (!ids.length) return
+        set(s => ({ bottles: s.bottles.filter(b => !ids.includes(b.id)) }))
+        logActivity('wine_deleted', `${ids.length} Weine gelöscht`)
+      },
+      clearAllBottles() {
+        const count = get().bottles.length
+        if (!count) return
+        set({ bottles: [] })
+        logActivity('wine_deleted', `Alle ${count} Weine gelöscht`)
+      },
 
       seedDemoData() {
         const samples = [

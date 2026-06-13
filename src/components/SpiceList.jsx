@@ -3,6 +3,7 @@ import useStore from '../store/useStore'
 import { getMhdStatus, MHD_STYLES, formatMhdDate, formatAmount } from '../utils/mhd'
 import { PACKAGING_TYPES, PACKAGING_COLORS, CATEGORY_COLORS } from '../data/spices'
 import FillBar, { FILL_LABELS } from './FillBar'
+import SelectionBar, { ClearAllButton } from './SelectionBar'
 
 const FILTERS = [
   { id: 'all', label: 'Alle' },
@@ -13,7 +14,7 @@ const FILTERS = [
 ]
 
 export default function SpiceList({ onEdit, onAdd }) {
-  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading, updateFillLevel } = useStore()
+  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading, updateFillLevel, bulkDeleteSpices, clearAllSpices } = useStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -23,6 +24,8 @@ export default function SpiceList({ onEdit, onAdd }) {
   const [expandedId, setExpandedId]         = useState(null)
   const [zoomedImage, setZoomedImage]       = useState(null)
   const [showReorderOnly, setShowReorderOnly] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
 
   // Nachkaufen-Logik: Gruppe braucht Nachkauf wenn ALLE Einheiten ≤ level 1
   const reorderNeeded = useMemo(() => {
@@ -80,7 +83,7 @@ export default function SpiceList({ onEdit, onAdd }) {
     <div className="flex flex-col h-full">
       {/* Stats strip */}
       {stats.total > 0 && (
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2.5 flex gap-4 text-sm">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-2.5 flex items-center gap-4 text-sm">
           <span className="text-gray-500 dark:text-gray-400">{stats.total} Gewürze</span>
           {stats.expired > 0 && (
             <span className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
@@ -107,6 +110,17 @@ export default function SpiceList({ onEdit, onAdd }) {
               {reorderNeeded.size} nachkaufen
             </button>
           )}
+          <div className="ml-auto flex items-center gap-2">
+            <ClearAllButton onClear={clearAllSpices} label="Alle löschen" count={allSpices.length} />
+            <button
+              onClick={() => { setSelectMode(m => !m); setSelected(new Set()) }}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                selectMode ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {selectMode ? 'Fertig' : 'Auswählen'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -223,17 +237,39 @@ export default function SpiceList({ onEdit, onAdd }) {
           <EmptyState search={search} onAdd={onAdd} />
         ) : (
           filtered.map(spice => (
-            <SpiceCard
-              key={spice.id}
-              spice={spice}
-              expanded={expandedId === spice.id}
-              onToggle={() => setExpandedId(id => id === spice.id ? null : spice.id)}
-              onEdit={() => { onEdit(spice); setExpandedId(null) }}
-              onAddToShopping={() => addShoppingItem(spice.name, '', true, { spiceId: spice.id, brand: spice.brand })}
-              onZoomImage={(url, name) => setZoomedImage({ url, name })}
-              needsReorder={reorderNeeded.has(spice.name.toLowerCase().trim())}
-              onFillChange={level => updateFillLevel(spice.id, level)}
-            />
+            <div key={spice.id} className="flex items-start gap-2">
+              {selectMode && (
+                <button
+                  onClick={() => setSelected(prev => {
+                    const next = new Set(prev)
+                    next.has(spice.id) ? next.delete(spice.id) : next.add(spice.id)
+                    return next
+                  })}
+                  className={`mt-4 flex-none w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                    selected.has(spice.id)
+                      ? 'bg-primary-600 border-primary-600 text-white'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  {selected.has(spice.id) && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </button>
+              )}
+              <div className="flex-1">
+                <SpiceCard
+                  spice={spice}
+                  expanded={!selectMode && expandedId === spice.id}
+                  onToggle={() => selectMode
+                    ? setSelected(prev => { const next = new Set(prev); next.has(spice.id) ? next.delete(spice.id) : next.add(spice.id); return next })
+                    : setExpandedId(id => id === spice.id ? null : spice.id)
+                  }
+                  onEdit={() => { onEdit(spice); setExpandedId(null) }}
+                  onAddToShopping={() => addShoppingItem(spice.name, '', true, { spiceId: spice.id, brand: spice.brand })}
+                  onZoomImage={(url, name) => setZoomedImage({ url, name })}
+                  needsReorder={reorderNeeded.has(spice.name.toLowerCase().trim())}
+                  onFillChange={level => updateFillLevel(spice.id, level)}
+                />
+              </div>
+            </div>
           ))
         )}
         <div className="h-2" />
@@ -245,6 +281,14 @@ export default function SpiceList({ onEdit, onAdd }) {
           url={zoomedImage.url}
           name={zoomedImage.name}
           onClose={() => setZoomedImage(null)}
+        />
+      )}
+
+      {selectMode && (
+        <SelectionBar
+          count={selected.size}
+          onDelete={() => { bulkDeleteSpices([...selected]); setSelected(new Set()); setSelectMode(false) }}
+          onCancel={() => { setSelected(new Set()); setSelectMode(false) }}
         />
       )}
     </div>

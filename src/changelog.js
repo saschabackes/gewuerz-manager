@@ -4,6 +4,14 @@
 
 export const CHANGELOG = [
   {
+    version: '1.6.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'new',      text: 'Mehrfachauswahl: Einträge auswählen und gebündelt löschen – in allen Bereichen.' },
+      { type: 'new',      text: 'Bereich leeren: alle Einträge eines Moduls mit einem Klick löschen (mit Bestätigung).' },
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-06-13',
     entries: [

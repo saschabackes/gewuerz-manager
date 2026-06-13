@@ -8,13 +8,15 @@ import ExcelImport from './ExcelImport'
 import WinePendingView from './WinePendingView'
 import SharePicker from './SharePicker'
 import SubTabs from '../../components/SubTabs'
+import SelectionBar, { ClearAllButton } from '../../components/SelectionBar'
 
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
 export default function CellarView() {
   const { racks, bottles, drinkOne, removeBottle,
           setupDone, completeSetup, recentNames, quickAddByName, lastUsedRack,
-          formOpen, formPrefill, openForm, closeForm, pending } = useCellar()
+          formOpen, formPrefill, openForm, closeForm, pending,
+          bulkDeleteBottles, clearAllBottles } = useCellar()
   const [tab, setTab] = useState('bestand')
   const [memoryFilter, setMemoryFilter] = useState('all') // all | loved | stocked | empty
   const [activeRackId, setActiveRackId] = useState(racks[0]?.id)
@@ -27,6 +29,8 @@ export default function CellarView() {
   const [detailId, setDetailId] = useState(null)
   const detailBottle = bottles.find(b => b.id === detailId)
   const [alcoholFilter, setAlcoholFilter] = useState('all') // all | alc | free
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
 
   const activeRack = racks.find(r => r.id === activeRackId) || racks[0]
 
@@ -97,6 +101,15 @@ export default function CellarView() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <ClearAllButton onClear={() => { clearAllBottles(); setSelectMode(false); setSelected(new Set()) }} label="Alle löschen" count={bottles.length} />
+            <button
+              onClick={() => { setSelectMode(m => !m); setSelected(new Set()) }}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                selectMode ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {selectMode ? 'Fertig' : 'Auswählen'}
+            </button>
             <button onClick={() => { setSharePreselect(null); setShowShare(true) }}
               className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg" title="Weine empfehlen">🔗</button>
             {pending.length > 0 && (
@@ -222,33 +235,48 @@ export default function CellarView() {
             const r = racks.find(r => r.id === b.rackId)
             const status = drinkStatus(b, r)
             return (
-              <button key={b.id} onClick={() => setDetailId(b.id)}
-                className="w-full text-left bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm active:scale-[0.99] transition-transform">
-                <div className="flex items-start gap-3">
-                  {b.photoData
-                    ? <img src={b.photoData} alt="" className="w-12 h-16 rounded object-cover flex-none" />
-                    : <div className="text-3xl flex-none w-12 text-center">{COLOR_EMOJI[b.color] || '🍷'}</div>}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-gray-800 dark:text-gray-100 truncate">{b.name}</span>
-                      <span className="text-xs text-gray-400">{b.vintage}</span>
-                      {b.rating > 0 && <span className="text-xs">{'⭐'.repeat(b.rating)}</span>}
-                      {b.alcoholFree && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">🚫 0%</span>}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {b.winery && <span>{b.winery} · </span>}{b.region}{b.grape && <span> · {b.grape}</span>}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
-                        {r?.emoji} {r?.label || '—'} · {b.slot || '—'}
-                      </span>
-                      <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{b.count}× Bestand</span>
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${status.cls}`}>{status.label}</span>
-                      {b.restock && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">+ nachkaufen</span>}
+              <div key={b.id} className="flex items-start gap-2">
+                {selectMode && (
+                  <button
+                    onClick={() => setSelected(prev => { const next = new Set(prev); next.has(b.id) ? next.delete(b.id) : next.add(b.id); return next })}
+                    className={`mt-4 flex-none w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      selected.has(b.id) ? 'bg-primary-600 border-primary-600 text-white' : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                  >
+                    {selected.has(b.id) && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </button>
+                )}
+                <button onClick={() => selectMode
+                    ? setSelected(prev => { const next = new Set(prev); next.has(b.id) ? next.delete(b.id) : next.add(b.id); return next })
+                    : setDetailId(b.id)
+                  }
+                  className="flex-1 text-left bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm active:scale-[0.99] transition-transform">
+                  <div className="flex items-start gap-3">
+                    {b.photoData
+                      ? <img src={b.photoData} alt="" className="w-12 h-16 rounded object-cover flex-none" />
+                      : <div className="text-3xl flex-none w-12 text-center">{COLOR_EMOJI[b.color] || '🍷'}</div>}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-gray-800 dark:text-gray-100 truncate">{b.name}</span>
+                        <span className="text-xs text-gray-400">{b.vintage}</span>
+                        {b.rating > 0 && <span className="text-xs">{'⭐'.repeat(b.rating)}</span>}
+                        {b.alcoholFree && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">🚫 0%</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {b.winery && <span>{b.winery} · </span>}{b.region}{b.grape && <span> · {b.grape}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
+                          {r?.emoji} {r?.label || '—'} · {b.slot || '—'}
+                        </span>
+                        <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{b.count}× Bestand</span>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${status.cls}`}>{status.label}</span>
+                        {b.restock && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">+ nachkaufen</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             )
           })}
         </div>
@@ -261,6 +289,14 @@ export default function CellarView() {
       {showImport   && <ExcelImport  onClose={() => setShowImport(false)} onImported={() => setShowPending(true)} />}
       {showPending  && <WinePendingView onClose={() => setShowPending(false)} />}
       {showShare    && <SharePicker  preselected={sharePreselect} onClose={() => setShowShare(false)} />}
+
+      {selectMode && (
+        <SelectionBar
+          count={selected.size}
+          onDelete={() => { bulkDeleteBottles([...selected]); setSelected(new Set()); setSelectMode(false) }}
+          onCancel={() => { setSelected(new Set()); setSelectMode(false) }}
+        />
+      )}
 
       {detailBottle && (
         <WineDetail

@@ -6,6 +6,7 @@ import QuickAddBar from './QuickAddBar'
 import StorageSettings from './StorageSettings'
 import ExcelImport from './ExcelImport'
 import SubTabs from '../../components/SubTabs'
+import SelectionBar, { ClearAllButton } from '../../components/SelectionBar'
 
 function daysUntil(dateStr) {
   if (!dateStr) return null
@@ -26,11 +27,14 @@ function catLabel(id) {
 
 export default function FreezerView() {
   const { storages, items, consumePortion, removeItem, toggleRestock,
-          setupDone, completeSetup, formOpen, formPrefill, openForm, closeForm } = useFreezer()
+          setupDone, completeSetup, formOpen, formPrefill, openForm, closeForm,
+          bulkDeleteItems, clearAllItems } = useFreezer()
   const [tab, setTab] = useState('bestand')
   const [activeStorageId, setActiveStorageId] = useState(storages[0]?.id)
   const [showSettings, setShowSettings] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
 
   const activeStorage = storages.find(s => s.id === activeStorageId) || storages[0]
   const drawersOfActive = activeStorage?.compartments || []
@@ -64,7 +68,16 @@ export default function FreezerView() {
               {items.length} Eintrag{items.length === 1 ? '' : 'e'} · {totalPortions} Portionen · {storages.length} Schrank{storages.length===1?'':'e'}
             </p>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <ClearAllButton onClear={() => { clearAllItems(); setSelectMode(false); setSelected(new Set()) }} label="Alle löschen" count={items.length} />
+            <button
+              onClick={() => { setSelectMode(m => !m); setSelected(new Set()) }}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                selectMode ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {selectMode ? 'Fertig' : 'Auswählen'}
+            </button>
             <button onClick={() => setShowImport(true)}
               className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 text-lg" title="Excel-Import">📥</button>
             <button onClick={() => setShowSettings(true)}
@@ -130,7 +143,8 @@ export default function FreezerView() {
                     <p className="text-xs text-gray-400 italic">Leer</p>
                   ) : (
                     <ul className="space-y-1.5">
-                      {byCompartment[c.id].map(it => <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem} onRestock={toggleRestock} />)}
+                      {byCompartment[c.id].map(it => <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem} onRestock={toggleRestock}
+                        selectMode={selectMode} isSelected={selected.has(it.id)} onToggleSelect={() => setSelected(prev => { const next = new Set(prev); next.has(it.id) ? next.delete(it.id) : next.add(it.id); return next })} />)}
                     </ul>
                   )}
                 </div>
@@ -149,7 +163,8 @@ export default function FreezerView() {
                 const st = storages.find(s => s.id === it.storageId)
                 const c = st?.compartments.find(c => c.id === it.compartmentId)
                 return <ItemRow key={it.id} item={it} onConsume={consumePortion} onRemove={removeItem} onRestock={toggleRestock}
-                  location={`${st?.emoji || ''} ${c?.label || ''}`} />
+                  location={`${st?.emoji || ''} ${c?.label || ''}`}
+                  selectMode={selectMode} isSelected={selected.has(it.id)} onToggleSelect={() => setSelected(prev => { const next = new Set(prev); next.has(it.id) ? next.delete(it.id) : next.add(it.id); return next })} />
               })}
             </ul>
           </div>
@@ -167,19 +182,27 @@ export default function FreezerView() {
       {showImport && (
         <ExcelImport onClose={() => setShowImport(false)} />
       )}
+
+      {selectMode && (
+        <SelectionBar
+          count={selected.size}
+          onDelete={() => { bulkDeleteItems([...selected]); setSelected(new Set()); setSelectMode(false) }}
+          onCancel={() => { setSelected(new Set()); setSelectMode(false) }}
+        />
+      )}
     </div>
   )
 }
 
-function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
+function ItemRow({ item, onConsume, onRemove, onRestock, location, selectMode, isSelected, onToggleSelect }) {
   const badge = expiryBadge(item)
   const [touchX, setTouchX] = useState(null)
   const [dx, setDx] = useState(0)
 
-  function onTouchStart(e)  { setTouchX(e.touches[0].clientX); setDx(0) }
+  function onTouchStart(e)  { if (selectMode) return; setTouchX(e.touches[0].clientX); setDx(0) }
   function onTouchMove(e)   { if (touchX !== null) setDx(e.touches[0].clientX - touchX) }
   function onTouchEnd()     {
-    if (dx < -70) { onConsume(item.id) } // Swipe links → -1 Portion
+    if (dx < -70) { onConsume(item.id) }
     setTouchX(null); setDx(0)
   }
 
@@ -187,9 +210,17 @@ function ItemRow({ item, onConsume, onRemove, onRestock, location }) {
 
   return (
     <li className={`relative overflow-hidden rounded-lg ${swipeBg}`}
+        onClick={selectMode ? onToggleSelect : undefined}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <div className="flex items-center gap-2 py-1.5"
         style={{ transform: dx < 0 ? `translateX(${Math.max(dx, -80)}px)` : 'none', transition: touchX===null ? 'transform 0.2s' : 'none' }}>
+        {selectMode && (
+          <div className={`flex-none w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+            isSelected ? 'bg-primary-600 border-primary-600 text-white' : 'border-gray-300 dark:border-gray-600'
+          }`}>
+            {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+          </div>
+        )}
         {item.photoData && <img src={item.photoData} className="w-9 h-9 rounded object-cover flex-none" alt="" />}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

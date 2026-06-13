@@ -757,6 +757,24 @@ const useStore = create((set, get) => ({
     if (sp) get()._logActivity('spice_deleted', sp.name)
   },
 
+  bulkDeleteSpices(ids) {
+    if (!ids.length) return
+    set(s => ({ spices: s.spices.filter(sp => !ids.includes(sp.id)) }))
+    supabase.from('spices').delete().in('id', ids)
+      .then(({ error }) => { if (error) console.error('bulkDeleteSpices:', error) })
+    get()._logActivity('spice_deleted', `${ids.length} Gewürze gelöscht`)
+  },
+
+  clearAllSpices() {
+    const { household } = get()
+    if (!household) return
+    const count = get().spices.length
+    set({ spices: [] })
+    supabase.from('spices').delete().eq('household_id', household.id)
+      .then(({ error }) => { if (error) console.error('clearAllSpices:', error) })
+    get()._logActivity('spice_deleted', `Alle ${count} Gewürze gelöscht`)
+  },
+
   // ── Lagerorte ─────────────────────────────────────────────────────────
 
   addLocation(data) {

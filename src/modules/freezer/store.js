@@ -249,6 +249,17 @@ export const useFreezer = create(
         set(s => ({ items: s.items.filter(it => it.id !== id) }))
         if (item) logActivity('freezer_deleted', item.name)
       },
+      bulkDeleteItems(ids) {
+        if (!ids.length) return
+        set(s => ({ items: s.items.filter(it => !ids.includes(it.id)) }))
+        logActivity('freezer_deleted', `${ids.length} Einträge gelöscht`)
+      },
+      clearAllItems() {
+        const count = get().items.length
+        if (!count) return
+        set({ items: [] })
+        logActivity('freezer_deleted', `Alle ${count} Einträge gelöscht`)
+      },
 
       toggleRestock(id) {
         set(s => ({ items: s.items.map(it => it.id === id ? { ...it, needsRestock: !it.needsRestock } : it) }))
