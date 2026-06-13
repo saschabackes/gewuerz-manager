@@ -259,8 +259,9 @@ exports.handler = async function (event) {
     const title = data.title || data.name || data.recipeTitle || ''
     const steps = extractSteps(data)
     const thumbnailUrl = extractImage(data)
+    const categories = (data.categories || []).map(c => c.title || c.name).filter(Boolean)
     if (ingredients.length === 0 && steps.length === 0) return err('Keine Zutaten/Schritte im Rezept gefunden')
-    return ok({ ok: true, title, ingredients, steps, thumbnailUrl })
+    return ok({ ok: true, title, ingredients, steps, thumbnailUrl, categories })
   } catch (e) {
     return err('Cookidoo-Fehler: ' + e.message)
   }

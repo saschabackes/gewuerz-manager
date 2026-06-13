@@ -94,6 +94,7 @@ function recipeToJS(r) {
     thumbnailUrl: r.thumbnail_url ?? null,
     author:       r.author       ?? '',
     tags:         r.tags         ?? [],
+    favorite:     r.favorite     ?? false,
     ingredients:  r.ingredients  ?? [],   // [{ name, amount }]
     steps:        r.steps        ?? [],   // [ "..." ]
     notes:        r.notes        ?? '',
@@ -110,6 +111,7 @@ function recipeToDB(d) {
     thumbnail_url: d.thumbnailUrl ?? null,
     author:        d.author       ?? null,
     tags:          d.tags         ?? [],
+    favorite:      d.favorite     ?? false,
     ingredients:   d.ingredients  ?? [],
     steps:         d.steps        ?? [],
     notes:         d.notes        ?? null,
@@ -723,6 +725,15 @@ const useStore = create((set, get) => ({
       .then(({ error }) => { if (error) console.error('deleteRecipe:', error) })
   },
 
+  toggleFavorite(id) {
+    set(s => ({ recipes: s.recipes.map(r => r.id === id ? { ...r, favorite: !r.favorite } : r) }))
+    const recipe = get().recipes.find(r => r.id === id)
+    if (recipe) {
+      supabase.from('recipes').update({ favorite: recipe.favorite }).eq('id', id)
+        .then(({ error }) => { if (error) console.error('toggleFavorite:', error) })
+    }
+  },
+
   async fetchCookidooCollections() {
     const { cookidooSettings, household } = get()
     if (!cookidooSettings?.email || !household) throw new Error('Cookidoo nicht verbunden')
@@ -748,6 +759,7 @@ const useStore = create((set, get) => ({
           sourceType: 'cookidoo',
           thumbnailUrl: detail.thumbnailUrl || fav.thumbnailUrl,
           author: 'Cookidoo',
+          tags: detail.categories || [],
           ingredients,
           steps: detail.steps || [],
         })

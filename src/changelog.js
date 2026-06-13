@@ -4,6 +4,17 @@
 
 export const CHANGELOG = [
   {
+    version: '2.1.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'new',      text: 'Rezept-Filter: nach Quelle (Cookidoo, YouTube, …), Favoriten und Verfügbarkeit filtern.' },
+      { type: 'new',      text: 'Sortierung: Rezepte nach Neueste, A–Z oder Verfügbarkeit sortieren.' },
+      { type: 'new',      text: 'Favoriten: Rezepte mit einem Stern markieren und gezielt filtern.' },
+      { type: 'new',      text: 'Kategorien: Cookidoo-Kategorien werden beim Sync als Tags übernommen.' },
+      { type: 'improved', text: 'Tag-Vorschläge: beim Bearbeiten eines Rezepts werden vorhandene Tags vorgeschlagen.' },
+    ],
+  },
+  {
     version: '2.0.0',
     date: '2026-06-13',
     entries: [

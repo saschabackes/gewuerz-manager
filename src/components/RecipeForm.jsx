@@ -5,7 +5,7 @@ import { parseRecipeDescription } from '../utils/recipeDescription'
 import InventoryCheck from './InventoryCheck'
 
 export default function RecipeForm({ recipe, onClose, onSaved }) {
-  const { addRecipe, updateRecipe, cookidooSettings } = useStore()
+  const { addRecipe, updateRecipe, cookidooSettings, recipes: allRecipes } = useStore()
   const isEdit = !!recipe
 
   const [sourceUrl, setSourceUrl]   = useState(recipe?.sourceUrl ?? '')
@@ -27,6 +27,19 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
   const [showPaste, setShowPaste]   = useState(false)
   const [descPaste, setDescPaste]   = useState('')
   const [pasteResult, setPasteResult] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const allTags = useMemo(() => {
+    const s = new Set()
+    allRecipes.forEach(r => (r.tags ?? []).forEach(t => s.add(t)))
+    return [...s].sort((a, b) => a.localeCompare(b, 'de'))
+  }, [allRecipes])
+
+  const filteredSuggestions = useMemo(() => {
+    if (!tagInput.trim()) return allTags.filter(t => !tags.includes(t))
+    const q = tagInput.toLowerCase()
+    return allTags.filter(t => !tags.includes(t) && t.toLowerCase().includes(q))
+  }, [tagInput, allTags, tags])
 
   function applyPastedDescription() {
     const { ingredients: ing, steps: st } = parseRecipeDescription(descPaste)
@@ -163,11 +176,26 @@ export default function RecipeForm({ recipe, onClose, onSaved }) {
                 ))}
               </div>
             )}
-            <input type="text" className="input py-2 text-sm" placeholder="z.B. Suppe, schnell, vegetarisch + Enter"
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
-            />
+            <div className="relative">
+              <input type="text" className="input py-2 text-sm" placeholder="z.B. Suppe, schnell, vegetarisch + Enter"
+                value={tagInput}
+                onChange={e => { setTagInput(e.target.value); setShowSuggestions(true) }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
+              />
+              {showSuggestions && filteredSuggestions.length > 0 && (
+                <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-32 overflow-y-auto">
+                  {filteredSuggestions.slice(0, 8).map(t => (
+                    <button key={t} type="button"
+                      className="w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-900/30"
+                      onMouseDown={e => { e.preventDefault(); addTag(t); setShowSuggestions(false) }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Rezepttext einfügen → automatisch erkennen */}
