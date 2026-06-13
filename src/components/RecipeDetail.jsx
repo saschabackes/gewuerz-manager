@@ -38,7 +38,7 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 pb-20">
         {/* Player */}
         {recipe.videoId ? (
-          <div className="rounded-2xl overflow-hidden bg-black aspect-video">
+          <div className="rounded-2xl overflow-hidden bg-black aspect-video max-h-56">
             <iframe
               className="w-full h-full"
               src={`https://www.youtube.com/embed/${recipe.videoId}`}
@@ -48,7 +48,11 @@ export default function RecipeDetail({ recipe, onBack, onEdit }) {
             />
           </div>
         ) : recipe.thumbnailUrl ? (
-          <img src={recipe.thumbnailUrl} alt="" className="w-full rounded-2xl" />
+          <div className="flex justify-center">
+            <div className="rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-700 max-h-48 max-w-sm">
+              <img src={recipe.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+          </div>
         ) : null}
 
         {/* Quelle / Tags */}
