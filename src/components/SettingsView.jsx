@@ -14,6 +14,7 @@ import SetupAssistantSection from './settings/SetupAssistantSection'
 import InviteSection from './settings/InviteSection'
 import MembersSection from './settings/MembersSection'
 import SuperAdminSection from './settings/SuperAdminSection'
+import FeedbackSection from './settings/FeedbackSection'
 
 const SUPER_ADMIN_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || '').toLowerCase()
 
@@ -127,6 +128,9 @@ export default function SettingsView({ onClose }) {
                 <SetupAssistantSection onClose={onClose} />
               </>
             )}
+
+            <div className="border-t border-gray-100 dark:border-gray-700" />
+            <FeedbackSection />
 
             {/* Version + Changelog – dezent am Ende */}
             <div className="border-t border-gray-100 dark:border-gray-700" />

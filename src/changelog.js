@@ -4,6 +4,15 @@
 
 export const CHANGELOG = [
   {
+    version: '1.4.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'new',      text: '„Was ist neu?" erscheint jetzt automatisch nach Updates.' },
+      { type: 'new',      text: 'Feedback direkt aus der App: Bugs melden oder Features wünschen – landet als GitHub Issue.' },
+      { type: 'fixed',    text: 'YouTube-Rezeptimport liefert jetzt zuverlässig Titel, Zutaten und Beschreibung.' },
+    ],
+  },
+  {
     version: '1.3.0',
     date: '2026-06-13',
     entries: [

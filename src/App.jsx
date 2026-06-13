@@ -21,6 +21,7 @@ import { useFreezer } from './modules/freezer/store'
 import { useCellar } from './modules/cellar/store'
 import { MODULES_ENABLED, APP_NAME } from './branding'
 import { hasUnseenChangelog } from './changelog'
+import ChangelogView from './components/ChangelogView'
 
 export default function App() {
   const { user, authLoading, init } = useStore()
@@ -45,6 +46,7 @@ export default function App() {
   const [showReview, setShowReview] = useState(false)
   const [formPrefill, setFormPrefill] = useState(null)
   const [showSpiceSettings, setShowSpiceSettings] = useState(false)
+  const [showChangelog, setShowChangelog] = useState(false)
   const reviewCount = useStore(s => s.pendingInventory.filter(p => p.status === 'ready').length)
   const resolvePending = useStore(s => s.resolvePending)
   const spiceSetupDone = useStore(s => s.spiceSetupDone)
@@ -85,6 +87,11 @@ export default function App() {
   if (showOnboarding) {
     return <OnboardingView onFinish={finishOnboarding} />
   }
+
+  // "Was ist neu?" automatisch zeigen nach Update (einmalig pro Version)
+  useEffect(() => {
+    if (hasUnseenChangelog()) setShowChangelog(true)
+  }, [])
 
   function handleEditSpice(spice) {
     setEditingSpice(spice)
@@ -252,6 +259,10 @@ export default function App() {
 
       {pendingInvite && (
         <InviteJoinDialog code={pendingInvite} onClose={() => setPendingInvite(null)} />
+      )}
+
+      {showChangelog && (
+        <ChangelogView onClose={() => setShowChangelog(false)} />
       )}
     </div>
   )
