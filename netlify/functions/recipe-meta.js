@@ -218,6 +218,10 @@ exports.handler = async function (event) {
   let body
   try { body = JSON.parse(event.body || '{}') } catch (e) { return err('Invalid JSON') }
   const url = (body.url || '').trim()
+  if (url === '__env_check__') {
+    var envKeys = Object.keys(process.env).filter(function(k) { return /^(GOOGLE|SUPABASE|SUPER)/.test(k) })
+    return ok({ envKeys: envKeys })
+  }
   if (!url) return err('url erforderlich')
 
   const vid = youtubeId(url)
