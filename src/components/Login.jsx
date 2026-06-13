@@ -7,36 +7,47 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAADkEqPyn3goEqAgu'
 function useTurnstile() {
   const containerRef = useRef(null)
   const widgetId = useRef(null)
-  const tokenRef = useRef('')
+  const [token, setToken] = useState('')
+  const [ready, setReady] = useState(false)
+  const [error, setError] = useState(false)
 
   const render = useCallback(() => {
     if (!containerRef.current || !window.turnstile) return
-    if (widgetId.current != null) window.turnstile.remove(widgetId.current)
+    if (widgetId.current != null) {
+      try { window.turnstile.remove(widgetId.current) } catch {}
+    }
+    setError(false)
     widgetId.current = window.turnstile.render(containerRef.current, {
       sitekey: TURNSTILE_SITE_KEY,
-      callback: (token) => { tokenRef.current = token },
-      'expired-callback': () => { tokenRef.current = '' },
-      'error-callback': () => { tokenRef.current = '' },
+      callback: (t) => { setToken(t); setReady(true) },
+      'expired-callback': () => { setToken(''); setReady(false) },
+      'error-callback': () => { setToken(''); setReady(false); setError(true) },
       theme: 'auto',
       size: 'flexible',
+      appearance: 'always',
     })
   }, [])
 
   useEffect(() => {
     if (window.turnstile) { render(); return }
     const script = document.createElement('script')
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__turnstileReady'
     script.async = true
-    script.onload = render
+    window.__turnstileReady = render
+    script.onerror = () => setError(true)
     document.head.appendChild(script)
+    return () => { delete window.__turnstileReady }
   }, [render])
 
   const reset = useCallback(() => {
-    tokenRef.current = ''
-    if (widgetId.current != null && window.turnstile) window.turnstile.reset(widgetId.current)
+    setToken('')
+    setReady(false)
+    if (widgetId.current != null && window.turnstile) {
+      try { window.turnstile.reset(widgetId.current) } catch {}
+    }
   }, [])
 
-  return { containerRef, getToken: () => tokenRef.current, reset }
+  return { containerRef, getToken: () => token, reset, ready, error }
 }
 
 export default function Login() {
@@ -58,7 +69,7 @@ export default function Login() {
     setLoading(true)
     try {
       const captchaToken = turnstile.getToken()
-      if (mode !== 'reset' && !captchaToken) throw new Error('Bitte warte kurz, bis die Sicherheitsprüfung abgeschlossen ist.')
+      if (mode !== 'reset' && !captchaToken) throw new Error('Sicherheitsprüfung nicht bereit. Bitte warte kurz oder lade die Seite neu.')
       if (mode === 'register') {
         if (!name.trim()) throw new Error('Bitte Namen eingeben')
         if (password.length < 6) throw new Error('Passwort muss mindestens 6 Zeichen haben')
@@ -237,10 +248,17 @@ export default function Login() {
           )}
 
           {mode !== 'reset' && (
-            <div ref={turnstile.containerRef} className="flex justify-center" />
+            <div>
+              <div ref={turnstile.containerRef} className="flex justify-center" />
+              {turnstile.error && (
+                <p className="text-xs text-red-500 dark:text-red-400 text-center mt-1">
+                  Sicherheitsprüfung konnte nicht geladen werden. Bitte Seite neu laden.
+                </p>
+              )}
+            </div>
           )}
 
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
+          <button type="submit" className="btn-primary w-full" disabled={loading || (mode !== 'reset' && !turnstile.ready)}>
             {loading ? (
               <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
