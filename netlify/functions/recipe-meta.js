@@ -237,6 +237,7 @@ exports.handler = async function (event) {
         description,
         ingredients,
         steps,
+        _debug: meta._debug,
       })
     } catch (e) {
       return ok({
