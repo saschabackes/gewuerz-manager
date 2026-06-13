@@ -4,6 +4,13 @@
 
 export const CHANGELOG = [
   {
+    version: '1.8.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'improved', text: 'Sicherheits-Härtung: CORS eingeschränkt, API-Endpoints mit Authentifizierung geschützt, SSRF-Schutz für Rezeptimport.' },
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-06-13',
     entries: [

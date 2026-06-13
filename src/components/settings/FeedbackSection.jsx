@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { APP_VERSION } from '../../changelog'
+import { supabase } from '../../lib/supabase'
 import useStore from '../../store/useStore'
 
 export default function FeedbackSection() {
@@ -17,9 +18,13 @@ export default function FeedbackSection() {
     setSending(true)
     setError('')
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/.netlify/functions/feedback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+        },
         body: JSON.stringify({
           type,
           title: title.trim(),

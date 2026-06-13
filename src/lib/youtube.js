@@ -1,10 +1,16 @@
+import { supabase } from './supabase'
+
 const PROXY = '/.netlify/functions/recipe-meta'
 
 // Metadaten zu einem Rezept-Link holen → { title, author, thumbnailUrl, videoId, sourceType }
 export async function fetchRecipeMeta(url) {
+  const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch(PROXY, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+    },
     body: JSON.stringify({ url }),
   })
   const data = await res.json().catch(() => ({}))

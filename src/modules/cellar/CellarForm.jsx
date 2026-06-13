@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
 import { useCellar } from './store'
 import { WINE_COUNTRIES_TOP, WINE_COUNTRIES_MORE, isSparkling, CountryPicker } from './wineConstants'
 
@@ -131,9 +132,13 @@ export default function CellarForm({ prefilled, onClose }) {
     setAnalyzing(true)
     setAnalyzeMsg('Etikett wird analysiert…')
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/.netlify/functions/analyze-label', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+        },
         body: JSON.stringify({ image: imageDataUrl }),
       })
       const json = await res.json()

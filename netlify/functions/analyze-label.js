@@ -1,43 +1,43 @@
 // Analysiert ein Weinetikett-Foto via Claude Vision und extrahiert strukturierte Daten.
 // POST { image: "data:image/jpeg;base64,..." } → { ok, data: { name, winery, vintage, ... } }
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
-}
-function ok(d)  { return { statusCode: 200, headers: CORS, body: JSON.stringify(d) } }
-function err(m) { return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: false, error: m }) } }
-
-function loadApiKey() {
-  const fromEnv = (process.env.ANTHROPIC_API_KEY || '').trim()
-  if (fromEnv.startsWith('sk-ant-')) return fromEnv
-  const fs = require('fs')
-  const path = require('path')
-  const candidates = [
-    path.resolve(process.cwd(), '.env'),
-    path.resolve(__dirname, '../../.env'),
-    path.resolve(__dirname, '../../../.env'),
-  ]
-  for (const p of candidates) {
-    try {
-      const lines = fs.readFileSync(p, 'utf8').split('\n')
-      for (const line of lines) {
-        const m = line.match(/^ANTHROPIC_API_KEY=(.+)$/)
-        if (m && m[1].trim().startsWith('sk-ant-')) return m[1].trim()
-      }
-    } catch { /* ignore */ }
+const ALLOWED_ORIGINS = ['https://depotapp.online', 'https://depotapp.netlify.app']
+function corsHeaders(event) {
+  const origin = (event?.headers?.origin || '').toLowerCase()
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json',
   }
-  return fromEnv
 }
+
+async function verifyJwt(event) {
+  const sbUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '')
+  const sbKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+  const accessToken = (event.headers.authorization || '').replace(/^Bearer\s+/i, '')
+  if (!accessToken || !sbUrl || !sbKey) return null
+  const res = await fetch(`${sbUrl}/auth/v1/user`, {
+    headers: { apikey: sbKey, Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) return null
+  const user = await res.json().catch(() => null)
+  return user?.id ? user : null
+}
+
+let _cors
+function ok(d)  { return { statusCode: 200, headers: _cors, body: JSON.stringify(d) } }
+function err(m) { return { statusCode: 200, headers: _cors, body: JSON.stringify({ ok: false, error: m }) } }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS }
+  _cors = corsHeaders(event)
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: _cors }
   if (event.httpMethod !== 'POST') return err('POST only')
 
-  const apiKey = loadApiKey()
+  const caller = await verifyJwt(event)
+  if (!caller) return err('Nicht autorisiert')
+
+  const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim()
   if (!apiKey) return err('ANTHROPIC_API_KEY nicht konfiguriert')
-  if (!apiKey.startsWith('sk-ant-')) return err(`Key-Format ungültig (Länge ${apiKey.length}, Start: ${apiKey.slice(0,8)}…)`)
 
   let body
   try { body = JSON.parse(event.body) } catch { return err('Invalid JSON') }

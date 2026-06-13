@@ -5,13 +5,46 @@
 
 const INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'  // öffentlicher Web-Client-Key
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
+const ALLOWED_ORIGINS = ['https://depotapp.online', 'https://depotapp.netlify.app']
+function corsHeaders(event) {
+  const origin = (event?.headers?.origin || '').toLowerCase()
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json',
+  }
 }
-function ok(d)  { return { statusCode: 200, headers: CORS, body: JSON.stringify(d) } }
-function err(m) { return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: false, error: m }) } }
+
+async function verifyJwt(event) {
+  const sbUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '')
+  const sbKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+  const accessToken = (event.headers.authorization || '').replace(/^Bearer\s+/i, '')
+  if (!accessToken || !sbUrl || !sbKey) return null
+  const res = await fetch(`${sbUrl}/auth/v1/user`, {
+    headers: { apikey: sbKey, Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) return null
+  const user = await res.json().catch(() => null)
+  return user?.id ? user : null
+}
+
+const URL_ALLOWLIST = [
+  /^https:\/\/(www\.)?youtube\.com\//i,
+  /^https:\/\/youtu\.be\//i,
+  /^https:\/\/(www\.)?chefkoch\.de\//i,
+  /^https:\/\/(www\.)?cookidoo\./i,
+  /^https:\/\/(www\.)?eatsmarter\.de\//i,
+  /^https:\/\/(www\.)?lecker\.de\//i,
+  /^https:\/\/(www\.)?springlane\.de\//i,
+  /^https:\/\/(www\.)?kitchenstories\.com\//i,
+  /^https:\/\/(www\.)?simply-yummy\.de\//i,
+  /^https:\/\/(www\.)?gutekueche\.(at|de|ch)\//i,
+  /^https:\/\/(www\.)?kochbar\.de\//i,
+]
+
+let _cors
+function ok(d)  { return { statusCode: 200, headers: _cors, body: JSON.stringify(d) } }
+function err(m) { return { statusCode: 200, headers: _cors, body: JSON.stringify({ ok: false, error: m }) } }
 
 function youtubeId(url) {
   const patterns = [
@@ -200,15 +233,23 @@ async function fetchYouTube(vid) {
 }
 
 exports.handler = async function (event) {
+  _cors = corsHeaders(event)
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
+    return { statusCode: 200, headers: Object.assign({}, _cors, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
   }
   if (event.httpMethod !== 'POST') return err('Method not allowed')
+
+  const caller = await verifyJwt(event)
+  if (!caller) return err('Nicht autorisiert')
 
   let body
   try { body = JSON.parse(event.body || '{}') } catch (e) { return err('Invalid JSON') }
   const url = (body.url || '').trim()
   if (!url) return err('url erforderlich')
+
+  if (!URL_ALLOWLIST.some(re => re.test(url))) {
+    return err('URL nicht unterstützt – nur YouTube, Chefkoch, Cookidoo und andere Rezeptseiten')
+  }
 
   const vid = youtubeId(url)
 

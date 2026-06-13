@@ -7,11 +7,17 @@
 const CIAM_LOGIN_SRV_URL = 'https://ciam.prod.cookidoo.vorwerk-digital.com/login-srv/login'
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
+const ALLOWED_ORIGINS = ['https://depotapp.online', 'https://depotapp.netlify.app']
+function corsHeaders(event) {
+  const origin = (event?.headers?.origin || '').toLowerCase()
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json',
+  }
 }
+
+let CORS
 function ok(data)  { return { statusCode: 200, headers: CORS, body: JSON.stringify(data) } }
 function err(msg)  { return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: false, error: msg }) } }
 
@@ -122,6 +128,7 @@ function extractImage(data) {
 }
 
 exports.handler = async function (event) {
+  CORS = corsHeaders(event)
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
   }

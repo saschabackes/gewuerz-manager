@@ -1,20 +1,24 @@
 // Bring! API Proxy v8 – serverseitig, kein CORS-Problem
 const BASE_URL  = 'https://api.getbring.com/rest/v2'
-const BRING_KEY = 'cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Ol'
 
 const BRING_HEADERS = {
-  'X-BRING-API-KEY':        BRING_KEY,
+  'X-BRING-API-KEY':        process.env.BRING_API_KEY || '',
   'X-BRING-CLIENT':         'webApp',
   'X-BRING-CLIENT-VERSION': '303070050',
   'X-BRING-COUNTRY':        'DE',
 }
 
-const CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type':                 'application/json',
+var ALLOWED_ORIGINS = ['https://depotapp.online', 'https://depotapp.netlify.app']
+function corsHeaders(event) {
+  var origin = (event && event.headers && event.headers.origin || '').toLowerCase()
+  return {
+    'Access-Control-Allow-Origin':  ALLOWED_ORIGINS.indexOf(origin) >= 0 ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type':                 'application/json',
+  }
 }
 
+var CORS
 function ok(data) {
   return { statusCode: 200, headers: CORS, body: JSON.stringify(data) }
 }
@@ -36,6 +40,7 @@ async function safeJson(res) {
 }
 
 exports.handler = async function(event) {
+  CORS = corsHeaders(event)
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
   }

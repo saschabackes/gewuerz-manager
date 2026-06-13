@@ -1,16 +1,22 @@
 // User-Admin Proxy – serverseitig, benutzt Service Role Key (bypasses RLS)
 // Nur Haushalts-Inhaber dürfen diese Actions ausführen.
 
-var CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type':                 'application/json',
+var ALLOWED_ORIGINS = ['https://depotapp.online', 'https://depotapp.netlify.app']
+function corsHeaders(event) {
+  var origin = (event && event.headers && event.headers.origin || '').toLowerCase()
+  return {
+    'Access-Control-Allow-Origin':  ALLOWED_ORIGINS.indexOf(origin) >= 0 ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type':                 'application/json',
+  }
 }
 
+var CORS
 function ok(data)       { return { statusCode: 200, headers: CORS, body: JSON.stringify(data) } }
 function err(msg, code) { return { statusCode: code || 500, headers: CORS, body: JSON.stringify({ error: msg }) } }
 
 exports.handler = async function(event) {
+  CORS = corsHeaders(event)
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: Object.assign({}, CORS, { 'Access-Control-Allow-Methods': 'POST, OPTIONS' }), body: '' }
   }
