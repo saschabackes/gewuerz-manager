@@ -47,6 +47,7 @@ export default function App() {
   const [formPrefill, setFormPrefill] = useState(null)
   const [showSpiceSettings, setShowSpiceSettings] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
+  const [swUpdate, setSwUpdate] = useState(false)
   const reviewCount = useStore(s => s.pendingInventory.filter(p => p.status === 'ready').length)
   const resolvePending = useStore(s => s.resolvePending)
   const spiceSetupDone = useStore(s => s.spiceSetupDone)
@@ -76,6 +77,22 @@ export default function App() {
 
   useEffect(() => {
     if (hasUnseenChangelog()) setShowChangelog(true)
+  }, [])
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg) return
+      const check = () => { if (reg.waiting) setSwUpdate(true) }
+      check()
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing
+        if (!sw) return
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) setSwUpdate(true)
+        })
+      })
+    })
   }, [])
 
   // Supabase-Session wird geprüft → Ladebildschirm
@@ -177,6 +194,15 @@ export default function App() {
           <UserMenu />
         </div>
       </header>
+
+      {swUpdate && (
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-primary-600 text-white text-xs font-semibold px-4 py-2 w-full text-center border-b border-primary-700"
+        >
+          Neue Version verfügbar — jetzt aktualisieren
+        </button>
+      )}
 
       {dataError && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-2 flex items-start gap-2">
