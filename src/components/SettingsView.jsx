@@ -15,6 +15,7 @@ import InviteSection from './settings/InviteSection'
 import MembersSection from './settings/MembersSection'
 import SuperAdminSection from './settings/SuperAdminSection'
 import FeedbackSection from './settings/FeedbackSection'
+import DataManagementSection from './settings/DataManagementSection'
 
 const SUPER_ADMIN_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || '').toLowerCase()
 
@@ -156,6 +157,8 @@ export default function SettingsView({ onClose }) {
             <InviteSection />
             <div className="border-t border-gray-100 dark:border-gray-700" />
             <MembersSection />
+            <div className="border-t border-gray-100 dark:border-gray-700" />
+            <DataManagementSection />
           </div>
         )}
 

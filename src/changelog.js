@@ -4,6 +4,19 @@
 
 export const CHANGELOG = [
   {
+    version: '2.0.0',
+    date: '2026-06-13',
+    entries: [
+      { type: 'new',      text: 'Dashboard: Neue Startseite mit Überblick über alle Bereiche, ablaufende Items und täglichen Kochvorschlägen.' },
+      { type: 'new',      text: 'Kochvorschläge: Rezepte werden nach Verfügbarkeit der Zutaten im Bestand gerankt – bald ablaufende Zutaten werden bevorzugt.' },
+      { type: 'new',      text: 'Weinempfehlungen: passende Weine aus dem eigenen Keller zu jedem Rezeptvorschlag.' },
+      { type: 'new',      text: 'KptnCook-Import: Rezepte per Share-Link aus KptnCook importieren.' },
+      { type: 'new',      text: 'Cookidoo-Sync: Listen auswählen und gezielt Rezepte mit Fotos importieren.' },
+      { type: 'new',      text: 'Dashboard anpassbar: Sektionen ein-/ausblenden und Reihenfolge ändern.' },
+      { type: 'improved', text: '„Alle löschen" in Admin-Bereich verschoben, mit Löschung nach Rezeptquelle.' },
+    ],
+  },
+  {
     version: '1.9.0',
     date: '2026-06-13',
     entries: [

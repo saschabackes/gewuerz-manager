@@ -2,41 +2,9 @@ import { useMemo, useState } from 'react'
 import useStore from '../store/useStore'
 import { useFreezer } from '../modules/freezer/store'
 import { useCellar } from '../modules/cellar/store'
-import { buildCookPlan, normalize, cleanIngredientName } from '../utils/recipeParser'
+import { computeRecipeAvailability } from '../utils/inventoryMatch'
 import { formatMhdDate, getMhdStatus, MHD_STYLES } from '../utils/mhd'
 import FillBar, { FILL_LABELS } from './FillBar'
-
-function keywords(name) {
-  return normalize(name).split(' ').filter(w => w.length >= 3)
-}
-
-const WINE_WORDS = ['wein', 'weißwein', 'rotwein', 'rosé', 'prosecco', 'sekt', 'champagner', 'marsala', 'sherry', 'port', 'portwein']
-
-function matchFreezerItems(ingredientName, freezerItems) {
-  const keys = keywords(ingredientName)
-  if (keys.length === 0) return []
-  return freezerItems.filter(item => {
-    const itemWords = normalize(item.name).split(' ').filter(w => w.length >= 3)
-    return keys.some(k => itemWords.some(w =>
-      k === w || (k.length >= 4 && w.length >= 4 && (k.includes(w) || w.includes(k)))
-    ))
-  })
-}
-
-function matchWineBottles(ingredientName, bottles) {
-  const n = normalize(ingredientName)
-  const isWineIngredient = WINE_WORDS.some(w => n.includes(w))
-  if (!isWineIngredient) return []
-
-  const wantsRed = n.includes('rotwein') || n.includes('rot')
-  const wantsWhite = n.includes('weißwein') || n.includes('weiß') || n.includes('weisswein')
-
-  return bottles.filter(b => {
-    if (wantsRed && b.color !== 'rot') return false
-    if (wantsWhite && b.color !== 'weiß') return false
-    return true
-  }).slice(0, 3)
-}
 
 export default function InventoryCheck({ ingredients }) {
   const spices = useStore(s => s.spices)
@@ -49,46 +17,8 @@ export default function InventoryCheck({ ingredients }) {
   const [expanded, setExpanded] = useState(true)
 
   const result = useMemo(() => {
-    const spicePlan = buildCookPlan(ingredients ?? [], spices)
-    const matchedSpiceNames = new Set(spicePlan.matched.map(m => m.recipeName))
-    const unmatchedSpiceNames = new Set(spicePlan.unmatched)
-
-    const freezerMatches = []
-    const wineMatches = []
-    const missing = []
-
-    const allIngNames = (ingredients ?? []).map(i => typeof i === 'string' ? i : i.name)
-
-    allIngNames.forEach(name => {
-      if (matchedSpiceNames.has(name)) return
-
-      const tkHits = matchFreezerItems(name, freezerItems)
-      if (tkHits.length > 0) {
-        freezerMatches.push({ recipeName: name, items: tkHits.slice(0, 3) })
-        unmatchedSpiceNames.delete(name)
-        return
-      }
-
-      const wineHits = matchWineBottles(name, bottles)
-      if (wineHits.length > 0) {
-        wineMatches.push({ recipeName: name, bottles: wineHits })
-        unmatchedSpiceNames.delete(name)
-        return
-      }
-    })
-
-    const cleanMissing = []
-    const seen = new Set()
-    ;[...unmatchedSpiceNames].forEach(raw => {
-      const clean = cleanIngredientName(raw)
-      const key = clean.toLowerCase()
-      if (clean && !seen.has(key)) { seen.add(key); cleanMissing.push(clean) }
-    })
-
-    const totalFound = spicePlan.matched.length + freezerMatches.length + wineMatches.length
-    const totalMissing = cleanMissing.length
-
-    return { spicePlan, freezerMatches, wineMatches, missing: cleanMissing, totalFound, totalMissing }
+    const r = computeRecipeAvailability({ ingredients }, spices, freezerItems, bottles)
+    return { spicePlan: r.spicePlan, freezerMatches: r.freezerMatches, wineMatches: r.wineMatches, missing: r.missing, totalFound: r.totalFound, totalMissing: r.totalMissing }
   }, [ingredients, spices, freezerItems, bottles])
 
   const locName = id => locations.find(l => l.id === id)?.name ?? null

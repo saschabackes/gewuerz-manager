@@ -17,6 +17,7 @@ import CellarView from './modules/cellar/CellarView'
 import UnifiedShoppingList from './modules/shopping/UnifiedShoppingList'
 import SpiceSettings from './components/SpiceSettings'
 import SpiceSetup from './components/SpiceSetup'
+import DashboardView from './modules/dashboard/DashboardView'
 import { useFreezer } from './modules/freezer/store'
 import { useCellar } from './modules/cellar/store'
 import { MODULES_ENABLED, APP_NAME } from './branding'
@@ -29,7 +30,8 @@ export default function App() {
   const finishOnboarding = useStore(s => s.finishOnboarding)
   const dataError = useStore(s => s.dataError)
   const currentUser = useStore(s => s.currentUser())
-  const [module, setModule] = useState('spices')
+  const [module, setModule] = useState('dashboard')
+  const [focusRecipeId, setFocusRecipeId] = useState(null)
   const [view, setView] = useState('bestand')
 
   function handleModuleAdd(modId) {
@@ -216,6 +218,12 @@ export default function App() {
       )}
 
       <main className="flex-1 overflow-hidden flex flex-col pb-20">
+        {module === 'dashboard' && (
+          <DashboardView onNavigate={(mod, recipeId) => {
+            setModule(mod)
+            if (recipeId) setFocusRecipeId(recipeId)
+          }} />
+        )}
         {module === 'spices' && !spiceSetupDone && (
           <SpiceSetup onComplete={completeSpiceSetup} />
         )}

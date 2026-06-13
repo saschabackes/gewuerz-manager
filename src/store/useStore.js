@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { bringLogin, bringGetLists, bringAddItem, bringGetItems, bringRemoveItem, bringRefreshToken } from '../lib/bring'
-import { cookidooVerify } from '../lib/cookidoo'
+import { cookidooVerify, cookidooFetchCollections, cookidooFetchFavorites, cookidooFetchRecipe } from '../lib/cookidoo'
 import { useFreezer } from '../modules/freezer/store'
 import { useCellar } from '../modules/cellar/store'
 
@@ -721,6 +721,44 @@ const useStore = create((set, get) => ({
     set(s => ({ recipes: s.recipes.filter(r => r.id !== id) }))
     supabase.from('recipes').delete().eq('id', id)
       .then(({ error }) => { if (error) console.error('deleteRecipe:', error) })
+  },
+
+  async fetchCookidooCollections() {
+    const { cookidooSettings, household } = get()
+    if (!cookidooSettings?.email || !household) throw new Error('Cookidoo nicht verbunden')
+    return cookidooFetchCollections(cookidooSettings.email, cookidooSettings.password)
+  },
+
+  async syncCookidooFavorites(collectionIds, onProgress) {
+    const { cookidooSettings, recipes, household, user } = get()
+    if (!cookidooSettings?.email || !household) throw new Error('Cookidoo nicht verbunden')
+    const favs = await cookidooFetchFavorites(cookidooSettings.email, cookidooSettings.password, collectionIds)
+    const existingUrls = new Set(recipes.map(r => r.sourceUrl).filter(Boolean))
+    const toImport = favs.filter(f => !existingUrls.has(f.url))
+    let imported = 0
+    for (const fav of toImport) {
+      try {
+        const detail = await cookidooFetchRecipe(cookidooSettings.email, cookidooSettings.password, fav.url)
+        const ingredients = (detail.ingredients || []).map(i =>
+          (typeof i === 'string' ? i : [i.amount, i.name].filter(Boolean).join(' ')).trim()
+        ).filter(Boolean)
+        get().addRecipe({
+          title: detail.title || fav.title,
+          sourceUrl: fav.url,
+          sourceType: 'cookidoo',
+          thumbnailUrl: detail.thumbnailUrl || fav.thumbnailUrl,
+          author: 'Cookidoo',
+          ingredients,
+          steps: detail.steps || [],
+        })
+        imported++
+        if (onProgress) onProgress(imported, toImport.length)
+      } catch (e) {
+        console.warn('Cookidoo-Import fehlgeschlagen:', fav.title, e.message)
+      }
+    }
+    if (imported > 0) get()._logActivity('recipe_added', `${imported} Cookidoo-Rezepte synchronisiert`)
+    return { imported, total: toImport.length, skipped: favs.length - toImport.length }
   },
 
   // ── Spices ────────────────────────────────────────────────────────────

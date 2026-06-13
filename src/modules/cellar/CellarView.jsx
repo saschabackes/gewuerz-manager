@@ -8,7 +8,7 @@ import ExcelImport from './ExcelImport'
 import WinePendingView from './WinePendingView'
 import SharePicker from './SharePicker'
 import SubTabs from '../../components/SubTabs'
-import SelectionBar, { ClearAllButton } from '../../components/SelectionBar'
+import SelectionBar from '../../components/SelectionBar'
 
 const COLOR_EMOJI = { rot: '🍷', weiß: '🥂', rosé: '🌸', schaum: '🍾' }
 
@@ -16,7 +16,7 @@ export default function CellarView() {
   const { racks, bottles, drinkOne, removeBottle,
           setupDone, completeSetup, recentNames, quickAddByName, lastUsedRack,
           formOpen, formPrefill, openForm, closeForm, pending,
-          bulkDeleteBottles, clearAllBottles } = useCellar()
+          bulkDeleteBottles } = useCellar()
   const [tab, setTab] = useState('bestand')
   const [memoryFilter, setMemoryFilter] = useState('all') // all | loved | stocked | empty
   const [activeRackId, setActiveRackId] = useState(racks[0]?.id)
@@ -106,7 +106,6 @@ export default function CellarView() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <ClearAllButton onClear={() => { clearAllBottles(); setSelectMode(false); setSelected(new Set()) }} label="Alle löschen" count={bottles.length} />
             <button
               onClick={() => { setSelectMode(m => !m); setSelected(new Set()) }}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${

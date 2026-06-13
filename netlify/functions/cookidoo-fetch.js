@@ -5,7 +5,7 @@
 // Zugangsdaten kommen pro Request vom Client (aus user_metadata), nichts global.
 
 const CIAM_LOGIN_SRV_URL = 'https://ciam.prod.cookidoo.vorwerk-digital.com/login-srv/login'
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
+const UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.39 Mobile Safari/537.36'
 
 const ALLOWED_ORIGINS = ['https://depotapp.online', 'https://depotapp.netlify.app']
 function corsHeaders(event) {
@@ -65,7 +65,13 @@ async function cookidooLogin(email, password, tld, lang, jar) {
   const form = new URLSearchParams({ requestId: rid[1], username: email, password })
   await follow(CIAM_LOGIN_SRV_URL, {
     method: 'POST',
-    headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'text/html,application/json' },
+    headers: {
+      'User-Agent': UA,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'text/html,application/json',
+      'Referer': `https://ciam.prod.cookidoo.vorwerk-digital.com/login-srv/login?requestId=${rid[1]}`,
+      'Origin': 'https://ciam.prod.cookidoo.vorwerk-digital.com',
+    },
     body: form.toString(),
   }, jar)
 
@@ -119,10 +125,16 @@ function extractSteps(data) {
 
 function extractImage(data) {
   let img = data.imageUrl || data.image
+  if (!img && Array.isArray(data.descriptiveAssets) && data.descriptiveAssets.length > 0) {
+    for (const asset of data.descriptiveAssets) {
+      img = asset.landscape || asset.square || asset.portrait
+      if (img) break
+    }
+  }
   if (Array.isArray(img)) img = img[0]
   if (img && typeof img === 'object') img = img.url || img.contentUrl || ''
   if (typeof img === 'string' && img.includes('{transformation}')) {
-    img = img.replace('{transformation}', 'w_640')
+    img = img.replace('{transformation}', 't_web_shared_recipe_221x240')
   }
   return typeof img === 'string' ? img : ''
 }
@@ -154,7 +166,87 @@ exports.handler = async function (event) {
     if (!login.ok) return err(login.error)
 
     // Verify-Modus
-    if (!body.url) return ok({ ok: true })
+    if (!body.url && !body.action) return ok({ ok: true })
+
+    // Listen-Übersicht: alle Sammlungen mit Rezeptanzahl
+    if (body.action === 'collections') {
+      const baseUrl = `https://cookidoo.${tld}`
+      const cookieHeader = jarHeader(jar)
+      const collections = []
+
+      async function fetchCollections(path, accept, listKey, type) {
+        const seen = new Set()
+        for (let page = 0; page < 20; page++) {
+          const url = `${baseUrl}/${path.replace('{language}', lang)}?page=${page}`
+          const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept': accept, 'Cookie': cookieHeader } })
+          if (!r.ok) break
+          const data = await r.json().catch(() => null)
+          if (!data) break
+          const lists = data[listKey] || []
+          if (lists.length === 0) break
+          let newItems = 0
+          for (const list of lists) {
+            if (seen.has(list.id)) continue
+            seen.add(list.id)
+            newItems++
+            let recipeCount = 0
+            for (const ch of (list.chapters || [])) recipeCount += (ch.recipes || []).length
+            collections.push({ id: list.id, title: list.title || '', type, recipeCount })
+          }
+          if (newItems === 0) break
+        }
+      }
+
+      await Promise.all([
+        fetchCollections('organize/{language}/api/managed-list', 'application/vnd.vorwerk.organize.managed-list.mobile+json', 'managedlists', 'managed'),
+        fetchCollections('organize/{language}/api/custom-list', 'application/vnd.vorwerk.organize.custom-list.mobile+json', 'customlists', 'custom'),
+      ])
+
+      return ok({ ok: true, collections })
+    }
+
+    // Rezepte aus bestimmten Listen synchronisieren
+    if (body.action === 'favorites') {
+      const baseUrl = `https://cookidoo.${tld}`
+      const cookieHeader = jarHeader(jar)
+      const selectedIds = new Set(body.collectionIds || [])
+      const allRecipes = new Map()
+
+      async function fetchCollections(path, accept, listKey) {
+        for (let page = 0; page < 20; page++) {
+          const url = `${baseUrl}/${path.replace('{language}', lang)}?page=${page}`
+          const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept': accept, 'Cookie': cookieHeader } })
+          if (!r.ok) break
+          const data = await r.json().catch(() => null)
+          if (!data) break
+          const lists = data[listKey] || []
+          for (const list of lists) {
+            if (selectedIds.size > 0 && !selectedIds.has(list.id)) continue
+            for (const chapter of (list.chapters || [])) {
+              for (const recipe of (chapter.recipes || [])) {
+                if (recipe.id && recipe.title) {
+                  allRecipes.set(recipe.id, {
+                    id: recipe.id,
+                    title: recipe.title,
+                    thumbnailUrl: '',
+                    url: `${baseUrl}/recipes/recipe/${lang}/${recipe.id}`,
+                  })
+                }
+              }
+            }
+          }
+          if (lists.length === 0) break
+        }
+      }
+
+      await Promise.all([
+        fetchCollections('organize/{language}/api/managed-list', 'application/vnd.vorwerk.organize.managed-list.mobile+json', 'managedlists'),
+        fetchCollections('organize/{language}/api/custom-list', 'application/vnd.vorwerk.organize.custom-list.mobile+json', 'customlists'),
+      ])
+
+      return ok({ ok: true, recipes: [...allRecipes.values()] })
+    }
+
     if (!recipeId) return err('Keine Rezept-ID im Link erkannt')
 
     const recipeApi = `https://cookidoo.${tld}/recipes/recipe/${lang}/${recipeId}`

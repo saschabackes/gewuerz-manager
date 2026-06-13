@@ -26,3 +26,15 @@ export async function cookidooFetchRecipe(email, password, url) {
     thumbnailUrl: data.thumbnailUrl ?? '',
   }
 }
+
+// Sammlungen-Übersicht → [{ id, title, type, recipeCount }]
+export async function cookidooFetchCollections(email, password) {
+  const data = await call({ email, password, action: 'collections' })
+  return data.collections ?? []
+}
+
+// Rezepte aus bestimmten Listen → [{ id, title, thumbnailUrl, url }]
+export async function cookidooFetchFavorites(email, password, collectionIds) {
+  const data = await call({ email, password, action: 'favorites', collectionIds })
+  return data.recipes ?? []
+}

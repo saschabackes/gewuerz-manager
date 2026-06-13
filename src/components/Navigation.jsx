@@ -1,9 +1,10 @@
 const MODULES = [
-  { id: 'spices',   label: 'Gewürze', emoji: '🌿', addLabel: 'Gewürz hinzufügen' },
-  { id: 'freezer',  label: 'TK',      emoji: '❄️', addLabel: 'TK-Eintrag' },
-  { id: 'cellar',   label: 'Wein',    emoji: '🍷', addLabel: 'Flasche' },
-  { id: 'recipes',  label: 'Kochen',  emoji: '📖', addLabel: 'Rezept' },
-  { id: 'shopping', label: 'Einkauf', emoji: '🛒', addLabel: null },
+  { id: 'dashboard', label: 'Start',   emoji: '🏠', addLabel: null },
+  { id: 'spices',    label: 'Gewürze', emoji: '🌿', addLabel: 'Gewürz hinzufügen' },
+  { id: 'freezer',   label: 'TK',      emoji: '❄️', addLabel: 'TK-Eintrag' },
+  { id: 'cellar',    label: 'Wein',    emoji: '🍷', addLabel: 'Flasche' },
+  { id: 'recipes',   label: 'Kochen',  emoji: '📖', addLabel: 'Rezept' },
+  { id: 'shopping',  label: 'Einkauf', emoji: '🛒', addLabel: null },
 ]
 
 export default function Navigation({ currentModule, onModuleChange, onAdd }) {

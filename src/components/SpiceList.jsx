@@ -3,7 +3,7 @@ import useStore from '../store/useStore'
 import { getMhdStatus, MHD_STYLES, formatMhdDate, formatAmount } from '../utils/mhd'
 import { PACKAGING_TYPES, PACKAGING_COLORS, CATEGORY_COLORS } from '../data/spices'
 import FillBar, { FILL_LABELS } from './FillBar'
-import SelectionBar, { ClearAllButton } from './SelectionBar'
+import SelectionBar from './SelectionBar'
 
 const FILTERS = [
   { id: 'all', label: 'Alle' },
@@ -14,7 +14,7 @@ const FILTERS = [
 ]
 
 export default function SpiceList({ onEdit, onAdd }) {
-  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading, updateFillLevel, bulkDeleteSpices, clearAllSpices } = useStore()
+  const { spices: allSpices, addShoppingItem, locations, categories: allCategories, dataLoading, updateFillLevel, bulkDeleteSpices } = useStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -111,7 +111,6 @@ export default function SpiceList({ onEdit, onAdd }) {
             </button>
           )}
           <div className="ml-auto flex items-center gap-2">
-            <ClearAllButton onClear={clearAllSpices} label="Alle löschen" count={allSpices.length} />
             <button
               onClick={() => { setSelectMode(m => !m); setSelected(new Set()) }}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${

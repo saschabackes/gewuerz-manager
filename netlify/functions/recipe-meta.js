@@ -40,6 +40,7 @@ const URL_ALLOWLIST = [
   /^https:\/\/(www\.)?simply-yummy\.de\//i,
   /^https:\/\/(www\.)?gutekueche\.(at|de|ch)\//i,
   /^https:\/\/(www\.)?kochbar\.de\//i,
+  /^https:\/\/(mobile\.)?kptncook\.com\//i,
 ]
 
 let _cors

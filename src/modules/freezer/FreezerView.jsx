@@ -6,7 +6,7 @@ import QuickAddBar from './QuickAddBar'
 import StorageSettings from './StorageSettings'
 import ExcelImport from './ExcelImport'
 import SubTabs from '../../components/SubTabs'
-import SelectionBar, { ClearAllButton } from '../../components/SelectionBar'
+import SelectionBar from '../../components/SelectionBar'
 
 function daysUntil(dateStr) {
   if (!dateStr) return null
@@ -28,7 +28,7 @@ function catLabel(id) {
 export default function FreezerView() {
   const { storages, items, consumePortion, removeItem, toggleRestock,
           setupDone, completeSetup, formOpen, formPrefill, openForm, closeForm,
-          bulkDeleteItems, clearAllItems, updateItem } = useFreezer()
+          bulkDeleteItems, updateItem } = useFreezer()
   const [tab, setTab] = useState('bestand')
   const [activeStorageId, setActiveStorageId] = useState(storages[0]?.id)
   const [showSettings, setShowSettings] = useState(false)
@@ -70,7 +70,6 @@ export default function FreezerView() {
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <ClearAllButton onClear={() => { clearAllItems(); setSelectMode(false); setSelected(new Set()) }} label="Alle löschen" count={items.length} />
             <button
               onClick={() => { setSelectMode(m => !m); setSelected(new Set()) }}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
