@@ -255,16 +255,19 @@ const useStore = create((set, get) => ({
     })
   },
 
-  async signIn(email, password) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+  async signIn(email, password, options) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email, password,
+      options: { captchaToken: options?.captchaToken },
+    })
     if (error) throw error
   },
 
-  async signUp(name, email, password) {
+  async signUp(name, email, password, options) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name }, captchaToken: options?.captchaToken },
     })
     if (error) throw error
     if (data.user && (!data.user.identities || data.user.identities.length === 0)) {

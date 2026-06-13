@@ -1,6 +1,43 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import useStore from '../store/useStore'
 import { MODULES_ENABLED, APP_NAME, APP_TAGLINE } from '../branding'
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAADkEqPyn3goEqAgu'
+
+function useTurnstile() {
+  const containerRef = useRef(null)
+  const widgetId = useRef(null)
+  const tokenRef = useRef('')
+
+  const render = useCallback(() => {
+    if (!containerRef.current || !window.turnstile) return
+    if (widgetId.current != null) window.turnstile.remove(widgetId.current)
+    widgetId.current = window.turnstile.render(containerRef.current, {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { tokenRef.current = token },
+      'expired-callback': () => { tokenRef.current = '' },
+      'error-callback': () => { tokenRef.current = '' },
+      theme: 'auto',
+      size: 'flexible',
+    })
+  }, [])
+
+  useEffect(() => {
+    if (window.turnstile) { render(); return }
+    const script = document.createElement('script')
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    script.async = true
+    script.onload = render
+    document.head.appendChild(script)
+  }, [render])
+
+  const reset = useCallback(() => {
+    tokenRef.current = ''
+    if (widgetId.current != null && window.turnstile) window.turnstile.reset(widgetId.current)
+  }, [])
+
+  return { containerRef, getToken: () => tokenRef.current, reset }
+}
 
 export default function Login() {
   const { signIn, signUp, resetPassword, resendConfirmation } = useStore()
@@ -12,6 +49,7 @@ export default function Login() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
+  const turnstile = useTurnstile()
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -19,10 +57,12 @@ export default function Login() {
     setMessage('')
     setLoading(true)
     try {
+      const captchaToken = turnstile.getToken()
+      if (mode !== 'reset' && !captchaToken) throw new Error('Bitte warte kurz, bis die Sicherheitsprüfung abgeschlossen ist.')
       if (mode === 'register') {
         if (!name.trim()) throw new Error('Bitte Namen eingeben')
         if (password.length < 6) throw new Error('Passwort muss mindestens 6 Zeichen haben')
-        const { needsConfirmation } = await signUp(name.trim(), email.trim(), password)
+        const { needsConfirmation } = await signUp(name.trim(), email.trim(), password, { captchaToken })
         if (needsConfirmation) {
           setMode('confirm')
         } else {
@@ -34,7 +74,7 @@ export default function Login() {
         await resetPassword(email)
         setMessage('Reset-Mail gesendet! Bitte prüfe dein Postfach und klicke den Link.')
       } else {
-        await signIn(email.trim(), password)
+        await signIn(email.trim(), password, { captchaToken })
       }
     } catch (err) {
       const msg = err.message ?? String(err)
@@ -48,6 +88,7 @@ export default function Login() {
         setError(msg)
     } finally {
       setLoading(false)
+      turnstile.reset()
     }
   }
 
@@ -193,6 +234,10 @@ export default function Login() {
               </svg>
               {error}
             </div>
+          )}
+
+          {mode !== 'reset' && (
+            <div ref={turnstile.containerRef} className="flex justify-center" />
           )}
 
           <button type="submit" className="btn-primary w-full" disabled={loading}>
