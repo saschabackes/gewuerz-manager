@@ -191,6 +191,32 @@ exports.handler = async function(event) {
       return ok(stats)
     }
 
+    // Letzte Aktivitäten eines Nutzers
+    if (action === 'superUserActivity') {
+      if (!body.targetId) return err('targetId erforderlich')
+      var actRes = await fetch(
+        sbUrl + '/rest/v1/activity_log?user_id=eq.' + body.targetId + '&select=action,target_name,detail,created_at&order=created_at.desc&limit=20',
+        { headers: dbH }
+      )
+      var activities = actRes.ok ? await actRes.json().catch(function() { return [] }) : []
+      return ok(activities)
+    }
+
+    // API-Nutzung eines Nutzers (letzte 30 Tage + Zusammenfassung)
+    if (action === 'superUserApiUsage') {
+      if (!body.targetId) return err('targetId erforderlich')
+      var since = new Date()
+      since.setDate(since.getDate() - 30)
+      var usageRes = await fetch(
+        sbUrl + '/rest/v1/api_usage?user_id=eq.' + body.targetId + '&created_at=gte.' + since.toISOString() + '&select=action,detail,created_at&order=created_at.desc&limit=50',
+        { headers: dbH }
+      )
+      var usage = usageRes.ok ? await usageRes.json().catch(function() { return [] }) : []
+      var summary = {}
+      usage.forEach(function(u) { summary[u.action] = (summary[u.action] || 0) + 1 })
+      return ok({ calls: usage, summary: summary, total: usage.length })
+    }
+
     return err('Unbekannte Super-Aktion: ' + action)
   }
 

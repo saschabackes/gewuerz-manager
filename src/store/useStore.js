@@ -201,6 +201,19 @@ const useStore = create((set, get) => ({
   completeSpiceSetup() { localStorage.setItem('spice-setup-done', '1'); set({ spiceSetupDone: true }) },
   restartSpiceSetup()  { localStorage.removeItem('spice-setup-done'); set({ spiceSetupDone: false }) },
 
+  // ── API-Usage-Tracking ──────────────────────────────────────────────────
+
+  _logApiUsage(action, detail = null) {
+    const { household, user } = get()
+    if (!household || !user) return
+    supabase.from('api_usage').insert([{
+      user_id: user.id,
+      household_id: household.id,
+      action,
+      detail,
+    }]).then(({ error }) => { if (error) console.error('logApiUsage:', error) })
+  },
+
   // ── Aktivitätsverlauf ───────────────────────────────────────────────────
 
   // Fire-and-forget: schreibt einen Verlaufseintrag (denormalisiert für Lesbarkeit)
@@ -709,6 +722,7 @@ const useStore = create((set, get) => ({
     supabase.from('recipes')
       .insert([{ id, ...recipeToDB(data), household_id: household.id, created_by: user?.id }])
       .then(({ error }) => { if (error) console.error('addRecipe:', error) })
+    if (data.sourceUrl) get()._logApiUsage('recipe_import', `${data.sourceType || 'web'}: ${data.title || ''}`.slice(0, 100))
     return id
   },
 
@@ -770,6 +784,7 @@ const useStore = create((set, get) => ({
       }
     }
     if (imported > 0) get()._logActivity('recipe_added', `${imported} Cookidoo-Rezepte synchronisiert`)
+    get()._logApiUsage('cookidoo_sync', `${imported} importiert, ${favs.length - toImport.length} übersprungen`)
     return { imported, total: toImport.length, skipped: favs.length - toImport.length }
   },
 

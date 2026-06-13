@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MODULES_ENABLED } from '../../branding'
-import { superListUsers, superBanUser, superResetPassword, superDeleteUser, superBackup, superStats } from '../../lib/userAdmin'
+import { superListUsers, superBanUser, superResetPassword, superDeleteUser, superBackup, superStats, superUserActivity, superUserApiUsage } from '../../lib/userAdmin'
 import { getLastSeen, markSeen } from './lastSeen'
 
 const SUPER_ADMIN_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || '').toLowerCase()
@@ -18,6 +18,32 @@ function initials(name = '') {
 function fmtDate(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
+
+const ACTION_LABELS = {
+  spice_added: 'Gewürz hinzugefügt',
+  spice_updated: 'Gewürz bearbeitet',
+  spice_deleted: 'Gewürz gelöscht',
+  fill_changed: 'Füllstand geändert',
+  recipe_added: 'Rezept hinzugefügt',
+  shopping_added: 'Einkauf hinzugefügt',
+  shopping_checked: 'Einkauf erledigt',
+  freezer_added: 'TK hinzugefügt',
+  freezer_removed: 'TK entnommen',
+  cellar_added: 'Wein eingelagert',
+  cellar_removed: 'Wein entnommen',
+}
+
+const API_ACTION_LABELS = {
+  cookidoo_sync: 'Cookidoo-Sync',
+  recipe_import: 'Rezept-Import',
+  cookidoo_verify: 'Cookidoo-Login',
 }
 
 function householdLabel(u) {
@@ -38,6 +64,10 @@ function SuperAdminSection() {
   const [error, setError]     = useState('')
   const [search, setSearch]   = useState('')
   const [expanded, setExpanded] = useState(null)
+  const [detailTab, setDetailTab] = useState('actions')
+  const [userActivity, setUserActivity] = useState([])
+  const [userApiUsage, setUserApiUsage] = useState(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
   const [busy, setBusy]       = useState(false)
   // Zeitpunkt des letzten Besuchs einmalig festhalten (für „Neu"-Markierung)
   const [seenBefore] = useState(() => getLastSeen())
@@ -69,6 +99,27 @@ function SuperAdminSection() {
       alert('Fehler: ' + e.message)
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function toggleExpand(userId) {
+    if (expanded === userId) { setExpanded(null); return }
+    setExpanded(userId)
+    setDetailTab('actions')
+    setLoadingDetail(true)
+    setUserActivity([])
+    setUserApiUsage(null)
+    try {
+      const [activity, apiUsage] = await Promise.all([
+        superUserActivity(userId).catch(() => []),
+        superUserApiUsage(userId).catch(() => null),
+      ])
+      setUserActivity(Array.isArray(activity) ? activity : [])
+      setUserApiUsage(apiUsage)
+    } catch (e) {
+      console.error('Detail load:', e)
+    } finally {
+      setLoadingDetail(false)
     }
   }
 
@@ -204,49 +255,111 @@ function SuperAdminSection() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setExpanded(e => e === u.id ? null : u.id)}
-                    className="p-2 rounded-xl hover:bg-gray-100 dark:bg-gray-700 text-gray-400 transition-colors flex-none"
+                    onClick={() => toggleExpand(u.id)}
+                    className={`p-2 rounded-xl transition-colors flex-none ${isOpen ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600' : 'hover:bg-gray-100 dark:bg-gray-700 text-gray-400'}`}
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+                    <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 </div>
 
                 {isOpen && (
-                  <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800 grid grid-cols-2 gap-2">
-                    <button
-                      disabled={busy}
-                      onClick={() => { if (confirm(`Passwort-Reset-Mail an ${u.email}?`)) act(() => superResetPassword(u.email), false) }}
-                      className="flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-xl px-3 py-2.5 hover:bg-blue-100 dark:bg-blue-900/40 transition-colors disabled:opacity-50"
-                    >
-                      Passwort reset
-                    </button>
-                    <button
-                      disabled={busy}
-                      onClick={() => {
-                        const msg = u.isBanned ? `${u.name} entsperren?` : `${u.name} sperren?`
-                        if (confirm(msg)) act(() => superBanUser(u.id, !u.isBanned))
-                      }}
-                      className={`flex items-center justify-center gap-1.5 text-xs font-semibold rounded-xl px-3 py-2.5 transition-colors disabled:opacity-50 ${
-                        u.isBanned ? 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:bg-green-900/40' : 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:bg-red-900/40'
-                      }`}
-                    >
-                      {u.isBanned ? 'Entsperren' : 'Sperren'}
-                    </button>
-                    <button
-                      disabled={busy}
-                      onClick={() => {
-                        if (confirm(`${u.name} (${u.email}) ENDGÜLTIG löschen? Das Konto wird komplett entfernt und kann nicht wiederhergestellt werden.`))
-                          act(() => superDeleteUser(u.id))
-                      }}
-                      className="col-span-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-red-600 rounded-xl px-3 py-2.5 hover:bg-red-700 transition-colors disabled:opacity-50"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Konto löschen
-                    </button>
+                  <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-200 dark:border-gray-600">
+                      {[
+                        { id: 'actions', label: 'Aktionen' },
+                        { id: 'activity', label: 'Aktivitäten' },
+                        { id: 'api', label: 'API-Nutzung' },
+                      ].map(tab => (
+                        <button key={tab.id} onClick={() => setDetailTab(tab.id)}
+                          className={`flex-1 text-xs font-semibold py-2 transition-colors ${
+                            detailTab === tab.id
+                              ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600'
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                        >{tab.label}</button>
+                      ))}
+                    </div>
+
+                    <div className="px-4 py-3">
+                      {/* Aktionen */}
+                      {detailTab === 'actions' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button disabled={busy}
+                            onClick={() => { if (confirm(`Passwort-Reset-Mail an ${u.email}?`)) act(() => superResetPassword(u.email), false) }}
+                            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-xl px-3 py-2.5 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                          >Passwort reset</button>
+                          <button disabled={busy}
+                            onClick={() => { if (confirm(u.isBanned ? `${u.name} entsperren?` : `${u.name} sperren?`)) act(() => superBanUser(u.id, !u.isBanned)) }}
+                            className={`flex items-center justify-center gap-1.5 text-xs font-semibold rounded-xl px-3 py-2.5 transition-colors disabled:opacity-50 ${
+                              u.isBanned ? 'text-green-700 bg-green-50 hover:bg-green-100' : 'text-red-700 bg-red-50 hover:bg-red-100'
+                            }`}
+                          >{u.isBanned ? 'Entsperren' : 'Sperren'}</button>
+                          <button disabled={busy}
+                            onClick={() => { if (confirm(`${u.name} (${u.email}) ENDGÜLTIG löschen?`)) act(() => superDeleteUser(u.id)) }}
+                            className="col-span-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-red-600 rounded-xl px-3 py-2.5 hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >Konto löschen</button>
+                        </div>
+                      )}
+
+                      {/* Aktivitäten */}
+                      {detailTab === 'activity' && (
+                        <div>
+                          {loadingDetail ? (
+                            <p className="text-xs text-gray-400 text-center py-3">Lade…</p>
+                          ) : userActivity.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-3">Keine Aktivitäten</p>
+                          ) : (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                              {userActivity.map((a, i) => (
+                                <div key={i} className="flex items-start gap-2 text-xs">
+                                  <span className="text-gray-400 flex-none w-24">{fmtDateTime(a.created_at)}</span>
+                                  <span className="text-gray-700 dark:text-gray-200">
+                                    <span className="font-semibold">{ACTION_LABELS[a.action] || a.action}</span>
+                                    {a.target_name && <span className="text-gray-500"> · {a.target_name}</span>}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* API-Nutzung */}
+                      {detailTab === 'api' && (
+                        <div>
+                          {loadingDetail ? (
+                            <p className="text-xs text-gray-400 text-center py-3">Lade…</p>
+                          ) : !userApiUsage || userApiUsage.total === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-3">Keine API-Calls (letzte 30 Tage)</p>
+                          ) : (
+                            <>
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {Object.entries(userApiUsage.summary).map(([action, count]) => (
+                                  <span key={action} className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full px-2.5 py-1 font-semibold">
+                                    {API_ACTION_LABELS[action] || action}: {count}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-xs text-gray-500 mb-2">{userApiUsage.total} Calls (letzte 30 Tage)</p>
+                              <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                                {userApiUsage.calls.map((c, i) => (
+                                  <div key={i} className="flex items-start gap-2 text-xs">
+                                    <span className="text-gray-400 flex-none w-24">{fmtDateTime(c.created_at)}</span>
+                                    <span className="text-gray-700 dark:text-gray-200">
+                                      <span className="font-semibold">{API_ACTION_LABELS[c.action] || c.action}</span>
+                                      {c.detail && <span className="text-gray-500"> · {c.detail}</span>}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
